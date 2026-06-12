@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Inicia sesión o crea tu cuenta en el Padrón Municipal de Mascotas de El Grullo, Jalisco." />
+  <title>Acceso — Padrón de Mascotas · El Grullo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="auth-page">
+  <!-- ── Aside ── -->
+  <aside class="auth-aside">
+    <div class="auth-aside-content">
+      <div class="auth-aside-logo">
+        <div class="auth-aside-logo-icon">🐾</div>
+        <div class="auth-aside-logo-text">
+          <div class="title">Padrón de Mascotas</div>
+          <div class="subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
+        </div>
+      </div>
+
+      <h2>Bienvenido a<br/><span style="color:var(--orange-light)">La Ciudad<br/>de la Gente</span></h2>
+      <p>Registra a tus mascotas de forma oficial, gratuita y desde la comodidad de tu hogar.</p>
+
+      <div class="auth-aside-features">
+        <div class="auth-feature">
+          <div class="auth-feature-icon">📄</div>
+          <div class="auth-feature-text">Acta oficial con folio único al registrar cada mascota</div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">💉</div>
+          <div class="auth-feature-text">Acceso a campañas de vacunación y esterilización</div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">🔍</div>
+          <div class="auth-feature-text">Reporte de extravío directamente en el portal</div>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">🔒</div>
+          <div class="auth-feature-text">Tus datos están protegidos por el Ayuntamiento</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="auth-main">
+    <div class="auth-form-wrap">
+      <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; font-size:.85rem; color:var(--gray-2); margin-bottom:32px; transition:var(--transition);"
+         onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray-2)'">
+        ← Volver al inicio
+      </a>
+
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')" role="tab">Iniciar sesión</div>
+        <div class="auth-tab" id="tab-registro" onclick="switchTab('registro')" role="tab">Crear cuenta</div>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form active" id="form-login" onsubmit="handleLogin(event)">
+        <div>
+          <div class="auth-title">¡Bienvenido de nuevo!</div>
+          <div class="auth-subtitle">Ingresa tus credenciales para continuar.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-email">Correo electrónico</label>
+          <div class="input-group">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="login-email" class="form-control" placeholder="tucorreo@ejemplo.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Contraseña</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="login-password" class="form-control" placeholder="Tu contraseña" required />
+            <span class="input-toggle" onclick="togglePassword('login-password')">👁️</span>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <label style="display:flex; align-items:center; gap:6px; font-size:.83rem; cursor:pointer; color:var(--gray-1);">
+            <input type="checkbox" id="remember" style="accent-color:var(--orange);"> Recordarme
+          </label>
+          <a href="#" style="font-size:.83rem; color:var(--orange); font-weight:600;">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <!-- Demo credentials -->
+        <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gray-1);">
+          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba — clic para rellenar:</strong>
+          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+            <button type="button"
+              onclick="fillCredentials('ciudadano@demo.com','Demo1234')"
+              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
+              onmouseover="this.style.background='var(--orange)'; this.style.color='white';"
+              onmouseout="this.style.background='white'; this.style.color='';">
+              👤 Ciudadano<br/>
+              <span style="font-weight:400; font-size:.7rem;">ciudadano@demo.com</span>
+            </button>
+            <button type="button"
+              onclick="fillCredentials('admin@demo.com','Admin1234')"
+              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
+              onmouseover="this.style.background='var(--orange-dark)'; this.style.color='white';"
+              onmouseout="this.style.background='white'; this.style.color='';">
+              🔧 Administrador<br/>
+              <span style="font-weight:400; font-size:.7rem;">admin@demo.com</span>
+            </button>
+          </div>
+        </div>
+
+
+        <button type="submit" class="btn btn-primary btn-block">Iniciar sesión →</button>
+
+        <div class="form-divider">o</div>
+
+        <div style="text-align:center; font-size:.85rem; color:var(--gray-2);">
+          ¿No tienes cuenta? <a href="#" onclick="switchTab('registro')" style="color:var(--orange); font-weight:600;">Regístrate gratis</a>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form class="auth-form" id="form-registro" onsubmit="handleRegistro(event)">
+        <div>
+          <div class="auth-title">Crea tu cuenta</div>
+          <div class="auth-subtitle">Es gratis y solo toma un minuto.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-nombre">Nombre(s)</label>
+            <input type="text" id="reg-nombre" class="form-control" placeholder="Luis Fernando" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-apellido">Apellidos</label>
+            <input type="text" id="reg-apellido" class="form-control" placeholder="Vargas Ramírez" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Correo electrónico</label>
+          <div class="input-group">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="reg-email" class="form-control" placeholder="tucorreo@ejemplo.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-telefono">Teléfono (opcional)</label>
+          <div class="input-group">
+            <span class="input-icon">📞</span>
+            <input type="tel" id="reg-telefono" class="form-control" placeholder="341-123-4567" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-colonia">Colonia o delegación</label>
+          <select id="reg-colonia" class="form-control">
+            <option value="">Seleccionar...</option>
+            <option value="Centro">Centro</option>
+            <option value="El Sabino">El Sabino</option>
+            <option value="La Loma">La Loma</option>
+            <option value="Las Flores">Las Flores</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Contraseña</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 8 caracteres" required oninput="checkPassword(this.value)" />
+            <span class="input-toggle" onclick="togglePassword('reg-password')">👁️</span>
+          </div>
+          <div id="password-strength" style="display:none; margin-top:4px;">
+            <div style="height:4px; border-radius:99px; background:var(--gray-4); overflow:hidden;">
+              <div id="strength-bar" style="height:100%; border-radius:99px; width:0%; transition:all .3s;"></div>
+            </div>
+            <div id="strength-label" style="font-size:.72rem; color:var(--gray-2); margin-top:4px;"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password2">Confirmar contraseña</label>
+          <div class="input-group">
+            <span class="input-icon">✅</span>
+            <input type="password" id="reg-password2" class="form-control" placeholder="Repite tu contraseña" required />
+          </div>
+        </div>
+
+        <label style="display:flex; align-items:flex-start; gap:8px; font-size:.82rem; cursor:pointer; color:var(--gray-1);">
+          <input type="checkbox" required style="accent-color:var(--orange); margin-top:2px; flex-shrink:0;"/>
+          <span>Acepto el <a href="#" style="color:var(--orange);">Aviso de Privacidad</a> del H. Ayuntamiento de El Grullo y el uso de mis datos para el Padrón Municipal de Mascotas.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">Crear mi cuenta →</button>
+
+        <div style="text-align:center; font-size:.85rem; color:var(--gray-2);">
+          ¿Ya tienes cuenta? <a href="#" onclick="switchTab('login')" style="color:var(--orange); font-weight:600;">Inicia sesión</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/mock-data.js"></script>
+<script>
+/* ── Tab switching ── */
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('form-' + tab).classList.add('active');
+}
+
+/* ── Quick fill credentials ── */
+function fillCredentials(email, password) {
+  document.getElementById('login-email').value    = email;
+  document.getElementById('login-password').value = password;
+  // Visual feedback
+  document.getElementById('login-email').style.borderColor    = 'var(--orange)';
+  document.getElementById('login-password').style.borderColor = 'var(--orange)';
+  setTimeout(() => {
+    document.getElementById('login-email').style.borderColor    = '';
+    document.getElementById('login-password').style.borderColor = '';
+  }, 1500);
+}
+
+/* ── Password toggle ── */
+function togglePassword(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+/* ── Password strength ── */
+function checkPassword(val) {
+  const bar = document.getElementById('strength-bar');
+  const label = document.getElementById('strength-label');
+  const container = document.getElementById('password-strength');
+  container.style.display = 'block';
+
+  let strength = 0;
+  if (val.length >= 8) strength++;
+  if (/[A-Z]/.test(val)) strength++;
+  if (/[0-9]/.test(val)) strength++;
+  if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+  const configs = [
+    { pct: '25%', color: '#ef5350', text: 'Muy débil' },
+    { pct: '50%', color: '#FF9800', text: 'Débil' },
+    { pct: '75%', color: '#FFC107', text: 'Aceptable' },
+    { pct: '100%', color: '#4CAF50', text: 'Fuerte ✓' },
+  ];
+  const cfg = configs[Math.max(0, strength - 1)] || configs[0];
+  bar.style.width = val ? cfg.pct : '0%';
+  bar.style.background = cfg.color;
+  label.textContent = val ? cfg.text : '';
+  label.style.color = cfg.color;
+}
+
+/* ── Login handler ── */
+
+// Mock user database
+const MOCK_USERS = [
+  { email: 'admin@demo.com',     password: 'Admin1234',    rol: 'admin',     nombre: 'Administrador' },
+  { email: 'ciudadano@demo.com', password: 'Demo1234',     rol: 'ciudadano', nombre: 'Juan Pérez' },
+];
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email    = document.getElementById('login-email').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!email || !password) {
+    showToast('❌ Completa todos los campos', 'error');
+    return;
+  }
+
+  // Check against mock users first
+  const user = MOCK_USERS.find(u => u.email === email && u.password === password);
+
+  if (user) {
+    // Save session
+    localStorage.setItem('padron_session', JSON.stringify({ email: user.email, nombre: user.nombre, rol: user.rol }));
+    if (user.rol === 'admin') {
+      showToast('✅ ¡Bienvenido, Administrador! Redirigiendo al panel...', 'success');
+      setTimeout(() => window.location.href = 'admin.html', 1200);
+    } else {
+      showToast(`✅ ¡Bienvenido, ${user.nombre}!`, 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 1200);
+    }
+    return;
+  }
+
+  // Allow any other valid-looking citizen account (simulates real DB)
+  if (password.length >= 8) {
+    localStorage.setItem('padron_session', JSON.stringify({ email, nombre: email.split('@')[0], rol: 'ciudadano' }));
+    showToast('✅ ¡Bienvenido de nuevo!', 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 1200);
+  } else {
+    showToast('❌ Correo o contraseña incorrectos', 'error');
+  }
+}
+
+
+/* ── Register handler ── */
+function handleRegistro(e) {
+  e.preventDefault();
+  const pass = document.getElementById('reg-password').value;
+  const pass2 = document.getElementById('reg-password2').value;
+
+  if (pass !== pass2) {
+    showToast('❌ Las contraseñas no coinciden', 'error');
+    return;
+  }
+  if (pass.length < 8) {
+    showToast('❌ La contraseña debe tener mínimo 8 caracteres', 'error');
+    return;
+  }
+
+  showToast('✅ ¡Cuenta creada exitosamente! Redirigiendo...', 'success');
+  setTimeout(() => window.location.href = 'dashboard.html', 1500);
+}
+
+/* ── Toast ── */
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+/* ── Check for #registro hash ── */
+if (window.location.hash === '#registro') switchTab('registro');
+</script>
+
+</body>
+</html>

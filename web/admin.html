@@ -1,0 +1,3062 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin — Padrón de Mascotas · El Grullo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    /* ── Admin overrides ── */
+    .sidebar { background: linear-gradient(180deg, #1A0F00 0%, #3D1F00 100%); }
+    .sidebar-link.active { background: rgba(242,122,0,.28); color: var(--orange-light); }
+    .sidebar-link:hover { background: rgba(255,255,255,.08); color: white; }
+    .sidebar-badge {
+      margin-left: auto; background: var(--orange); color: white;
+      font-size: .66rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+    }
+    .sidebar-badge.amber { background: #FF9800; }
+
+    /* ── Datos dashboard layout ── */
+    .datos-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px minmax(0, 1fr);
+      gap: 20px;
+      height: calc(100vh - 130px);
+      min-height: 500px;
+      overflow: hidden;
+    }
+    .datos-grid > * { min-width: 0; overflow: hidden; }
+
+    /* ── Map ── */
+    #mapContainer {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--gray-4);
+      position: relative;
+      min-height: 380px;
+    }
+    #map { width: 100%; height: 100%; min-height: 380px; }
+    .map-footer {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      padding: 10px 16px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .9rem;
+      color: var(--orange-dark);
+      border-top: 1px solid var(--gray-4);
+    }
+
+    /* ── Charts column ── */
+    .charts-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chart-box {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-box-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .82rem;
+      color: var(--dark);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    /* ── CSS Pie Chart ── */
+    .pie-chart {
+      position: relative;
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      background: conic-gradient(
+        var(--orange)  0deg 160deg,
+        #FF9800       160deg 230deg,
+        #9E9E9E       230deg 290deg,
+        #4CAF50       290deg 360deg
+      );
+      box-shadow: 0 4px 14px rgba(0,0,0,.12);
+    }
+    .pie-center {
+      position: absolute; inset: 22px;
+      background: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: .85rem;
+      color: var(--orange-dark);
+    }
+    .pie-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: .72rem;
+    }
+    .pie-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-1);
+    }
+    .pie-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Horizontal bar chart ── */
+    .hbar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 4px 2px;
+    }
+    .hbar-row {
+      display: grid;
+      grid-template-columns: 62px 1fr 28px;
+      align-items: center;
+      gap: 6px;
+    }
+    .hbar-label {
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--gray-1);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .hbar-track {
+      height: 10px;
+      background: var(--gray-4);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .hbar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .8s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+    }
+    .hbar-val {
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--gray-2);
+      text-align: right;
+    }
+
+    /* ── Right column: search + table ── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .padron-table-mini {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .padron-table-mini table { width: 100%; border-collapse: collapse; }
+    .padron-table-mini thead th {
+      background: var(--surface);
+      padding: 10px 12px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--gray-2);
+      border-bottom: 1px solid var(--gray-4);
+      white-space: nowrap;
+    }
+    .padron-table-mini tbody td {
+      padding: 10px 12px;
+      font-size: .84rem;
+      border-bottom: 1px solid var(--gray-4);
+    }
+    .padron-table-mini tbody tr:last-child td { border-bottom: none; }
+    .padron-table-mini tbody tr:hover { background: var(--surface); cursor: pointer; }
+    .seguimiento-btn {
+      background: none; border: none; cursor: pointer; font-size: 1rem;
+      color: var(--orange); transition: var(--transition);
+      padding: 4px; border-radius: var(--radius-sm);
+    }
+    .seguimiento-btn:hover { background: var(--orange-pale); }
+
+    /* ── Seguimiento view ── */
+    .seguimiento-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .pet-detail-card {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+    }
+    .pet-detail-photo {
+      width: 90px; height: 90px;
+      background: var(--orange-pale);
+      border: 2px solid var(--orange);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.8rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .pet-detail-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius) - 2px); }
+    .fab-btn {
+      position: absolute; bottom: 20px; right: 20px;
+      width: 44px; height: 44px;
+      background: var(--orange);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      color: white;
+      box-shadow: 0 4px 14px rgba(242,122,0,.4);
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+    .fab-btn:hover { background: var(--orange-dark); transform: scale(1.08); }
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-4);
+    }
+    .detail-field:last-of-type { border-bottom: none; }
+    .detail-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--gray-2); }
+    .detail-value { font-size: .9rem; font-weight: 600; color: var(--dark); }
+
+    /* ── Config card-nav ── */
+    .config-card-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .config-nav-item {
+      background: white;
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      position: relative;
+    }
+    .config-nav-item:hover {
+      border-color: var(--orange);
+      background: var(--orange-pale);
+    }
+    .config-nav-item.active {
+      border-color: var(--orange);
+      background: var(--orange-pale);
+      box-shadow: 0 2px 12px rgba(242,122,0,.15);
+    }
+    .config-nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--orange);
+    }
+    .config-nav-icon {
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+    .config-nav-label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.2;
+    }
+    .config-nav-item.active .config-nav-label { color: var(--orange-dark); }
+    .config-nav-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 8px; height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      border: 1.5px solid white;
+    }
+    .config-nav-badge.unsaved { background: #FF9800; }
+    .config-panel { display: none; }
+    .config-panel.active { display: block; }
+
+    /* ── Setting row (label + control + description) ── */
+    .setting-section {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .setting-section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+    }
+    .setting-section-icon { font-size: 1.1rem; }
+    .setting-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--dark);
+    }
+    .setting-section-desc {
+      font-size: .72rem;
+      color: var(--gray-2);
+      margin-top: 1px;
+    }
+    .setting-rows { padding: 4px 0; }
+    .setting-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-4);
+      transition: var(--transition);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:hover { background: var(--surface); }
+    .setting-row-label {
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 2px;
+    }
+    .setting-row-hint {
+      font-size: .72rem;
+      color: var(--gray-2);
+    }
+    .setting-row-full {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-4);
+    }
+    .setting-row-full:last-child { border-bottom: none; }
+
+    /* ── Toggle switch ── */
+    .toggle-switch {
+      position: relative;
+      width: 46px; height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-4);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: var(--transition);
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--orange); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* ── Color swatch picker ── */
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .color-swatch {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: var(--transition);
+      position: relative;
+    }
+    .color-swatch:hover { transform: scale(1.12); }
+    .color-swatch.selected {
+      border-color: var(--dark);
+      box-shadow: 0 0 0 2px white inset;
+    }
+    .color-picker-custom {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px dashed var(--gray-3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+    }
+    .color-picker-custom input {
+      position: absolute;
+      inset: -4px;
+      opacity: 0;
+      cursor: pointer;
+      width: 140%;
+    }
+
+    /* ── Font selector cards ── */
+    .font-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .font-card {
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius);
+      padding: 12px 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+    .font-card:hover { border-color: var(--orange); }
+    .font-card.selected { border-color: var(--orange); background: var(--orange-pale); }
+    .font-card-name { font-size: .7rem; font-weight: 600; color: var(--gray-1); margin-top: 6px; }
+    .font-card-sample { font-size: 1.2rem; color: var(--dark); }
+
+    /* ── SEO preview card ── */
+    .seo-preview {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .seo-preview-title {
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--gray-2);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+    }
+    .seo-google-preview {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      max-width: 600px;
+    }
+    .seo-url { font-size: .72rem; color: #1A0DAB; margin-bottom: 2px; }
+    .seo-google-title {
+      font-size: 1rem;
+      color: #1A0DAB;
+      font-weight: 400;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+    .seo-google-title:hover { text-decoration: underline; }
+    .seo-google-desc { font-size: .8rem; color: #545454; line-height: 1.5; }
+
+    /* ── Status bar ── */
+    .config-status-bar {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      font-size: .75rem;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--gray-2);
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .status-dot.saved { background: #4CAF50; }
+    .status-dot.pending { background: #FF9800; }
+    .status-dot.empty { background: var(--gray-3); }
+
+    /* ── Drag & drop banner ── */
+    .banner-drop {
+      border: 2px dashed var(--gray-3);
+      border-radius: var(--radius);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--surface);
+    }
+    .banner-drop:hover { border-color: var(--orange); background: var(--orange-pale); }
+    .banner-drop.drag-over { border-color: var(--orange); background: var(--orange-pale); }
+    .banner-drop-icon { font-size: 2rem; margin-bottom: 6px; }
+    .banner-drop-text { font-size: .82rem; color: var(--gray-2); }
+    .banner-drop-text strong { color: var(--orange); }
+
+    /* ── FAQ table inline ── */
+    .faq-mgmt-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .faq-mgmt-table { background: white; border: 1px solid var(--gray-4); border-radius: var(--radius); overflow: hidden; }
+    .faq-mgmt-table table { width: 100%; border-collapse: collapse; }
+    .faq-mgmt-table thead th {
+      background: var(--surface);
+      padding: 10px 12px;
+      font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      color: var(--gray-2); border-bottom: 1px solid var(--gray-4);
+    }
+    .faq-mgmt-table tbody td {
+      padding: 12px; font-size: .84rem;
+      border-bottom: 1px solid var(--gray-4);
+      vertical-align: top;
+    }
+    .faq-mgmt-table tbody tr:last-child td { border-bottom: none; }
+    .faq-mgmt-table tbody tr:hover { background: var(--surface); }
+
+    /* ── Nuevo Artículo / WYSIWYG ── */
+    .articulo-form {
+      max-width: 760px;
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+    }
+
+    /* WYSIWYG toolbar */
+    .wysiwyg-wrap {
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    .wysiwyg-wrap:focus-within {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(242,122,0,.12);
+    }
+    .wysiwyg-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--gray-4);
+      flex-wrap: wrap;
+    }
+    .wysiwyg-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 6px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--gray-1);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .wysiwyg-btn:hover { background: var(--gray-4); color: var(--dark); }
+    .wysiwyg-btn.active { background: var(--orange-pale); color: var(--orange-dark); }
+    .wysiwyg-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--gray-4);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .wysiwyg-select {
+      height: 28px;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-sm);
+      font-size: .78rem;
+      font-family: inherit;
+      padding: 0 6px;
+      color: var(--gray-1);
+      background: white;
+      cursor: pointer;
+      outline: none;
+    }
+    .wysiwyg-select:hover { border-color: var(--orange); }
+    .wysiwyg-editor {
+      min-height: 260px;
+      padding: 16px 18px;
+      font-size: .9rem;
+      font-family: inherit;
+      color: var(--dark);
+      line-height: 1.7;
+      outline: none;
+      background: white;
+    }
+    .wysiwyg-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--gray-3);
+      pointer-events: none;
+    }
+    .wysiwyg-editor h1 { font-size: 1.5rem; margin: .4em 0; }
+    .wysiwyg-editor h2 { font-size: 1.2rem; margin: .4em 0; }
+    .wysiwyg-editor h3 { font-size: 1rem; margin: .4em 0; }
+    .wysiwyg-editor ul, .wysiwyg-editor ol { padding-left: 1.4em; margin: .4em 0; }
+    .wysiwyg-editor img { max-width: 100%; border-radius: var(--radius-sm); margin: 6px 0; }
+    .wysiwyg-editor blockquote {
+      border-left: 3px solid var(--orange);
+      padding-left: 12px;
+      margin: .4em 0;
+      color: var(--gray-1);
+    }
+
+    /* Emoji picker dropdown */
+    .emoji-picker {
+      position: relative;
+      display: inline-block;
+    }
+    .emoji-grid {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 500;
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius);
+      padding: 10px;
+      box-shadow: var(--shadow-lg);
+      width: 240px;
+      display: none;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .emoji-grid.open { display: flex; }
+    .emoji-item {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .emoji-item:hover { background: var(--orange-pale); }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .datos-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+      .charts-col { flex-direction: row; }
+    }
+    @media (max-width: 768px) {
+      .datos-grid { grid-template-columns: 1fr; }
+      .seguimiento-layout { grid-template-columns: 1fr; }
+      .faq-mgmt-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Icon Selector (Apariencia) ── */
+    .icon-sel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .icon-sel-card {
+      background: white;
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      transition: var(--transition);
+    }
+    .icon-sel-card:hover { border-color: var(--orange); }
+    .icon-sel-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--gray-2);
+      margin-bottom: 12px;
+    }
+    .icon-sel-preview {
+      width: 64px; height: 64px;
+      background: var(--orange-pale);
+      border: 2px dashed var(--orange);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 14px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    .icon-sel-preview img { width:100%; height:100%; object-fit:contain; }
+    .icon-sel-types {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .icon-sel-type-btn {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-4);
+      background: white;
+      font-size: .73rem;
+      font-weight: 600;
+      color: var(--gray-2);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .icon-sel-type-btn.active {
+      border-color: var(--orange);
+      background: var(--orange-pale);
+      color: var(--orange-dark);
+    }
+    .icon-sel-input { display: flex; flex-direction: column; gap: 8px; }
+    .icon-sel-emoji-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      max-height: 90px;
+      overflow-y: auto;
+      padding: 4px;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+    }
+    .icon-sel-emoji-item {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+    .icon-sel-emoji-item:hover { background: var(--orange-pale); }
+    .icon-sel-emoji-item.selected { background: var(--orange); }
+    .icon-sel-drop {
+      border: 2px dashed var(--gray-3);
+      border-radius: var(--radius-sm);
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: .75rem;
+      color: var(--gray-2);
+      transition: var(--transition);
+      background: var(--surface);
+    }
+    .icon-sel-drop:hover { border-color: var(--orange); background: var(--orange-pale); }
+    .icon-sel-drop.drag-over { border-color: var(--orange); background: var(--orange-pale); }
+    .appearance-save-bar {
+      position: sticky;
+      bottom: 16px;
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-lg);
+      margin-top: 20px;
+      z-index: 10;
+    }
+
+    /* Leaflet map fix */
+    .leaflet-container { z-index: 1; }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon" style="background:var(--orange);">🔧</div>
+      <div>
+        <div class="sidebar-logo-title">Panel Admin</div>
+        <div class="sidebar-logo-sub">Padrón Mascotas · El Grullo</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Menú principal</div>
+    <a class="sidebar-link active" id="nav-datos" onclick="showAdmin('datos')">
+      <span class="icon">📊</span> Datos
+    </a>
+    <a class="sidebar-link" id="nav-seguimiento" onclick="showAdmin('seguimiento')">
+      <span class="icon">🔍</span> Seguimiento
+      <span class="sidebar-badge">342</span>
+    </a>
+    <a class="sidebar-link" id="nav-articulo" onclick="showAdmin('articulo')">
+      <span class="icon">📝</span> Nuevo artículo
+    </a>
+    <a class="sidebar-link" id="nav-config" onclick="showAdmin('config')">
+      <span class="icon">⚙️</span> Configuración sitio
+    </a>
+
+    <div class="sidebar-section" style="margin-top:8px;">Alertas</div>
+    <a class="sidebar-link" onclick="showAdmin('seguimiento'); filtrarPorEstatus('extraviado')">
+      <span class="icon">⚠️</span> Extraviadas
+      <span class="sidebar-badge amber">8</span>
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" style="background:#C96200;">AD</div>
+        <div>
+          <div class="sidebar-user-name">Administrador</div>
+          <div class="sidebar-user-role" style="color:var(--orange-light);">Panel admin</div>
+        </div>
+      </div>
+      <a class="sidebar-link" style="margin-top:8px;" href="index.html">
+        <span class="icon">🏠</span> Ver portal público
+      </a>
+      <a class="sidebar-link" href="login.html">
+        <span class="icon">🚪</span> Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="dashboard-main">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div>
+        <div class="dashboard-title" id="adminTitle">Datos del Padrón</div>
+        <div class="dashboard-subtitle" id="adminSub">Mapa de mascotas · Gráficas · Seguimiento en tiempo real</div>
+      </div>
+      <div class="flex gap-8 items-center">
+        <span class="badge badge-orange">👤 Admin</span>
+        <button class="btn btn-primary btn-sm" onclick="exportCSV()">📥 Exportar CSV</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: DATOS                             -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-datos">
+      <div class="datos-grid">
+
+        <!-- Columna 1: Mapa -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div id="mapContainer">
+            <div id="map"></div>
+            <div class="map-footer">
+              📍 Mascotas en el padrón: <span id="mapCount">342</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna 2: Gráficas -->
+        <div class="charts-col">
+          <!-- Pie: Enfermedades -->
+          <div class="chart-box">
+            <div class="chart-box-title">Enfermedades reportadas</div>
+            <div class="pie-chart">
+              <div class="pie-center">342</div>
+            </div>
+            <div class="pie-legend">
+              <div class="pie-item"><div class="pie-dot" style="background:var(--orange);"></div>Ninguna (44%)</div>
+              <div class="pie-item"><div class="pie-dot" style="background:#FF9800;"></div>Parasitosis (19%)</div>
+              <div class="pie-item"><div class="pie-dot" style="background:#9E9E9E;"></div>Dermatitis (17%)</div>
+              <div class="pie-item"><div class="pie-dot" style="background:#4CAF50;"></div>Otras (20%)</div>
+            </div>
+          </div>
+
+          <!-- Bar: Tipos de mascotas -->
+          <div class="chart-box">
+            <div class="chart-box-title">Tipos de mascotas</div>
+            <div class="hbar-list" id="miniBarChart"></div>
+          </div>
+        </div>
+
+        <!-- Columna 3: Búsqueda + tabla mini -->
+        <div class="right-col">
+          <div class="search-box" style="width:100%;">
+            <span class="search-icon">🔍</span>
+            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." oninput="filterMiniTable()" style="width:100%; padding-left:36px;" />
+          </div>
+          <div class="padron-table-mini">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Vacunado <span style="font-size:.65rem;">⇕</span></th>
+                  <th>Seguimiento</th>
+                </tr>
+              </thead>
+              <tbody id="miniTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: SEGUIMIENTO                       -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-seguimiento" style="display:none;">
+      <!-- Search -->
+      <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
+        <div class="search-box" style="flex:1; min-width:200px;">
+          <span class="search-icon">🔍</span>
+          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="filterSeguimiento()" style="width:100%; padding-left:36px;" />
+        </div>
+        <select class="form-control" id="segFilterEspecie" onchange="filterSeguimiento()" style="width:140px;">
+          <option value="">Especie...</option>
+          <option value="perro">🐕 Perro</option>
+          <option value="gato">🐈 Gato</option>
+        </select>
+        <select class="form-control" id="segFilterEstatus" onchange="filterSeguimiento()" style="width:150px;">
+          <option value="">Estatus...</option>
+          <option value="activo">Activo</option>
+          <option value="extraviado">Extraviado</option>
+          <option value="fallecido">Fallecido</option>
+        </select>
+      </div>
+
+      <div class="seguimiento-layout" id="seguimientoGrid">
+        <!-- Cards rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: NUEVO ARTÍCULO                    -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-articulo" style="display:none;">
+      <div class="articulo-form">
+        <h3 style="font-size:1.1rem; margin-bottom:20px;">📝 Nuevo artículo / Tip de cuidado</h3>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+          <!-- Título + Ícono -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="art-titulo">Título del artículo *</label>
+              <input type="text" id="art-titulo" class="form-control" placeholder="Ej. ¿Con qué frecuencia debo vacunar a mi mascota?" />
+            </div>
+            <div class="form-group" style="max-width:100px;">
+              <label for="art-icono">Ícono</label>
+              <input type="text" id="art-icono" class="form-control" placeholder="🐕" maxlength="4" style="text-align:center; font-size:1.2rem;" />
+            </div>
+          </div>
+
+          <!-- ── WYSIWYG Editor ── -->
+          <div class="form-group">
+            <label>Contenido *</label>
+            <div class="wysiwyg-wrap">
+
+              <!-- Toolbar -->
+              <div class="wysiwyg-toolbar" id="wysiwygToolbar">
+
+                <!-- Formato de texto -->
+                <button class="wysiwyg-btn" id="btn-bold"    onclick="wExec('bold')"          title="Negrita (Ctrl+B)"><b>B</b></button>
+                <button class="wysiwyg-btn" id="btn-italic"  onclick="wExec('italic')"        title="Cursiva (Ctrl+I)"><i>I</i></button>
+                <button class="wysiwyg-btn" id="btn-under"   onclick="wExec('underline')"     title="Subrayado (Ctrl+U)" style="text-decoration:underline;">U</button>
+                <button class="wysiwyg-btn" id="btn-strike"  onclick="wExec('strikeThrough')" title="Tachado"><s>S</s></button>
+
+                <div class="wysiwyg-sep"></div>
+
+                <!-- Estilo de párrafo -->
+                <select class="wysiwyg-select" id="styleSelect" onchange="wExecBlock(this.value)" title="Estilo de texto">
+                  <option value="p">Normal</option>
+                  <option value="h1">Título 1</option>
+                  <option value="h2">Título 2</option>
+                  <option value="h3">Título 3</option>
+                  <option value="blockquote">Cita</option>
+                </select>
+
+                <div class="wysiwyg-sep"></div>
+
+                <!-- Listas -->
+                <button class="wysiwyg-btn" onclick="wExec('insertUnorderedList')" title="Lista con viñetas">≡</button>
+                <button class="wysiwyg-btn" onclick="wExec('insertOrderedList')"   title="Lista numerada">1≡</button>
+
+                <div class="wysiwyg-sep"></div>
+
+                <!-- Alineación -->
+                <button class="wysiwyg-btn" onclick="wExec('justifyLeft')"   title="Izquierda">◀</button>
+                <button class="wysiwyg-btn" onclick="wExec('justifyCenter')" title="Centrado">▶◀</button>
+                <button class="wysiwyg-btn" onclick="wExec('justifyRight')"  title="Derecha">▶</button>
+
+                <div class="wysiwyg-sep"></div>
+
+                <!-- Deshacer / Rehacer -->
+                <button class="wysiwyg-btn" onclick="wExec('undo')" title="Deshacer (Ctrl+Z)">↺</button>
+                <button class="wysiwyg-btn" onclick="wExec('redo')" title="Rehacer (Ctrl+Y)">↻</button>
+
+                <div class="wysiwyg-sep"></div>
+
+                <!-- Insertar imagen -->
+                <button class="wysiwyg-btn" onclick="document.getElementById('wysiwyg-img').click()" title="Insertar imagen">🖼️</button>
+                <input type="file" id="wysiwyg-img" accept="image/*" style="display:none;" onchange="insertImageInEditor(this)" />
+
+                <!-- Emoji picker -->
+                <div class="emoji-picker" id="emojiPickerWrap">
+                  <button class="wysiwyg-btn" onclick="toggleEmoji()" id="emojiBtn" title="Insertar emoji">🙂</button>
+                  <div class="emoji-grid" id="emojiGrid"></div>
+                </div>
+
+              </div><!-- /toolbar -->
+
+              <!-- Área editable -->
+              <div
+                id="wysiwygEditor"
+                class="wysiwyg-editor"
+                contenteditable="true"
+                data-placeholder="Escribe el contenido del artículo aquí..."
+                oninput="updateToolbarState()"
+                onkeyup="updateToolbarState()"
+                onmouseup="updateToolbarState()"
+                onkeydown="handleEditorKey(event)"
+              ></div>
+
+            </div><!-- /wysiwyg-wrap -->
+            <!-- Word count -->
+            <div style="font-size:.72rem; color:var(--gray-2); margin-top:4px; text-align:right;">
+              <span id="wordCount">0</span> palabras
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex gap-8" style="justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="resetArticulo()">Limpiar</button>
+            <button class="btn btn-primary" onclick="saveArticulo()">💾 Guardar artículo</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Lista artículos existentes -->
+      <div style="margin-top:28px;">
+        <h4 style="font-size:.9rem; margin-bottom:14px; color:var(--gray-1);">Artículos publicados</h4>
+        <div class="articles-grid" id="adminArtList"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: CONFIGURACIÓN SITIO               -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-config" style="display:none;">
+
+      <!-- Status bar -->
+      <div class="config-status-bar">
+        <span style="font-weight:700; color:var(--dark); font-size:.78rem;">⚙️ Configuración del sitio</span>
+        <div style="flex:1;"></div>
+        <div class="status-item"><div class="status-dot saved"></div> Reglamento guardado</div>
+        <div class="status-item"><div class="status-dot saved"></div> Contactos guardados</div>
+        <div class="status-item" id="statusApariencia"><div class="status-dot empty"></div> Apariencia (sin cambios)</div>
+        <div class="status-item" id="statusTema"><div class="status-dot empty"></div> Tema (sin cambios)</div>
+        <div class="status-item" id="statusSEO"><div class="status-dot empty"></div> SEO (sin cambios)</div>
+      </div>
+
+      <!-- Card nav -->
+      <div class="config-card-nav">
+        <div class="config-nav-item active" id="cnav-reglamento" onclick="switchConfig('reglamento', this)">
+          <div class="config-nav-badge saved"></div>
+          <div class="config-nav-icon">📋</div>
+          <div class="config-nav-label">Reglamento</div>
+        </div>
+        <div class="config-nav-item" id="cnav-avisos" onclick="switchConfig('avisos', this)">
+          <div class="config-nav-icon">📢</div>
+          <div class="config-nav-label">Avisos y promociones</div>
+        </div>
+        <div class="config-nav-item" id="cnav-eventos" onclick="switchConfig('eventos', this)">
+          <div class="config-nav-icon">📅</div>
+          <div class="config-nav-label">Eventos</div>
+        </div>
+        <div class="config-nav-item" id="cnav-contactos" onclick="switchConfig('contactos', this)">
+          <div class="config-nav-badge saved"></div>
+          <div class="config-nav-icon">📞</div>
+          <div class="config-nav-label">Contactos</div>
+        </div>
+        <div class="config-nav-item" id="cnav-preguntas" onclick="switchConfig('preguntas', this)">
+          <div class="config-nav-icon">❓</div>
+          <div class="config-nav-label">Preguntas FAQ</div>
+        </div>
+        <div class="config-nav-item" id="cnav-apariencia" onclick="switchConfig('apariencia', this)">
+          <div class="config-nav-icon">🎨</div>
+          <div class="config-nav-label">Apariencia e íconos</div>
+        </div>
+        <div class="config-nav-item" id="cnav-municipio" onclick="switchConfig('municipio', this)">
+          <div class="config-nav-icon">🏛️</div>
+          <div class="config-nav-label">Municipio</div>
+        </div>
+        <div class="config-nav-item" id="cnav-tema" onclick="switchConfig('tema', this)">
+          <div class="config-nav-icon">🖌️</div>
+          <div class="config-nav-label">Tema visual</div>
+        </div>
+        <div class="config-nav-item" id="cnav-seo" onclick="switchConfig('seo', this)">
+          <div class="config-nav-icon">🌐</div>
+          <div class="config-nav-label">SEO y metadatos</div>
+        </div>
+      </div>
+
+      <!-- TAB: Reglamento -->
+      <div class="config-panel active" id="cfg-reglamento">
+        <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; max-width:700px;">
+          <h3 style="font-size:1rem; margin-bottom:16px;">📋 Reglamento Municipal de Tenencia Responsable</h3>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label for="reg-titulo">Título del reglamento</label>
+            <input type="text" id="reg-titulo" class="form-control" value="Reglamento de Tenencia Responsable de Animales — El Grullo, Jalisco" />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label for="reg-contenido">Contenido / Artículos</label>
+            <textarea id="reg-contenido" class="form-control" rows="10" placeholder="Artículo 1. Todo propietario de animales de compañía deberá...">Artículo 1. Todo propietario de animales de compañía deberá registrar a sus mascotas en el Padrón Municipal dentro de los 30 días posteriores a su adquisición.
+
+Artículo 2. Las mascotas deberán contar con vacuna antirrábica vigente. El Ayuntamiento realizará campañas anuales de vacunación gratuita.
+
+Artículo 3. Queda prohibido el abandono de animales domésticos en la vía pública. El incumplimiento se sancionará conforme al Código Municipal.
+
+Artículo 4. Los dueños de mascotas son responsables de los daños que éstas puedan ocasionar a terceros.</textarea>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('✅ Reglamento actualizado', 'success')">💾 Guardar cambios</button>
+        </div>
+      </div>
+
+      <!-- TAB: Avisos y promociones -->
+      <div class="config-panel" id="cfg-avisos">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+          <!-- Formulario -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700;">📢 Avisos y promociones</h3>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="aviso-titulo">Título</label>
+              <input type="text" id="aviso-titulo" class="form-control" placeholder="Ej. Registra su mascota" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Banner</label>
+              <div class="banner-drop"
+                   onclick="document.getElementById('aviso-img').click()"
+                   ondragover="event.preventDefault(); this.classList.add('drag-over')"
+                   ondragleave="this.classList.remove('drag-over')"
+                   ondrop="handleDrop(event, 'aviso-img')">
+                <div class="banner-drop-icon">⬆️</div>
+                <div class="banner-drop-text"><strong>Arrastre para subir</strong></div>
+              </div>
+              <input type="file" id="aviso-img" accept="image/*" style="display:none;" onchange="previewBanner(this,'aviso-prev')" />
+              <div id="aviso-prev" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="aviso-desc">Descripción</label>
+              <textarea id="aviso-desc" class="form-control" rows="4" placeholder="Registra su mascota..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="aviso-inicio">Fecha inicio</label>
+                  <input type="date" id="aviso-inicio" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="aviso-fin">Fecha fin (opcional)</label>
+                  <input type="date" id="aviso-fin" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="saveAviso()">📢 Publicar aviso</button>
+          </div>
+
+          <!-- Lista avisos publicados -->
+          <div>
+            <h4 style="font-size:.88rem; margin-bottom:12px; color:var(--gray-1);">Avisos publicados</h4>
+            <div id="avisosList" style="display:flex; flex-direction:column; gap:12px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Eventos próximos -->
+      <div class="config-panel" id="cfg-eventos">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700;">📅 Nuevo evento</h3>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="evt-titulo">Nombre del evento</label>
+              <input type="text" id="evt-titulo" class="form-control" placeholder="Ej. Campaña de Vacunación" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="evt-lugar">Lugar</label>
+              <input type="text" id="evt-lugar" class="form-control" placeholder="Ej. Centro de Salud Municipal" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="evt-fecha">Fecha</label>
+                  <input type="date" id="evt-fecha" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="evt-hora">Hora</label>
+                  <input type="time" id="evt-hora" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="evt-desc">Descripción</label>
+              <textarea id="evt-desc" class="form-control" rows="3" placeholder="Detalles del evento..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="saveEvento()">📅 Agregar evento</button>
+          </div>
+          <div>
+            <h4 style="font-size:.88rem; margin-bottom:12px; color:var(--gray-1);">Eventos programados</h4>
+            <div id="eventosList" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Información de contactos / Footer editor -->
+      <div class="config-panel" id="cfg-contactos">
+        <div style="display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start;">
+
+          <!-- ── Formulario ── -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Identidad del sitio -->
+            <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:22px;">
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🏛️ Identidad del sitio</div>
+              <div class="form-row" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label>Nombre del portal</label>
+                  <input type="text" class="form-control" id="cfg-nombre" value="Padrón de Mascotas" oninput="previewFooter()" />
+                </div>
+                <div class="form-group">
+                  <label>Slogan / subtítulo</label>
+                  <input type="text" class="form-control" id="cfg-slogan" value="La Ciudad de la Gente" oninput="previewFooter()" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Descripción del footer</label>
+                <textarea class="form-control" id="cfg-desc" rows="3" oninput="previewFooter()">H. Ayuntamiento Constitucional de El Grullo, Jalisco.
+Gobierno Municipal 2024–2027.
+Dirección de Medio Ambiente e Informática Municipal.</textarea>
+              </div>
+            </div>
+
+            <!-- Datos de contacto -->
+            <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:22px;">
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">📞 Datos de contacto</div>
+              <div class="form-row" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label>Teléfono</label>
+                  <input type="tel" class="form-control" id="cfg-telefono" value="(341) 123-4567" oninput="previewFooter()" />
+                </div>
+                <div class="form-group">
+                  <label>Dirección</label>
+                  <input type="text" class="form-control" id="cfg-direccion" value="El Grullo, Jalisco" oninput="previewFooter()" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Email Medio Ambiente</label>
+                  <input type="email" class="form-control" id="cfg-email-ma" value="medioambiente@elgrullo.gob.mx" oninput="previewFooter()" />
+                </div>
+                <div class="form-group">
+                  <label>Email Informática</label>
+                  <input type="email" class="form-control" id="cfg-email-inf" value="informatica@elgrullo.gob.mx" oninput="previewFooter()" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Redes sociales -->
+            <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:22px;">
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🌐 Redes sociales y sitio web</div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label>📷 Instagram</label>
+                <input type="url" class="form-control" id="cfg-instagram" value="https://www.instagram.com/laciudaddelagente" oninput="previewFooter()" />
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label>👍 Facebook</label>
+                <input type="url" class="form-control" id="cfg-facebook" value="https://www.facebook.com/laciudaddelagente" oninput="previewFooter()" />
+              </div>
+              <div class="form-group">
+                <label>🌐 Sitio web oficial</label>
+                <input type="url" class="form-control" id="cfg-web" value="https://elgrullo.gob.mx" oninput="previewFooter()" />
+              </div>
+            </div>
+
+            <!-- Pie de página -->
+            <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:22px;">
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">📄 Texto del pie de página</div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label>Copyright</label>
+                <input type="text" class="form-control" id="cfg-copyright" value="© 2026 H. Ayuntamiento de El Grullo, Jalisco · Todos los derechos reservados." oninput="previewFooter()" />
+              </div>
+              <div class="form-group">
+                <label>Créditos de desarrollo</label>
+                <input type="text" class="form-control" id="cfg-creditos" value="Desarrollado como proyecto de Residencias Profesionales — ITJMM Campus El Grullo" oninput="previewFooter()" />
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div style="display:flex; gap:12px;">
+              <button class="btn btn-primary" style="flex:1;" onclick="saveSiteConfig()">
+                💾 Guardar y publicar cambios
+              </button>
+              <button class="btn btn-ghost" onclick="resetSiteConfig()">Restablecer</button>
+            </div>
+
+          </div><!-- /formulario -->
+
+          <!-- ── Vista previa ── -->
+          <div style="position:sticky; top:16px;">
+            <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.82rem; color:var(--gray-2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">
+              Vista previa del footer
+            </div>
+            <div id="footerPreview" style="
+              background:#1a1a2e;
+              border-radius:var(--radius-lg);
+              padding:20px;
+              font-size:.72rem;
+              font-family:'Inter',sans-serif;
+              color:rgba(255,255,255,.7);
+              line-height:1.6;
+              overflow:hidden;
+              border:2px solid var(--orange);
+            ">
+              <!-- rendered by JS -->
+            </div>
+            <div style="font-size:.72rem; color:var(--gray-2); margin-top:8px; text-align:center;">
+              🔴 Los cambios se reflejan en tiempo real
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- TAB: Preguntas (FAQ) -->
+      <div class="config-panel" id="cfg-preguntas">
+        <div class="faq-mgmt-layout">
+          <!-- Formulario agregar/editar -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700;" id="faqFormTitle">❓ Preguntas</h3>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="faq-pregunta">Pregunta</label>
+              <input type="text" id="faq-pregunta" class="form-control" placeholder="¿Se atiende de forma gratuita?" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="faq-respuesta">Respuesta:</label>
+              <textarea id="faq-respuesta" class="form-control" rows="4" placeholder="Sí, el ayuntamiento tiene el servicio gratuito"></textarea>
+            </div>
+            <div class="flex gap-8">
+              <button class="btn btn-primary btn-block" id="faqSaveBtn" onclick="saveFaq()">+ Agregar</button>
+              <button class="btn btn-ghost btn-sm" id="faqCancelBtn" onclick="cancelEditFaq()" style="display:none;">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Tabla de preguntas -->
+          <div class="faq-mgmt-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pregunta</th>
+                  <th>Respuesta</th>
+                  <th>Tareas</th>
+                </tr>
+              </thead>
+              <tbody id="faqTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- TAB: Apariencia / Iconos -->
+      <div class="config-panel" id="cfg-apariencia">
+
+        <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.25); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; font-size:.82rem; color:var(--orange-dark); display:flex; gap:10px; align-items:center;">
+          <span style="font-size:1.2rem;">🎨</span>
+          <span>Personaliza los íconos e imágenes del portal público. Puedes usar <strong>emojis</strong>, <strong>imágenes</strong> (JPG/PNG) o <strong>GIFs</strong> (URL o archivo). Los cambios se aplican en tiempo real al guardar.</span>
+        </div>
+
+        <div class="icon-sel-grid" id="iconSelGrid">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Save bar -->
+        <div class="appearance-save-bar">
+          <div style="font-size:.85rem; color:var(--gray-1);">
+            <strong>💡 Tip:</strong> Los GIFs animados son compatibles. Usa URLs de <a href="https://giphy.com" target="_blank" style="color:var(--orange);">Giphy</a> o sube el archivo directamente.
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-ghost" onclick="resetAppearance()">♻️ Restablecer</button>
+            <button class="btn btn-primary" onclick="saveAppearance()">💾 Guardar apariencia</button>
+          </div>
+        </div>
+
+      </div><!-- /cfg-apariencia -->
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB: Municipio                          -->
+      <!-- ─────────────────────────────────────── -->
+      <div class="config-panel" id="cfg-municipio">
+
+        <div class="setting-section">
+          <div class="setting-section-header">
+            <div class="setting-section-icon">🏛️</div>
+            <div>
+              <div class="setting-section-title">Datos oficiales del municipio</div>
+              <div class="setting-section-desc">Información que aparece en el encabezado, pie de página y documentos oficiales</div>
+            </div>
+          </div>
+          <div class="setting-rows">
+            <div class="setting-row-full">
+              <div class="setting-row-label" style="margin-bottom:8px;">Nombre del Ayuntamiento</div>
+              <input type="text" class="form-control" id="mun-nombre" value="H. Ayuntamiento Constitucional de El Grullo" />
+              <div class="setting-row-hint" style="margin-top:4px;">Aparece en pies de página, actas y documentos oficiales</div>
+            </div>
+            <div class="setting-row-full">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Municipio</label>
+                  <input type="text" class="form-control" id="mun-municipio" value="El Grullo" />
+                </div>
+                <div class="form-group">
+                  <label>Estado</label>
+                  <input type="text" class="form-control" id="mun-estado" value="Jalisco" />
+                </div>
+              </div>
+            </div>
+            <div class="setting-row-full">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Período de gobierno</label>
+                  <input type="text" class="form-control" id="mun-periodo" value="2024 – 2027" />
+                </div>
+                <div class="form-group">
+                  <label>Presidente Municipal</label>
+                  <input type="text" class="form-control" id="mun-presidente" placeholder="Nombre del Presidente Municipal" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <div class="setting-section-header">
+            <div class="setting-section-icon">👥</div>
+            <div>
+              <div class="setting-section-title">Responsables del padrón</div>
+              <div class="setting-section-desc">Aparecen en documentos y en la sección de contacto</div>
+            </div>
+          </div>
+          <div class="setting-rows">
+            <div class="setting-row-full">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Director(a) de Medio Ambiente</label>
+                  <input type="text" class="form-control" id="mun-dir-ma" placeholder="Nombre completo" />
+                </div>
+                <div class="form-group">
+                  <label>Responsable de Informática</label>
+                  <input type="text" class="form-control" id="mun-dir-inf" placeholder="Nombre completo" />
+                </div>
+              </div>
+            </div>
+            <div class="setting-row-full">
+              <label style="display:block; margin-bottom:8px;" class="setting-row-label">Crédito del proyecto / Acreditación</label>
+              <input type="text" class="form-control" id="mun-credito" value="Residencias Profesionales — ITJMM Campus El Grullo" />
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <div class="setting-section-header">
+            <div class="setting-section-icon">🖼️</div>
+            <div>
+              <div class="setting-section-title">Logotipo y escudo oficial</div>
+              <div class="setting-section-desc">Imágenes que representan al municipio en el portal</div>
+            </div>
+          </div>
+          <div class="setting-rows">
+            <div class="setting-row-full">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+                <!-- Logo upload -->
+                <div>
+                  <div class="setting-row-label" style="margin-bottom:8px;">Escudo municipal (PNG transparente)</div>
+                  <div style="display:flex; gap:12px; align-items:center;">
+                    <div id="escudo-preview" style="width:64px;height:64px;background:var(--surface);border:1.5px dashed var(--orange);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.8rem;overflow:hidden;">🏛️</div>
+                    <div>
+                      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('escudo-upload').click()">⬆️ Subir imagen</button>
+                      <input type="file" id="escudo-upload" accept="image/*" style="display:none;" onchange="previewMunImg(this,'escudo-preview')" />
+                      <div class="setting-row-hint" style="margin-top:4px;">PNG transparente, mín. 256×256px</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Logo URL -->
+                <div>
+                  <div class="setting-row-label" style="margin-bottom:8px;">O pega una URL de imagen</div>
+                  <input type="url" class="form-control" id="escudo-url" placeholder="https://..." oninput="applyEscudoUrl()" />
+                  <div class="setting-row-hint" style="margin-top:4px;">Útil para usar el logo ya publicado en el sitio oficial</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:4px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="saveMunicipio()">💾 Guardar datos del municipio</button>
+          <button class="btn btn-ghost" onclick="resetMunicipio()">Restablecer</button>
+        </div>
+      </div><!-- /cfg-municipio -->
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB: Tema visual                        -->
+      <!-- ─────────────────────────────────────── -->
+      <div class="config-panel" id="cfg-tema">
+
+        <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
+
+          <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">🎨</div>
+                <div>
+                  <div class="setting-section-title">Color principal del sitio</div>
+                  <div class="setting-section-desc">Se aplica a botones, acentos, navbar y elementos interactivos</div>
+                </div>
+              </div>
+              <div class="setting-row-full">
+                <div class="color-swatches" id="colorSwatches">
+                  <div class="color-swatch selected" style="background:#F27A00;" onclick="selectColor('#F27A00', this)" title="Naranja (predeterminado)"></div>
+                  <div class="color-swatch" style="background:#E53935;" onclick="selectColor('#E53935', this)" title="Rojo"></div>
+                  <div class="color-swatch" style="background:#8E24AA;" onclick="selectColor('#8E24AA', this)" title="Morado"></div>
+                  <div class="color-swatch" style="background:#1976D2;" onclick="selectColor('#1976D2', this)" title="Azul"></div>
+                  <div class="color-swatch" style="background:#00897B;" onclick="selectColor('#00897B', this)" title="Verde azulado"></div>
+                  <div class="color-swatch" style="background:#388E3C;" onclick="selectColor('#388E3C', this)" title="Verde"></div>
+                  <div class="color-swatch" style="background:#F9A825;" onclick="selectColor('#F9A825', this)" title="Amarillo dorado"></div>
+                  <div class="color-swatch" style="background:#D84315;" onclick="selectColor('#D84315', this)" title="Naranja oscuro"></div>
+                  <div class="color-swatch" style="background:#37474F;" onclick="selectColor('#37474F', this)" title="Gris oscuro"></div>
+                  <div class="color-swatch" style="background:#5D4037;" onclick="selectColor('#5D4037', this)" title="Café"></div>
+                  <div class="color-swatch" style="background:#00838F;" onclick="selectColor('#00838F', this)" title="Cian"></div>
+                  <div class="color-swatch" style="background:#6A1B9A;" onclick="selectColor('#6A1B9A', this)" title="Violeta"></div>
+                  <!-- Custom picker -->
+                  <div class="color-picker-custom" title="Color personalizado">
+                    +<input type="color" value="#F27A00" oninput="selectColor(this.value, null)" />
+                  </div>
+                </div>
+                <div style="margin-top:12px; display:flex; align-items:center; gap:10px;">
+                  <div id="colorPreviewSwatch" style="width:36px;height:36px;background:#F27A00;border-radius:50%;border:2px solid var(--gray-4);"></div>
+                  <code id="colorPreviewCode" style="font-size:.8rem; background:var(--surface); padding:4px 10px; border-radius:4px;">#F27A00</code>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">🔤</div>
+                <div>
+                  <div class="setting-section-title">Tipografía</div>
+                  <div class="setting-section-desc">Fuente usada en títulos y cuerpo de texto</div>
+                </div>
+              </div>
+              <div class="setting-row-full">
+                <div class="font-grid">
+                  <div class="font-card selected" onclick="selectFont('Inter', this)">
+                    <div class="font-card-sample" style="font-family:'Inter';">Aa</div>
+                    <div class="font-card-name">Inter</div>
+                  </div>
+                  <div class="font-card" onclick="selectFont('Outfit', this)">
+                    <div class="font-card-sample" style="font-family:'Outfit';">Aa</div>
+                    <div class="font-card-name">Outfit</div>
+                  </div>
+                  <div class="font-card" onclick="selectFont('Roboto', this)">
+                    <div class="font-card-sample" style="font-family:'Roboto';">Aa</div>
+                    <div class="font-card-name">Roboto</div>
+                  </div>
+                  <div class="font-card" onclick="selectFont('Poppins', this)">
+                    <div class="font-card-sample" style="font-family:'Poppins';">Aa</div>
+                    <div class="font-card-name">Poppins</div>
+                  </div>
+                  <div class="font-card" onclick="selectFont('Nunito', this)">
+                    <div class="font-card-sample" style="font-family:'Nunito';">Aa</div>
+                    <div class="font-card-name">Nunito</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">⚙️</div>
+                <div>
+                  <div class="setting-section-title">Opciones generales</div>
+                  <div class="setting-section-desc">Controles de comportamiento visual del portal</div>
+                </div>
+              </div>
+              <div class="setting-rows">
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-row-label">🌙 Modo oscuro disponible para usuarios</div>
+                    <div class="setting-row-hint">Los ciudadanos podrán activar el modo oscuro desde su perfil</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-darkmode" />
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-row-label">✨ Animaciones y transiciones</div>
+                    <div class="setting-row-hint">Efectos de entrada en tarjetas y secciones</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-anim" checked />
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-row-label">🔲 Bordes redondeados (tarjetas)</div>
+                    <div class="setting-row-hint">Desactivar para un estilo más cuadrado/formal</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-radius" checked />
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-row-label">🏷️ Mostrar folio en tarjeta de mascota</div>
+                    <div class="setting-row-hint">El número de folio visible en el panel ciudadano</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-folio" checked />
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" style="flex:1;" onclick="saveTema()">🖌️ Aplicar tema</button>
+              <button class="btn btn-ghost" onclick="resetTema()">Restablecer</button>
+            </div>
+
+          </div><!-- /form -->
+
+          <!-- Live preview -->
+          <div style="position:sticky; top:16px;">
+            <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.82rem; color:var(--gray-2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Vista previa en vivo</div>
+            <div id="themePreview" style="background:#f8f9fa; border-radius:12px; padding:18px; border:2px solid var(--orange); font-size:.75rem;">
+              <!-- rendered by JS -->
+            </div>
+            <div style="font-size:.7rem; color:var(--gray-2); margin-top:8px; text-align:center;">Los cambios se aplican al guardar</div>
+          </div>
+
+        </div>
+      </div><!-- /cfg-tema -->
+
+      <!-- ─────────────────────────────────────── -->
+      <!-- TAB: SEO y metadatos                    -->
+      <!-- ─────────────────────────────────────── -->
+      <div class="config-panel" id="cfg-seo">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+
+          <!-- Left: form -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">📋</div>
+                <div>
+                  <div class="setting-section-title">Información básica SEO</div>
+                  <div class="setting-section-desc">Aparece en resultados de búsqueda (Google, Bing, etc.)</div>
+                </div>
+              </div>
+              <div class="setting-rows">
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">Título de la página
+                    <span id="seo-title-count" style="font-size:.7rem; color:var(--gray-2); font-weight:400; margin-left:8px;">0/60 caracteres</span>
+                  </label>
+                  <input type="text" class="form-control" id="seo-title"
+                         value="Padrón Municipal de Mascotas — El Grullo, Jalisco"
+                         maxlength="60" oninput="updateSeoPreview()" />
+                  <div class="setting-row-hint" style="margin-top:4px;">Recomendado: 50–60 caracteres. Se muestra en la pestaña del navegador y en Google.</div>
+                </div>
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">Meta descripción
+                    <span id="seo-desc-count" style="font-size:.7rem; color:var(--gray-2); font-weight:400; margin-left:8px;">0/160 caracteres</span>
+                  </label>
+                  <textarea class="form-control" id="seo-desc" rows="3" maxlength="160" oninput="updateSeoPreview()">Registra a tu mascota en el Padrón Municipal de El Grullo, Jalisco. Gratuito, rápido y oficial. H. Ayuntamiento 2024-2027.</textarea>
+                  <div class="setting-row-hint" style="margin-top:4px;">Recomendado: 120–160 caracteres. Describe el sitio de forma atractiva para el usuario.</div>
+                </div>
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">Palabras clave</label>
+                  <input type="text" class="form-control" id="seo-keywords" value="padrón mascotas, El Grullo, Jalisco, ayuntamiento, perros, gatos, registro mascota" />
+                  <div class="setting-row-hint" style="margin-top:4px;">Separadas por coma. Ya no es crítico para Google pero ayuda en otros motores.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">📱</div>
+                <div>
+                  <div class="setting-section-title">Open Graph (redes sociales)</div>
+                  <div class="setting-section-desc">Cómo se ve el enlace al compartirlo en Facebook, WhatsApp, etc.</div>
+                </div>
+              </div>
+              <div class="setting-rows">
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">Imagen OG (para compartir)</label>
+                  <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                    <div id="og-img-preview" style="width:80px;height:42px;background:var(--surface);border:1px solid var(--gray-4);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--gray-2);overflow:hidden;">1200×630</div>
+                    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('og-upload').click()">⬆️ Subir imagen</button>
+                    <input type="file" id="og-upload" accept="image/*" style="display:none;" onchange="previewOgImg(this)" />
+                  </div>
+                  <input type="url" class="form-control" id="seo-og-img" placeholder="https://... (URL de imagen 1200×630px)" oninput="previewOgImgUrl()" />
+                  <div class="setting-row-hint" style="margin-top:4px;">Tamaño recomendado: 1200×630px</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-section">
+              <div class="setting-section-header">
+                <div class="setting-section-icon">🔧</div>
+                <div>
+                  <div class="setting-section-title">Configuración técnica</div>
+                  <div class="setting-section-desc">Opciones avanzadas para indexación y analítica</div>
+                </div>
+              </div>
+              <div class="setting-rows">
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-row-label">Indexación por buscadores</div>
+                    <div class="setting-row-hint">Permite que Google y otros indexen el sitio</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="seo-index" checked />
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">Google Analytics / Tag ID</label>
+                  <input type="text" class="form-control" id="seo-ga" placeholder="G-XXXXXXXXXX" />
+                  <div class="setting-row-hint" style="margin-top:4px;">Deja vacío si no usas Google Analytics</div>
+                </div>
+                <div class="setting-row-full">
+                  <label class="setting-row-label" style="margin-bottom:6px;">URL canónica del sitio</label>
+                  <input type="url" class="form-control" id="seo-canonical" value="https://elgrullo.gob.mx/padron" />
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" style="flex:1;" onclick="saveSEO()">🌐 Guardar configuración SEO</button>
+              <button class="btn btn-ghost" onclick="resetSEO()">Restablecer</button>
+            </div>
+
+          </div><!-- /left form -->
+
+          <!-- Right: live preview -->
+          <div>
+            <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.82rem; color:var(--gray-2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Vista previa en Google</div>
+            <div class="seo-google-preview">
+              <div class="seo-url">elgrullo.gob.mx/padron</div>
+              <div class="seo-google-title" id="seo-prev-title">Padrón Municipal de Mascotas — El Grullo, Jalisco</div>
+              <div class="seo-google-desc" id="seo-prev-desc">Registra a tu mascota en el Padrón Municipal de El Grullo, Jalisco. Gratuito, rápido y oficial. H. Ayuntamiento 2024-2027.</div>
+            </div>
+
+            <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.82rem; color:var(--gray-2); text-transform:uppercase; letter-spacing:.06em; margin:18px 0 10px;">Vista previa en redes sociales</div>
+            <div style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden; max-width:360px;">
+              <div id="og-preview-img" style="height:120px; background:linear-gradient(135deg,var(--orange),var(--orange-dark)); display:flex;align-items:center;justify-content:center;font-size:2rem;">🐾</div>
+              <div style="padding:10px 12px; background:white;">
+                <div style="font-size:.65rem; color:var(--gray-2); margin-bottom:3px;">elgrullo.gob.mx</div>
+                <div style="font-size:.82rem; font-weight:700; color:var(--dark);" id="og-prev-title">Padrón Municipal de Mascotas — El Grullo</div>
+                <div style="font-size:.72rem; color:var(--gray-2); margin-top:2px;" id="og-prev-desc">Registra a tu mascota de forma oficial y gratuita.</div>
+              </div>
+            </div>
+
+            <!-- Checklist SEO -->
+            <div style="margin-top:18px; background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:16px;">
+              <div style="font-weight:700; font-size:.8rem; margin-bottom:10px;">✅ Checklist SEO</div>
+              <div id="seoChecklist" style="display:flex; flex-direction:column; gap:6px; font-size:.75rem;">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /cfg-seo -->
+
+    </div><!-- /sec-config -->
+
+
+
+  </div><!-- /dashboard-main -->
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/mock-data.js"></script>
+<script>
+/* ══════════════════════════════════════════════════ */
+/*  DATA                                              */
+/* ══════════════════════════════════════════════════ */
+const allPets = getTodasMascotas();
+const stats   = getStats();
+
+let faqData = [...getFaq()];
+let avisoData = [...getCampanas()];
+let editingFaqId = null;
+
+// El Grullo coordinates: ~19.8056, -104.2139
+const EL_GRULLO = [19.8056, -104.2139];
+const colonias = {
+  'Centro':    [19.8056, -104.2139],
+  'El Sabino': [19.8100, -104.2080],
+  'La Loma':   [19.8000, -104.2200],
+  'Las Flores':[19.8020, -104.2060],
+  'Otra':      [19.8090, -104.2170],
+};
+
+/* ══════════════════════════════════════════════════ */
+/*  NAVIGATION                                        */
+/* ══════════════════════════════════════════════════ */
+const sections = {
+  datos:       { title: 'Datos del Padrón',       sub: 'Mapa de mascotas · Gráficas · Seguimiento en tiempo real' },
+  seguimiento: { title: 'Seguimiento de Mascotas', sub: 'Busca y gestiona el registro individual de cada mascota' },
+  articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
+  config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
+};
+
+function showAdmin(name) {
+  Object.keys(sections).forEach(s => {
+    const el = document.getElementById('sec-' + s);
+    if (el) el.style.display = s === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('nav-' + name)?.classList.add('active');
+  const info = sections[name] || {};
+  document.getElementById('adminTitle').textContent = info.title || '';
+  document.getElementById('adminSub').textContent   = info.sub   || '';
+
+  if (name === 'datos' && !window._mapInit) initMap();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MAP (Leaflet + OpenStreetMap)                     */
+/* ══════════════════════════════════════════════════ */
+let leafletMap;
+window._mapInit = false;
+
+function initMap() {
+  leafletMap = L.map('map', { zoomControl: true }).setView(EL_GRULLO, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18,
+  }).addTo(leafletMap);
+
+  // Custom orange marker icon
+  const orangeIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background:var(--orange);
+      width:28px; height:28px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:3px solid white;
+      box-shadow:0 2px 8px rgba(0,0,0,.3);
+      display:flex; align-items:center; justify-content:center;
+    "></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30],
+  });
+
+  const extraIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background:#FF9800;
+      width:28px; height:28px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:3px solid white;
+      box-shadow:0 2px 8px rgba(0,0,0,.3);
+    "></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30],
+  });
+
+  // Plot all pets with small random offsets around their colonia
+  allPets.forEach(pet => {
+    const base = colonias[pet.colonia] || EL_GRULLO;
+    const lat  = base[0] + (Math.random() - 0.5) * 0.012;
+    const lng  = base[1] + (Math.random() - 0.5) * 0.016;
+    const icon = pet.estatus === 'extraviado' ? extraIcon : orangeIcon;
+    L.marker([lat, lng], { icon })
+      .addTo(leafletMap)
+      .bindPopup(`
+        <div style="font-family:'Inter',sans-serif; min-width:140px;">
+          <div style="font-weight:700; font-size:.9rem; margin-bottom:4px;">
+            ${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}
+          </div>
+          <div style="font-size:.78rem; color:#666;">
+            ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'}<br/>
+            Dueño: ${pet.dueno || '—'}<br/>
+            <b>Folio:</b> ${pet.folio}<br/>
+            <b>Estatus:</b> <span style="color:${pet.estatus === 'extraviado' ? '#FF9800' : '#4CAF50'};">${capitalize(pet.estatus)}</span>
+          </div>
+        </div>
+      `);
+  });
+
+  // Add legend
+  const legend = L.control({ position: 'topright' });
+  legend.onAdd = () => {
+    const div = L.DomUtil.create('div');
+    div.style.cssText = 'background:white;padding:8px 12px;border-radius:8px;font-size:.72rem;box-shadow:0 2px 8px rgba(0,0,0,.1);font-family:Inter,sans-serif;';
+    div.innerHTML = `
+      <div style="margin-bottom:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F27A00;margin-right:6px;"></span>Activo</div>
+      <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF9800;margin-right:6px;"></span>Extraviado</div>
+    `;
+    return div;
+  };
+  legend.addTo(leafletMap);
+
+  window._mapInit = true;
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MINI BAR CHART                                    */
+/* ══════════════════════════════════════════════════ */
+function renderMiniBar() {
+  const bars = [
+    { label: 'Criolla',   val: 80,  color: '#FF9A2E' },
+    { label: 'Otras',     val: 127, color: '#BDBDBD' },
+    { label: 'Labrador',  val: 45,  color: '#F27A00' },
+    { label: 'Chihuahua', val: 38,  color: '#C96200' },
+    { label: 'Siamés',    val: 30,  color: '#FF9800' },
+    { label: 'Persa',     val: 22,  color: '#FFB74D' },
+  ];
+  const max = Math.max(...bars.map(b => b.val));
+  const container = document.getElementById('miniBarChart');
+  container.innerHTML = bars.map(b => `
+    <div class="hbar-row">
+      <div class="hbar-label" title="${b.label}">${b.label}</div>
+      <div class="hbar-track">
+        <div class="hbar-fill" data-pct="${Math.round((b.val/max)*100)}" style="width:0%; background:${b.color};"></div>
+      </div>
+      <div class="hbar-val">${b.val}</div>
+    </div>`).join('');
+
+  // Animate bars after render
+  requestAnimationFrame(() => {
+    container.querySelectorAll('.hbar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MINI TABLE (Datos section)                        */
+/* ══════════════════════════════════════════════════ */
+function renderMiniTable(data) {
+  const tbody = document.getElementById('miniTableBody');
+  tbody.innerHTML = data.map((pet, i) => `
+    <tr onclick="goToSeguimiento('${pet.nombre}')" title="Ver seguimiento de ${pet.nombre}">
+      <td>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span>${pet.especie === 'gato' ? '🐈' : '🐕'}</span>
+          <div>
+            <div style="font-weight:600; font-size:.84rem;">${pet.nombre}</div>
+            <div style="font-size:.72rem; color:var(--gray-2);">${pet.colonia || '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        ${pet.vacunado
+          ? '<span class="badge badge-green" style="font-size:.68rem;">💉 Sí</span>'
+          : '<span class="badge badge-red" style="font-size:.68rem;">❌ No</span>'}
+      </td>
+      <td>
+        <button class="seguimiento-btn" onclick="event.stopPropagation(); goToSeguimiento('${pet.nombre}')" title="Ver seguimiento">👁️</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterMiniTable() {
+  const q = document.getElementById('miniSearch').value.toLowerCase();
+  const data = allPets.filter(m =>
+    m.nombre.toLowerCase().includes(q) ||
+    (m.dueno && m.dueno.toLowerCase().includes(q)) ||
+    m.folio.toLowerCase().includes(q)
+  );
+  renderMiniTable(data.slice(0, 10));
+}
+
+function goToSeguimiento(nombre) {
+  showAdmin('seguimiento');
+  document.getElementById('segSearch').value = nombre;
+  filterSeguimiento();
+}
+
+function filtrarPorEstatus(estatus) {
+  document.getElementById('segFilterEstatus').value = estatus;
+  filterSeguimiento();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  SEGUIMIENTO                                       */
+/* ══════════════════════════════════════════════════ */
+function renderSeguimiento(data) {
+  const grid = document.getElementById('seguimientoGrid');
+  if (data.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; background:white; border:2px dashed var(--gray-4); border-radius:var(--radius-lg);">
+      <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
+      <div style="font-size:.95rem; color:var(--gray-2);">No se encontraron mascotas con ese criterio</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = data.map((pet, i) => {
+    const icon = pet.especie === 'gato' ? '🐈' : '🐕';
+    const statusColor = { activo: 'var(--green)', extraviado: 'var(--amber)', fallecido: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
+    return `
+    <div class="pet-detail-card">
+      <div style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-2); margin-bottom:12px;">Datos de la mascota</div>
+      <div style="display:flex; gap:14px; margin-bottom:16px;">
+        <div class="pet-detail-photo">${icon}</div>
+        <div>
+          <div style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.1rem;">${pet.nombre}</div>
+          <div style="font-size:.8rem; color:var(--gray-2); margin-top:2px;">${capitalize(pet.especie)} · ${capitalize(pet.sexo || '')} · ${pet.raza || 'Sin raza'}</div>
+          <div style="font-size:.8rem; color:var(--gray-2); margin-top:2px;">Edad: ${pet.edad_anios || '?'} años</div>
+          <div style="margin-top:6px;">
+            ${pet.vacunado ? '<span class="badge badge-green">💉 Vacunado</span>' : '<span class="badge badge-red">💉 Sin vacuna</span>'}
+            ${pet.esterilizado ? '<span class="badge badge-blue" style="margin-left:4px;">✂️ Esterilizado</span>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-field">
+        <div class="detail-label">Datos de dueño</div>
+        <div class="detail-value">${pet.dueno || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Domicilio</div>
+        <div class="detail-value">${pet.colonia ? pet.colonia + ', El Grullo, Jal.' : '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Folio</div>
+        <div class="detail-value" style="font-family:monospace; font-size:.85rem;">${pet.folio}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Estatus:</div>
+        <div class="detail-value" style="color:${statusColor};">● ${capitalize(pet.estatus)}</div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn btn-ghost btn-sm" onclick="changeEstatus(${i})" style="flex:1;">🔄 Cambiar estatus</button>
+        <button class="btn btn-primary btn-sm" onclick="showToast('📄 Acta ${pet.folio} generada','success')" style="flex:1;">📄 Ver acta</button>
+      </div>
+
+      <button class="fab-btn" onclick="showToast('✏️ Editando a ${pet.nombre}...','info')" title="Editar mascota">+</button>
+    </div>`;
+  }).join('');
+}
+
+function filterSeguimiento() {
+  const q = document.getElementById('segSearch').value.toLowerCase();
+  const especie = document.getElementById('segFilterEspecie').value;
+  const estatus = document.getElementById('segFilterEstatus').value;
+  let data = [...allPets];
+  if (q) data = data.filter(m => m.nombre.toLowerCase().includes(q) || m.dueno?.toLowerCase().includes(q) || m.folio.includes(q));
+  if (especie) data = data.filter(m => m.especie === especie);
+  if (estatus) data = data.filter(m => m.estatus === estatus);
+  renderSeguimiento(data);
+}
+
+function changeEstatus(i) {
+  const opts = ['activo', 'extraviado', 'fallecido'];
+  const cur = allPets[i].estatus;
+  const next = opts[(opts.indexOf(cur) + 1) % opts.length];
+  allPets[i].estatus = next;
+  filterSeguimiento();
+  showToast(`🔄 Estatus cambiado a: ${capitalize(next)}`, 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  WYSIWYG EDITOR                                    */
+/* ══════════════════════════════════════════════════ */
+
+// ── Core execCommand wrapper ──────────────────────
+function wExec(cmd, val = null) {
+  document.getElementById('wysiwygEditor').focus();
+  document.execCommand(cmd, false, val);
+  updateToolbarState();
+  updateWordCount();
+}
+
+// ── Block-level style (paragraph format) ─────────
+function wExecBlock(tag) {
+  const editor = document.getElementById('wysiwygEditor');
+  editor.focus();
+  if (tag === 'blockquote') {
+    document.execCommand('formatBlock', false, 'blockquote');
+  } else {
+    document.execCommand('formatBlock', false, tag);
+  }
+  updateToolbarState();
+  // Reset select to avoid confusion
+  setTimeout(() => { document.getElementById('styleSelect').value = tag; }, 0);
+}
+
+// ── Toolbar active state ──────────────────────────
+function updateToolbarState() {
+  const cmds = ['bold','italic','underline','strikeThrough'];
+  const ids   = ['btn-bold','btn-italic','btn-under','btn-strike'];
+  cmds.forEach((cmd, i) => {
+    const btn = document.getElementById(ids[i]);
+    if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+  });
+  updateWordCount();
+}
+
+// ── Word counter ──────────────────────────────────
+function updateWordCount() {
+  const editor = document.getElementById('wysiwygEditor');
+  const text = editor.innerText.trim();
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  document.getElementById('wordCount').textContent = words;
+}
+
+// ── Keyboard shortcuts ────────────────────────────
+function handleEditorKey(e) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'b') { e.preventDefault(); wExec('bold'); }
+    if (e.key === 'i') { e.preventDefault(); wExec('italic'); }
+    if (e.key === 'u') { e.preventDefault(); wExec('underline'); }
+  }
+  updateWordCount();
+}
+
+// ── Insert image into editor ──────────────────────
+function insertImageInEditor(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('❌ Imagen máximo 2 MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('wysiwygEditor').focus();
+    document.execCommand('insertHTML', false, `<img src="${e.target.result}" style="max-width:100%; border-radius:8px; margin:8px 0;" />`);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+// ── Emoji picker ──────────────────────────────────
+const EMOJIS = [
+  '🐕','🐈','🐾','💉','✂️','❤️','🏥','🔍','📋','⭐',
+  '🌟','✅','❌','⚠️','📢','📅','📍','📞','✉️','🏛️',
+  '🌿','🌱','🐇','🐠','🦜','🦴','🐟','🏡','🔒','🎉',
+  '👏','💪','🙌','🤝','👍','😊','😢','😮','🥰','😷',
+];
+
+function buildEmojiGrid() {
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = EMOJIS.map(e => `
+    <div class="emoji-item" onclick="insertEmoji('${e}')" title="${e}">${e}</div>
+  `).join('');
+}
+
+function toggleEmoji() {
+  const grid = document.getElementById('emojiGrid');
+  grid.classList.toggle('open');
+}
+
+function insertEmoji(emoji) {
+  const editor = document.getElementById('wysiwygEditor');
+  editor.focus();
+  document.execCommand('insertText', false, emoji);
+  document.getElementById('emojiGrid').classList.remove('open');
+  updateWordCount();
+}
+
+// Close emoji picker on outside click
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('emojiPickerWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('emojiGrid')?.classList.remove('open');
+  }
+});
+
+// ── Save / Reset article ──────────────────────────
+function saveArticulo() {
+  const titulo   = document.getElementById('art-titulo').value.trim();
+  const icono    = document.getElementById('art-icono').value.trim() || '📝';
+  const editor   = document.getElementById('wysiwygEditor');
+  const contenido = editor.innerText.trim();
+
+  if (!titulo)    { showToast('⚠️ El título es obligatorio', 'error'); return; }
+  if (!contenido) { showToast('⚠️ El contenido no puede estar vacío', 'error'); return; }
+
+  // Simulate save — in production: POST to /api/articulos
+  showToast(`✅ Artículo "${titulo}" publicado correctamente`, 'success');
+  resetArticulo();
+  renderAdminArtList();
+}
+
+function resetArticulo() {
+  document.getElementById('art-titulo').value  = '';
+  document.getElementById('art-icono').value   = '';
+  document.getElementById('wysiwygEditor').innerHTML = '';
+  document.getElementById('wordCount').textContent   = '0';
+  updateToolbarState();
+}
+function renderAdminArtList() {
+  const container = document.getElementById('adminArtList');
+  container.innerHTML = getArticulos().map(a => `
+    <div class="article-card">
+      <span class="article-icon">${a.imagen_icono}</span>
+      <div class="article-title">${a.titulo}</div>
+      <div class="article-excerpt">${a.contenido.substring(0, 80)}...</div>
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('✏️ Editando artículo...','info')">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="showToast('🗑️ Artículo eliminado','success')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  CONFIG TABS                                       */
+/* ══════════════════════════════════════════════════ */
+function switchConfig(tab, navItem) {
+  document.querySelectorAll('.config-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+  if (navItem) navItem.classList.add('active');
+  document.getElementById('cfg-' + tab).classList.add('active');
+
+  // Run tab-specific init
+  if (tab === 'seo')   { updateSeoPreview(); renderSeoChecklist(); }
+  if (tab === 'tema')  { renderThemePreview(); }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MUNICIPIO                                         */
+/* ══════════════════════════════════════════════════ */
+function saveMunicipio() {
+  const data = {
+    nombre:     document.getElementById('mun-nombre').value.trim(),
+    municipio:  document.getElementById('mun-municipio').value.trim(),
+    estado:     document.getElementById('mun-estado').value.trim(),
+    periodo:    document.getElementById('mun-periodo').value.trim(),
+    presidente: document.getElementById('mun-presidente').value.trim(),
+    dir_ma:     document.getElementById('mun-dir-ma').value.trim(),
+    dir_inf:    document.getElementById('mun-dir-inf').value.trim(),
+    credito:    document.getElementById('mun-credito').value.trim(),
+    escudo_url: document.getElementById('escudo-url').value.trim(),
+  };
+  localStorage.setItem('padron_municipio_config', JSON.stringify(data));
+  // Update nav badge
+  document.querySelector('#cnav-municipio .config-nav-badge')?.remove();
+  const badge = document.createElement('div');
+  badge.className = 'config-nav-badge saved';
+  document.getElementById('cnav-municipio').prepend(badge);
+  showToast('✅ Datos del municipio guardados correctamente', 'success');
+}
+
+function resetMunicipio() {
+  localStorage.removeItem('padron_municipio_config');
+  showToast('♻️ Datos del municipio restablecidos', 'info');
+}
+
+function previewMunImg(input, targetId) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const el = document.getElementById(targetId);
+    el.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyEscudoUrl() {
+  const url = document.getElementById('escudo-url').value.trim();
+  if (!url) return;
+  document.getElementById('escudo-preview').innerHTML =
+    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'" />`;
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  TEMA VISUAL                                       */
+/* ══════════════════════════════════════════════════ */
+let _currentColor = '#F27A00';
+let _currentFont  = 'Inter';
+
+function selectColor(hex, el) {
+  _currentColor = hex;
+  // Unselect all swatches
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  // Update preview swatch
+  const ps = document.getElementById('colorPreviewSwatch');
+  const pc = document.getElementById('colorPreviewCode');
+  if (ps) ps.style.background = hex;
+  if (pc) pc.textContent = hex;
+  renderThemePreview();
+}
+
+function selectFont(font, el) {
+  _currentFont = font;
+  document.querySelectorAll('.font-card').forEach(c => c.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  renderThemePreview();
+}
+
+function renderThemePreview() {
+  const preview = document.getElementById('themePreview');
+  if (!preview) return;
+  preview.innerHTML = `
+    <div style="font-family:'${_currentFont}',sans-serif;">
+      <!-- Mini nav -->
+      <div style="background:${_currentColor}; border-radius:8px 8px 0 0; padding:10px 14px; display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <span style="font-size:1.2rem;">🐾</span>
+        <span style="color:white; font-weight:700; font-size:.78rem;">Padrón de Mascotas</span>
+      </div>
+      <!-- Button preview -->
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button style="background:${_currentColor}; color:white; border:none; border-radius:6px; padding:7px 14px; font-size:.72rem; font-weight:700; cursor:pointer; font-family:inherit;">Registrarme →</button>
+        <button style="background:transparent; color:${_currentColor}; border:1.5px solid ${_currentColor}; border-radius:6px; padding:7px 14px; font-size:.72rem; font-weight:700; cursor:pointer; font-family:inherit;">Ver más</button>
+      </div>
+      <!-- Stat card preview -->
+      <div style="background:white; border:1px solid #e0e0e0; border-radius:10px; padding:12px; display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+        <div style="width:36px;height:36px;background:${_currentColor}20;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🐾</div>
+        <div>
+          <div style="font-size:.65rem;color:#666;font-family:inherit;">Total de mascotas</div>
+          <div style="font-size:1.2rem;font-weight:800;color:#1A1A2E;font-family:inherit;">342</div>
+        </div>
+      </div>
+      <!-- Badge preview -->
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <span style="background:${_currentColor}20;color:${_currentColor};border-radius:99px;padding:3px 10px;font-size:.65rem;font-weight:700;">✓ Activo</span>
+        <span style="background:#E8F5E9;color:#388E3C;border-radius:99px;padding:3px 10px;font-size:.65rem;font-weight:700;">💉 Vacunado</span>
+      </div>
+      <div style="margin-top:10px;font-size:.65rem;color:#666;font-family:inherit;">
+        Fuente: <b>${_currentFont}</b> · Color: <b>${_currentColor}</b>
+      </div>
+    </div>`;
+}
+
+function saveTema() {
+  const data = {
+    color:      _currentColor,
+    font:       _currentFont,
+    darkmode:   document.getElementById('toggle-darkmode').checked,
+    anim:       document.getElementById('toggle-anim').checked,
+    radius:     document.getElementById('toggle-radius').checked,
+    showFolio:  document.getElementById('toggle-folio').checked,
+  };
+  localStorage.setItem('padron_tema_config', JSON.stringify(data));
+  // Mark status bar
+  const stEl = document.getElementById('statusTema');
+  if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Tema guardado';
+  // Update nav badge
+  document.querySelector('#cnav-tema .config-nav-badge')?.remove();
+  const badge = document.createElement('div');
+  badge.className = 'config-nav-badge saved';
+  document.getElementById('cnav-tema').prepend(badge);
+  showToast('🖌️ Tema aplicado. Recarga el portal para verlo.', 'success');
+}
+
+function resetTema() {
+  localStorage.removeItem('padron_tema_config');
+  _currentColor = '#F27A00';
+  _currentFont  = 'Inter';
+  document.querySelectorAll('.color-swatch').forEach(s => { s.classList.remove('selected'); if (s.style.background.includes('242, 122') || s.style.background === 'rgb(242, 122, 0)') s.classList.add('selected'); });
+  document.querySelectorAll('.font-card').forEach(c => { c.classList.remove('selected'); if (c.querySelector('.font-card-name')?.textContent === 'Inter') c.classList.add('selected'); });
+  renderThemePreview();
+  showToast('♻️ Tema restablecido al predeterminado', 'info');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  SEO Y METADATOS                                   */
+/* ══════════════════════════════════════════════════ */
+function updateSeoPreview() {
+  const title = document.getElementById('seo-title')?.value || '';
+  const desc  = document.getElementById('seo-desc')?.value  || '';
+
+  // Update counters
+  const tc = document.getElementById('seo-title-count');
+  const dc = document.getElementById('seo-desc-count');
+  if (tc) {
+    tc.textContent = `${title.length}/60 caracteres`;
+    tc.style.color = title.length > 60 ? '#EF5350' : title.length > 50 ? '#4CAF50' : '#FF9800';
+  }
+  if (dc) {
+    dc.textContent = `${desc.length}/160 caracteres`;
+    dc.style.color = desc.length > 160 ? '#EF5350' : desc.length > 120 ? '#4CAF50' : '#FF9800';
+  }
+
+  // Update Google preview
+  const pt = document.getElementById('seo-prev-title');
+  const pd = document.getElementById('seo-prev-desc');
+  const ot = document.getElementById('og-prev-title');
+  if (pt) pt.textContent = title || '(sin título)';
+  if (pd) pd.textContent = desc  || '(sin descripción)';
+  if (ot) ot.textContent = title || '(sin título)';
+
+  renderSeoChecklist();
+}
+
+function renderSeoChecklist() {
+  const list = document.getElementById('seoChecklist');
+  if (!list) return;
+  const title    = document.getElementById('seo-title')?.value    || '';
+  const desc     = document.getElementById('seo-desc')?.value     || '';
+  const keywords = document.getElementById('seo-keywords')?.value || '';
+  const ogImg    = document.getElementById('seo-og-img')?.value   || '';
+  const ga       = document.getElementById('seo-ga')?.value       || '';
+  const indexed  = document.getElementById('seo-index')?.checked;
+
+  const items = [
+    { ok: title.length >= 30 && title.length <= 60, text: 'Título entre 30 y 60 caracteres' },
+    { ok: desc.length  >= 120 && desc.length <= 160, text: 'Descripción entre 120 y 160 caracteres' },
+    { ok: keywords.length > 0,                       text: 'Palabras clave definidas' },
+    { ok: ogImg.length > 0,                          text: 'Imagen OG configurada' },
+    { ok: indexed,                                   text: 'Sitio indexable por buscadores' },
+    { ok: ga.startsWith('G-'),                       text: 'Google Analytics conectado' },
+  ];
+
+  list.innerHTML = items.map(i => `
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span>${i.ok ? '✅' : '⚠️'}</span>
+      <span style="color:${i.ok ? '#388E3C' : '#EF6C00'};">${i.text}</span>
+    </div>`).join('');
+}
+
+function previewOgImg(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const thumb = document.getElementById('og-img-preview');
+    const big   = document.getElementById('og-preview-img');
+    if (thumb) thumb.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+    if (big)   big.innerHTML   = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewOgImgUrl() {
+  const url = document.getElementById('seo-og-img').value.trim();
+  const big = document.getElementById('og-preview-img');
+  if (big && url) big.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='❌ URL inválida'" />`;
+}
+
+function saveSEO() {
+  const data = {
+    title:     document.getElementById('seo-title').value,
+    desc:      document.getElementById('seo-desc').value,
+    keywords:  document.getElementById('seo-keywords').value,
+    og_img:    document.getElementById('seo-og-img').value,
+    ga:        document.getElementById('seo-ga').value,
+    canonical: document.getElementById('seo-canonical').value,
+    indexed:   document.getElementById('seo-index').checked,
+  };
+  localStorage.setItem('padron_seo_config', JSON.stringify(data));
+  const stEl = document.getElementById('statusSEO');
+  if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> SEO guardado';
+  document.querySelector('#cnav-seo .config-nav-badge')?.remove();
+  const badge = document.createElement('div');
+  badge.className = 'config-nav-badge saved';
+  document.getElementById('cnav-seo').prepend(badge);
+  showToast('🌐 Configuración SEO guardada correctamente', 'success');
+}
+
+function resetSEO() {
+  localStorage.removeItem('padron_seo_config');
+  showToast('♻️ Configuración SEO restablecida', 'info');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  AVISOS                                            */
+/* ══════════════════════════════════════════════════ */
+function saveAviso() {
+  const titulo = document.getElementById('aviso-titulo').value.trim();
+  const desc   = document.getElementById('aviso-desc').value.trim();
+  if (!titulo) { showToast('⚠️ El título es obligatorio', 'error'); return; }
+  avisoData.push({ id: Date.now(), titulo, descripcion: desc, publicado: true, banner_color: '#F27A00', icono: '📢', fecha_inicio: document.getElementById('aviso-inicio').value || '' });
+  renderAvisos();
+  document.getElementById('aviso-titulo').value = '';
+  document.getElementById('aviso-desc').value = '';
+  document.getElementById('aviso-inicio').value = '';
+  document.getElementById('aviso-fin').value = '';
+  document.getElementById('aviso-prev').innerHTML = '';
+  showToast('✅ Aviso publicado correctamente', 'success');
+}
+function renderAvisos() {
+  const list = document.getElementById('avisosList');
+  list.innerHTML = avisoData.map(a => `
+    <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius); padding:14px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span>${a.icono}</span>
+        <div style="font-weight:700; font-size:.88rem;">${a.titulo}</div>
+        <span class="badge badge-green" style="margin-left:auto; font-size:.65rem;">Publicado</span>
+      </div>
+      <div style="font-size:.78rem; color:var(--gray-2); margin-bottom:8px;">${a.descripcion?.substring(0,80) || ''}...</div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('✏️ Editando aviso...','info')" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="this.closest('div[style]').remove(); showToast('🗑️ Aviso eliminado','success')" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  EVENTOS                                           */
+/* ══════════════════════════════════════════════════ */
+let eventosData = [
+  { titulo: 'Campaña Vacunación Antirrábica', fecha: '2026-07-15', hora: '09:00', lugar: 'Centro de Salud Municipal' },
+  { titulo: 'Taller de Tenencia Responsable', fecha: '2026-08-05', hora: '10:00', lugar: 'Palacio Municipal' },
+];
+function saveEvento() {
+  const titulo = document.getElementById('evt-titulo').value.trim();
+  const fecha  = document.getElementById('evt-fecha').value;
+  const hora   = document.getElementById('evt-hora').value;
+  const lugar  = document.getElementById('evt-lugar').value.trim();
+  if (!titulo || !fecha) { showToast('⚠️ Completa título y fecha', 'error'); return; }
+  eventosData.push({ titulo, fecha, hora, lugar });
+  renderEventos();
+  document.getElementById('evt-titulo').value = '';
+  document.getElementById('evt-fecha').value = '';
+  document.getElementById('evt-hora').value = '';
+  document.getElementById('evt-lugar').value = '';
+  document.getElementById('evt-desc').value = '';
+  showToast('✅ Evento agregado', 'success');
+}
+function renderEventos() {
+  const list = document.getElementById('eventosList');
+  list.innerHTML = eventosData.map((e, i) => `
+    <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius); padding:14px; display:flex; gap:12px; align-items:center;">
+      <div style="background:var(--orange-pale); border-radius:var(--radius-sm); padding:10px; text-align:center; flex-shrink:0; min-width:52px;">
+        <div style="font-size:.68rem; font-weight:700; color:var(--orange-dark); text-transform:uppercase;">${e.fecha ? new Date(e.fecha+'T12:00:00').toLocaleString('es-MX', {month:'short'}).toUpperCase() : '—'}</div>
+        <div style="font-size:1.3rem; font-weight:800; color:var(--orange-dark); font-family:'Outfit',sans-serif;">${e.fecha ? new Date(e.fecha+'T12:00:00').getDate() : '—'}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:700; font-size:.88rem;">${e.titulo}</div>
+        <div style="font-size:.75rem; color:var(--gray-2);">📍 ${e.lugar || '—'} · ⏰ ${e.hora || '—'}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); showToast('🗑️ Evento eliminado','success')" style="padding:4px 8px;">🗑️</button>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  FAQ MANAGEMENT                                    */
+/* ══════════════════════════════════════════════════ */
+function renderFaqTable() {
+  const tbody = document.getElementById('faqTableBody');
+  tbody.innerHTML = faqData.map((f, i) => `
+    <tr>
+      <td style="max-width:160px;">${f.pregunta}</td>
+      <td style="max-width:200px; color:var(--gray-1);">${f.respuesta.substring(0, 60)}...</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" onclick="editFaq(${i})" style="padding:4px 8px;" title="Editar">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFaq(${i})" style="padding:4px 8px;" title="Eliminar">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+function saveFaq() {
+  const pregunta  = document.getElementById('faq-pregunta').value.trim();
+  const respuesta = document.getElementById('faq-respuesta').value.trim();
+  if (!pregunta || !respuesta) { showToast('⚠️ Completa pregunta y respuesta', 'error'); return; }
+  if (editingFaqId !== null) {
+    faqData[editingFaqId] = { ...faqData[editingFaqId], pregunta, respuesta };
+    editingFaqId = null;
+    document.getElementById('faqSaveBtn').textContent = '+ Agregar';
+    document.getElementById('faqFormTitle').textContent = '❓ Preguntas';
+    document.getElementById('faqCancelBtn').style.display = 'none';
+    showToast('✅ Pregunta actualizada', 'success');
+  } else {
+    faqData.push({ id: Date.now(), pregunta, respuesta });
+    showToast('✅ Pregunta agregada', 'success');
+  }
+  document.getElementById('faq-pregunta').value = '';
+  document.getElementById('faq-respuesta').value = '';
+  renderFaqTable();
+}
+function editFaq(i) {
+  editingFaqId = i;
+  document.getElementById('faq-pregunta').value = faqData[i].pregunta;
+  document.getElementById('faq-respuesta').value = faqData[i].respuesta;
+  document.getElementById('faqSaveBtn').textContent = '💾 Guardar cambios';
+  document.getElementById('faqFormTitle').textContent = '✏️ Editar pregunta';
+  document.getElementById('faqCancelBtn').style.display = 'inline-flex';
+}
+function cancelEditFaq() {
+  editingFaqId = null;
+  document.getElementById('faq-pregunta').value = '';
+  document.getElementById('faq-respuesta').value = '';
+  document.getElementById('faqSaveBtn').textContent = '+ Agregar';
+  document.getElementById('faqFormTitle').textContent = '❓ Preguntas';
+  document.getElementById('faqCancelBtn').style.display = 'none';
+}
+function deleteFaq(i) {
+  faqData.splice(i, 1);
+  renderFaqTable();
+  showToast('🗑️ Pregunta eliminada', 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  DRAG & DROP HELPERS                               */
+/* ══════════════════════════════════════════════════ */
+function handleDrop(e, inputId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById(inputId).files = dt.files;
+    const prevId = inputId.replace('-img', '-prev').replace('art-img', 'art-banner-prev');
+    previewBanner({ files: dt.files }, prevId);
+  }
+}
+function previewBanner(input, prevId) {
+  const file = input.files ? input.files[0] : null;
+  const el   = typeof input === 'string' ? null : document.getElementById(prevId);
+  if (!file || !el) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    el.innerHTML = `<img src="${e.target.result}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  EXPORT CSV                                        */
+/* ══════════════════════════════════════════════════ */
+function exportCSV() {
+  const data = getTodasMascotas();
+  const header = ['Folio','Nombre','Especie','Raza','Edad','Sexo','Vacunado','Esterilizado','Estatus','Dueño','Colonia','Registro'];
+  const rows = data.map(m => [
+    m.folio, m.nombre, m.especie, m.raza||'', m.edad_anios||'',
+    m.sexo||'', m.vacunado?'Sí':'No', m.esterilizado?'Sí':'No',
+    m.estatus, m.dueno||'', m.colonia||'', m.created_at,
+  ]);
+  const csv = [header,...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `padron_mascotas_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  showToast('📥 CSV descargado correctamente', 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  TOAST                                             */
+/* ══════════════════════════════════════════════════ */
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+/* ══════════════════════════════════════════════════ */
+/*  INIT                                              */
+/* ══════════════════════════════════════════════════ */
+renderMiniTable(allPets.slice(0, 10));
+renderMiniBar();
+renderSeguimiento(allPets);
+renderAdminArtList();
+renderAvisos();
+renderEventos();
+renderFaqTable();
+
+// Init map after DOM is ready
+setTimeout(() => { initMap(); }, 300);
+
+// Init WYSIWYG
+buildEmojiGrid();
+document.execCommand('defaultParagraphSeparator', false, 'p');
+
+/* ══════════════════════════════════════════════════ */
+/*  SITE CONFIG (footer editor)                       */
+/* ══════════════════════════════════════════════════ */
+
+// ── Helper to get all field values ───────────────
+function getSiteConfigValues() {
+  const g = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    nombre:      g('cfg-nombre'),
+    slogan:      g('cfg-slogan'),
+    descripcion: g('cfg-desc'),
+    telefono:    g('cfg-telefono'),
+    copyright:   g('cfg-copyright'),
+    creditos:    g('cfg-creditos'),
+    instagram:   g('cfg-instagram'),
+    facebook:    g('cfg-facebook'),
+    web_oficial: g('cfg-web'),
+    contactos: {
+      direccion:          g('cfg-direccion'),
+      telefono:           g('cfg-telefono'),
+      email_medioambiente: g('cfg-email-ma'),
+      email_informatica:   g('cfg-email-inf'),
+    },
+  };
+}
+
+// ── Live preview (mini footer in admin) ──────────
+function previewFooter() {
+  const cfg = getSiteConfigValues();
+  const prev = document.getElementById('footerPreview');
+  if (!prev) return;
+
+  prev.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div style="width:28px;height:28px;background:var(--orange);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1rem;">🐾</div>
+          <div>
+            <div style="color:white; font-weight:700; font-size:.78rem;">${cfg.nombre || 'Padrón de Mascotas'}</div>
+            <div style="font-size:.65rem; color:var(--orange-light);">${cfg.slogan || 'La Ciudad de la Gente'}</div>
+          </div>
+        </div>
+        <div style="font-size:.65rem; line-height:1.7; color:rgba(255,255,255,.6);">
+          ${(cfg.descripcion || '').replace(/\n/g, '<br/>')}
+        </div>
+        <div style="margin-top:8px; display:flex; gap:6px;">
+          <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">📷</span>
+          <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">👍</span>
+          <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">🌐</span>
+        </div>
+      </div>
+      <div>
+        <div style="color:white; font-weight:700; font-size:.7rem; margin-bottom:6px;">Contacto</div>
+        <div style="font-size:.65rem; color:rgba(255,255,255,.65); display:flex; flex-direction:column; gap:3px;">
+          <span>📍 ${cfg.contactos.direccion || '—'}</span>
+          <span>📞 ${cfg.contactos.telefono || '—'}</span>
+          <span>✉️ ${cfg.contactos.email_medioambiente || '—'}</span>
+          <span>✉️ ${cfg.contactos.email_informatica  || '—'}</span>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.1); padding-top:10px; font-size:.6rem; color:rgba(255,255,255,.4); display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px;">
+      <span>${cfg.copyright || ''}</span>
+      <span>${cfg.creditos  || ''}</span>
+    </div>
+  `;
+}
+
+// ── Save to localStorage ──────────────────────────
+function saveSiteConfig() {
+  const cfg = getSiteConfigValues();
+  localStorage.setItem('padron_site_config', JSON.stringify(cfg));
+  showToast('✅ Configuración guardada — el footer del portal ha sido actualizado', 'success');
+
+  // Flash the preview border
+  const prev = document.getElementById('footerPreview');
+  if (prev) {
+    prev.style.borderColor = '#4CAF50';
+    prev.style.boxShadow = '0 0 0 4px rgba(76,175,80,.2)';
+    setTimeout(() => {
+      prev.style.borderColor = 'var(--orange)';
+      prev.style.boxShadow   = '';
+    }, 1500);
+  }
+}
+
+// ── Reset to defaults ─────────────────────────────
+function resetSiteConfig() {
+  const defaults = {
+    'cfg-nombre':     'Padrón de Mascotas',
+    'cfg-slogan':     'La Ciudad de la Gente',
+    'cfg-desc':       'H. Ayuntamiento Constitucional de El Grullo, Jalisco.\nGobierno Municipal 2024–2027.\nDirección de Medio Ambiente e Informática Municipal.',
+    'cfg-telefono':   '(341) 123-4567',
+    'cfg-direccion':  'El Grullo, Jalisco',
+    'cfg-email-ma':   'medioambiente@elgrullo.gob.mx',
+    'cfg-email-inf':  'informatica@elgrullo.gob.mx',
+    'cfg-instagram':  'https://www.instagram.com/laciudaddelagente',
+    'cfg-facebook':   'https://www.facebook.com/laciudaddelagente',
+    'cfg-web':        'https://elgrullo.gob.mx',
+    'cfg-copyright':  '© 2026 H. Ayuntamiento de El Grullo, Jalisco · Todos los derechos reservados.',
+    'cfg-creditos':   'Desarrollado como proyecto de Residencias Profesionales — ITJMM Campus El Grullo',
+  };
+  Object.entries(defaults).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  localStorage.removeItem('padron_site_config');
+  previewFooter();
+  showToast('♻️ Configuración restablecida a valores predeterminados', 'info');
+}
+
+// ── Load saved config on page open ───────────────
+function loadSiteConfig() {
+  const raw = localStorage.getItem('padron_site_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('cfg-nombre',    cfg.nombre);
+    set('cfg-slogan',    cfg.slogan);
+    set('cfg-desc',      cfg.descripcion);
+    set('cfg-copyright', cfg.copyright);
+    set('cfg-creditos',  cfg.creditos);
+    set('cfg-instagram', cfg.instagram);
+    set('cfg-facebook',  cfg.facebook);
+    set('cfg-web',       cfg.web_oficial);
+    if (cfg.contactos) {
+      set('cfg-telefono',   cfg.contactos.telefono);
+      set('cfg-direccion',  cfg.contactos.direccion);
+      set('cfg-email-ma',   cfg.contactos.email_medioambiente);
+      set('cfg-email-inf',  cfg.contactos.email_informatica);
+    }
+  } catch(e) { /* ignore */ }
+}
+
+// Run on init
+loadSiteConfig();
+previewFooter();
+
+/* ══════════════════════════════════════════════════ */
+/*  APARIENCIA — ICON SELECTOR                        */
+/* ══════════════════════════════════════════════════ */
+
+// Definitions: all customizable elements
+const ICON_ELEMENTS = [
+  { id: 'nav-logo-icon',    label: 'Logo del portal (navbar)',  default: '🐾' },
+  { id: 'hero-mascot-icon', label: 'Imagen principal (hero)',   default: '🐾' },
+  { id: 'banner-icon',      label: 'Ícono del aviso/banner',    default: '💉' },
+  { id: 'step-1-icon',      label: 'Paso 1 — Crear cuenta',     default: '📧' },
+  { id: 'step-2-icon',      label: 'Paso 2 — Registrar mascota',default: '🐕' },
+  { id: 'step-3-icon',      label: 'Paso 3 — Descargar acta',   default: '📄' },
+  { id: 'footer-logo-icon', label: 'Logo del footer',           default: '🐾' },
+];
+
+// Quick emoji palette for the selector (pet/municipal themed)
+const ICON_EMOJIS = [
+  '🐾','🐕','🐈','🐩','🐶','🐱','🐾','🦮','🐕‍🦺','🐇',
+  '🐠','🦜','🦴','💉','✂️','❤️','🏥','🏛️','📋','📄',
+  '⭐','✅','🌿','🌱','📍','📞','✉️','🎉','🔍','💪',
+  '🐾','🔒','🏡','🐟','🦜','🌟','👏','🤝','🥰','😊',
+];
+
+// In-memory state: { elementId: { type, value } }
+let appearanceState = {};
+
+// ── Build all icon-selector cards ────────────────
+function buildIconSelectors() {
+  const grid = document.getElementById('iconSelGrid');
+  if (!grid) return;
+
+  grid.innerHTML = ICON_ELEMENTS.map(el => `
+    <div class="icon-sel-card" id="card-${el.id}">
+      <div class="icon-sel-label">${el.label}</div>
+
+      <!-- Preview -->
+      <div class="icon-sel-preview" id="prev-${el.id}">${el.default}</div>
+
+      <!-- Type selector -->
+      <div class="icon-sel-types">
+        <button class="icon-sel-type-btn active" id="type-emoji-${el.id}" onclick="setIconSelType('${el.id}','emoji')">😀 Emoji</button>
+        <button class="icon-sel-type-btn"        id="type-image-${el.id}" onclick="setIconSelType('${el.id}','image')">🖼️ Imagen</button>
+        <button class="icon-sel-type-btn"        id="type-gif-${el.id}"   onclick="setIconSelType('${el.id}','gif')">✨ GIF/URL</button>
+      </div>
+
+      <!-- Emoji panel -->
+      <div class="icon-sel-input" id="inp-emoji-${el.id}">
+        <input type="text" class="form-control" id="emoji-text-${el.id}"
+               placeholder="Escribe un emoji: 🐾"
+               maxlength="8"
+               oninput="updateIconPreview('${el.id}')"
+               style="font-size:1.2rem; text-align:center; letter-spacing:.1em;" />
+        <div class="icon-sel-emoji-row" id="emoji-row-${el.id}">
+          ${ICON_EMOJIS.map(e => `
+            <div class="icon-sel-emoji-item" title="${e}" onclick="selectEmoji('${el.id}','${e}')">${e}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Image upload panel (hidden) -->
+      <div class="icon-sel-input" id="inp-image-${el.id}" style="display:none;">
+        <div class="icon-sel-drop"
+             id="drop-${el.id}"
+             onclick="document.getElementById('file-${el.id}').click()"
+             ondragover="event.preventDefault(); this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleIconDrop(event,'${el.id}')">
+          <div>⬆️ Arrastra una imagen o haz clic</div>
+          <div style="font-size:.65rem; color:var(--gray-3); margin-top:4px;">JPG · PNG · GIF · SVG · Máx. 1 MB</div>
+        </div>
+        <input type="file" id="file-${el.id}" accept="image/*,.gif,.svg" style="display:none;" onchange="handleIconFile(this,'${el.id}')" />
+      </div>
+
+      <!-- GIF/URL panel (hidden) -->
+      <div class="icon-sel-input" id="inp-gif-${el.id}" style="display:none;">
+        <input type="url" class="form-control" id="gif-url-${el.id}"
+               placeholder="https://media.giphy.com/..."
+               oninput="updateIconPreviewUrl('${el.id}')" />
+        <div style="font-size:.68rem; color:var(--gray-2);">
+          Pega una URL de imagen o GIF animado (Giphy, Tenor, etc.)
+        </div>
+      </div>
+
+    </div>
+  `).join('');
+
+  // Restore previously saved state
+  loadAppearance();
+}
+
+// ── Switch input type ─────────────────────────────
+function setIconSelType(id, type) {
+  ['emoji','image','gif'].forEach(t => {
+    document.getElementById(`inp-${t}-${id}`).style.display  = t === type ? '' : 'none';
+    document.getElementById(`type-${t}-${id}`).classList.toggle('active', t === type);
+  });
+  appearanceState[id] = appearanceState[id] || {};
+  appearanceState[id].type = type;
+}
+
+// ── Select a preset emoji ─────────────────────────
+function selectEmoji(id, emoji) {
+  document.getElementById(`emoji-text-${id}`).value = emoji;
+  // highlight selected
+  document.querySelectorAll(`#emoji-row-${id} .icon-sel-emoji-item`).forEach(el => {
+    el.classList.toggle('selected', el.textContent === emoji);
+  });
+  appearanceState[id] = { type: 'emoji', value: emoji };
+  document.getElementById(`prev-${id}`).innerHTML = emoji;
+}
+
+// ── Live preview from text input ──────────────────
+function updateIconPreview(id) {
+  const val = document.getElementById(`emoji-text-${id}`).value;
+  if (!val) return;
+  appearanceState[id] = { type: 'emoji', value: val };
+  document.getElementById(`prev-${id}`).innerHTML = val;
+}
+
+// ── Live preview from URL input ───────────────────
+function updateIconPreviewUrl(id) {
+  const url = document.getElementById(`gif-url-${id}`).value.trim();
+  if (!url) return;
+  appearanceState[id] = { type: 'gif', value: url };
+  document.getElementById(`prev-${id}`).innerHTML =
+    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
+}
+
+// ── Handle file upload ────────────────────────────
+function handleIconFile(input, id) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 1 * 1024 * 1024) { showToast('❌ Imagen máximo 1 MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    appearanceState[id] = { type: 'image', value: src };
+    document.getElementById(`prev-${id}`).innerHTML =
+      `<img src="${src}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+    document.getElementById(`drop-${id}`).innerHTML =
+      `<div>✅ ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar</div>`;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+// ── Handle drag & drop file ───────────────────────
+function handleIconDrop(event, id) {
+  event.preventDefault();
+  document.getElementById(`drop-${id}`).classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  // Simulate input
+  const fakeInput = { files: [file] };
+  handleIconFile(fakeInput, id);
+}
+
+// ── Save all to localStorage ──────────────────────
+function saveAppearance() {
+  if (Object.keys(appearanceState).length === 0) {
+    showToast('⚠️ No hay cambios que guardar', 'error');
+    return;
+  }
+  localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
+  showToast('✅ Apariencia guardada — recarga el portal para ver los cambios', 'success');
+}
+
+// ── Reset all to defaults ─────────────────────────
+function resetAppearance() {
+  appearanceState = {};
+  localStorage.removeItem('padron_appearance_config');
+  buildIconSelectors(); // re-render with defaults
+  showToast('♻️ Apariencia restablecida a valores predeterminados', 'info');
+}
+
+// ── Load appearance from localStorage ────────────
+function loadAppearance() {
+  const raw = localStorage.getItem('padron_appearance_config');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    appearanceState = saved;
+    Object.entries(saved).forEach(([id, val]) => {
+      const prev = document.getElementById(`prev-${id}`);
+      if (!prev) return;
+
+      setIconSelType(id, val.type);
+
+      if (val.type === 'emoji') {
+        const input = document.getElementById(`emoji-text-${id}`);
+        if (input) input.value = val.value;
+        prev.innerHTML = val.value;
+        document.querySelectorAll(`#emoji-row-${id} .icon-sel-emoji-item`).forEach(el => {
+          el.classList.toggle('selected', el.textContent === val.value);
+        });
+      } else {
+        prev.innerHTML = `<img src="${val.value}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
+        if (val.type === 'gif') {
+          const input = document.getElementById(`gif-url-${id}`);
+          if (input) input.value = val.value;
+        }
+      }
+    });
+  } catch(e) { /* ignore */ }
+}
+
+// Init appearance selector
+buildIconSelectors();
+
+</script>
+
+</body>
+</html>
+

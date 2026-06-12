@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Registra a tu mascota en el Padrón Municipal de El Grullo, Jalisco. Gratuito, rápido y oficial. H. Ayuntamiento 2024-2027." />
+  <title>Padrón Municipal de Mascotas — El Grullo, Jalisco</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<header class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="index.html" class="navbar-logo">
+        <div class="logo-icon" id="nav-logo-icon">🐾</div>
+        <div class="logo-text">
+          <div class="logo-title">Padrón de Mascotas</div>
+          <div class="logo-subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
+        </div>
+      </a>
+
+      <nav class="navbar-nav" id="navMenu">
+        <a href="#como-funciona" class="active">¿Cómo funciona?</a>
+        <a href="#campanas">Campañas</a>
+        <a href="#articulos">Consejos</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="navbar-actions">
+        <a href="login.html" class="btn btn-ghost btn-sm">Iniciar sesión</a>
+        <a href="login.html#registro" class="btn btn-primary btn-sm">Registrarme</a>
+        <div class="navbar-hamburger" id="hamburger" onclick="toggleNav()">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Hero ── -->
+<section class="hero" id="inicio">
+  <div class="hero-grid"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <span>🏛️</span> Gobierno Municipal 2024–2027 · La Ciudad de la Gente
+        </div>
+        <h1 class="hero-title">
+          Registra a tu <span class="highlight">mascota</span> en el Padrón Municipal
+        </h1>
+        <p class="hero-desc">
+          El H. Ayuntamiento de El Grullo pone a tu disposición este portal para
+          registrar a tus perros y gatos. Gratuito, oficial y con acta digital incluida.
+        </p>
+        <div class="hero-actions">
+          <a href="login.html#registro" class="btn btn-primary btn-lg">
+            🐶 Registrar mi mascota
+          </a>
+          <a href="#como-funciona" class="btn btn-white btn-lg">
+            Ver cómo funciona
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num counter" data-target="342">0</div>
+            <div class="hero-stat-label">Mascotas registradas</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num counter" data-target="289">0</div>
+            <div class="hero-stat-label">Familias registradas</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num counter" data-target="187">0</div>
+            <div class="hero-stat-label">Vacunadas al día</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-mascot-card">
+          <div class="hero-mascot-icon" id="hero-mascot-icon">🐾</div>
+          <div class="hero-mascot-title">Registro en 3 sencillos pasos</div>
+          <div class="hero-mascot-steps">
+            <div class="hero-step">
+              <div class="hero-step-num">1</div>
+              <div class="hero-step-text">Crea tu cuenta con tu correo electrónico</div>
+            </div>
+            <div class="hero-step">
+              <div class="hero-step-num">2</div>
+              <div class="hero-step-text">Llena los datos de tu mascota (foto opcional)</div>
+            </div>
+            <div class="hero-step">
+              <div class="hero-step-num">3</div>
+              <div class="hero-step-text">Descarga tu acta oficial — folio único garantizado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Aviso Importante ── -->
+<section class="section-sm" style="background: var(--orange); color: white;">
+  <div class="container">
+    <div class="flex items-center justify-between gap-24" style="flex-wrap:wrap;">
+      <div class="flex items-center gap-12">
+        <span style="font-size:1.8rem;" id="banner-icon">💉</span>
+        <div>
+          <strong style="font-family:'Outfit',sans-serif; font-size:1rem;">Campaña de Vacunación Antirrábica · Julio 2026</strong>
+          <div style="font-size:.85rem; opacity:.9; margin-top:2px;">Gratuita para todos los perros y gatos registrados en el padrón municipal.</div>
+        </div>
+      </div>
+      <a href="login.html" class="btn btn-white btn-sm">Regístrate ahora →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Cómo funciona ── -->
+<section class="section" id="como-funciona">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-eyebrow">Proceso de registro</div>
+      <h2 class="section-title">¿Cómo funciona el padrón?</h2>
+      <p class="section-desc">
+        Registrar a tu mascota es completamente gratuito y tarda menos de 5 minutos.
+        Solo necesitas un correo electrónico.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-icon" id="step-1-icon">📧</div>
+        <div class="step-num">1</div>
+        <div class="step-title">Crea tu cuenta</div>
+        <p class="step-desc">
+          Regístrate con tu correo electrónico y datos básicos. No se requieren documentos físicos.
+        </p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon" id="step-2-icon">🐕</div>
+        <div class="step-num">2</div>
+        <div class="step-title">Registra a tu mascota</div>
+        <p class="step-desc">
+          Proporciona nombre, especie, raza, edad y estado de vacunación. Puedes subir una foto.
+        </p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon" id="step-3-icon">📄</div>
+        <div class="step-num">3</div>
+        <div class="step-title">Descarga tu acta</div>
+        <p class="step-desc">
+          Recibe de inmediato el acta oficial con folio único (<code>EG-2026-XXXXX</code>) 
+          firmada por el Ayuntamiento.
+        </p>
+      </div>
+    </div>
+
+    <div style="margin-top:48px; background:var(--orange-pale); border:1px solid rgba(242,122,0,.2); border-radius:var(--radius-lg); padding:28px 32px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <div style="font-size:2.5rem;">ℹ️</div>
+      <div>
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; color:var(--orange-dark); font-size:1rem; margin-bottom:4px;">¿Por qué registrar a tu mascota?</div>
+        <p style="font-size:.88rem; color:var(--gray-1); line-height:1.6;">
+          El registro oficial te permite acceder a campañas de vacunación gratuitas, 
+          reportar extravíos con mayor efectividad y cumplir con el Reglamento Municipal de 
+          Tenencia Responsable de Animales.
+        </p>
+      </div>
+      <a href="login.html" class="btn btn-primary" style="flex-shrink:0;">Comenzar →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Campañas ── -->
+<section class="section section-alt" id="campanas">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Avisos y campañas</div>
+      <h2 class="section-title">Campañas activas</h2>
+      <p class="section-desc">
+        El Ayuntamiento coordina campañas de salud animal. ¡Mantente informado!
+      </p>
+    </div>
+
+    <div class="campaigns-grid" id="campaignsContainer">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ── Estadísticas ── -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-eyebrow" style="color:var(--orange-light);">Padrón municipal 2026</div>
+      <h2 class="section-title">El Grullo cuida a sus mascotas</h2>
+      <p class="section-desc">Datos en tiempo real del Censo Municipal de Animales de Compañía.</p>
+    </div>
+
+    <div class="grid grid-4 gap-24" style="margin-bottom:40px;">
+      <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="342">0</div>
+        <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Mascotas en el padrón</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="218">0</div>
+        <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Perros registrados</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="124">0</div>
+        <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Gatos registrados</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="54">0</div>
+        <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">% Vacunadas al día</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+      <div style="background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:24px;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; color:white; margin-bottom:20px; font-size:1rem;">Por especie</div>
+        <div class="chart-bar-container">
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Perros</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:64%; background:var(--orange);"></div>
+            </div>
+            <div class="chart-bar-val" style="color:white;">218</div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Gatos</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:36%; background:var(--orange-light);"></div>
+            </div>
+            <div class="chart-bar-val" style="color:white;">124</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:24px;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; color:white; margin-bottom:20px; font-size:1rem;">Por estatus</div>
+        <div class="chart-bar-container">
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Activo</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:96%; background:#4CAF50;"></div>
+            </div>
+            <div class="chart-bar-val" style="color:white;">330</div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Extraviado</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:2%; background:#FF9800;"></div>
+            </div>
+            <div class="chart-bar-val" style="color:white;">8</div>
+          </div>
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Fallecido</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:1%; background:#9E9E9E;"></div>
+            </div>
+            <div class="chart-bar-val" style="color:white;">4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Artículos ── -->
+<section class="section" id="articulos">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Consejos y cuidados</div>
+      <h2 class="section-title">Tips de salud animal</h2>
+      <p class="section-desc">Información de nuestros veterinarios para mantener a tu mascota sana.</p>
+    </div>
+    <div class="articles-grid" id="articlesContainer">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="section section-alt" id="faq">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-eyebrow">Preguntas frecuentes</div>
+      <h2 class="section-title">Resolvemos tus dudas</h2>
+    </div>
+    <div class="faq-list" id="faqContainer">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="section">
+  <div class="container">
+    <div class="cta-banner">
+      <div class="cta-banner-text">
+        <h2 class="cta-banner-title">¿Listo para registrar a tu mascota?</h2>
+        <p class="cta-banner-desc">Es gratuito, tarda 5 minutos y obtienes tu acta oficial al instante.</p>
+      </div>
+      <div class="cta-banner-actions">
+        <a href="login.html#registro" class="btn btn-white btn-lg">🐾 Registrarme ahora</a>
+        <a href="login.html" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,.5); color:white;">Iniciar sesión</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer (dinámico — editable desde panel admin) ── -->
+<footer class="footer" id="siteFooter">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-icon" id="footer-logo-icon">🐾</div>
+          <div>
+            <div class="footer-logo-title" id="ft-nombre">Padrón de Mascotas</div>
+            <div class="footer-logo-subtitle" id="ft-slogan">La Ciudad de la Gente</div>
+          </div>
+        </div>
+        <p class="footer-desc" id="ft-desc">
+          H. Ayuntamiento Constitucional de El Grullo, Jalisco.<br/>
+          Gobierno Municipal 2024–2027.<br/>
+          Dirección de Medio Ambiente e Informática Municipal.
+        </p>
+        <div class="footer-socials">
+          <a id="ft-instagram" href="https://www.instagram.com/laciudaddelagente" target="_blank" class="footer-social" title="Instagram">📷</a>
+          <a id="ft-facebook"  href="https://www.facebook.com/laciudaddelagente" target="_blank" class="footer-social" title="Facebook">👍</a>
+          <a id="ft-web"       href="https://elgrullo.gob.mx" target="_blank" class="footer-social" title="Sitio oficial">🌐</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Portal ciudadano</div>
+        <div class="footer-links">
+          <a href="login.html#registro">Crear cuenta</a>
+          <a href="login.html">Iniciar sesión</a>
+          <a href="dashboard.html">Mi dashboard</a>
+          <a href="#como-funciona">¿Cómo funciona?</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Información</div>
+        <div class="footer-links">
+          <a href="#campanas">Campañas activas</a>
+          <a href="#articulos">Tips de salud</a>
+          <a href="#faq">Preguntas frecuentes</a>
+          <a href="https://elgrullo.gob.mx" target="_blank">Sitio del Ayuntamiento</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Contacto</div>
+        <div class="footer-links" id="ft-contactos">
+          <a href="#">📍 El Grullo, Jalisco</a>
+          <a href="tel:+523411234567">📞 (341) 123-4567</a>
+          <a href="mailto:medioambiente@elgrullo.gob.mx">✉️ Medio Ambiente</a>
+          <a href="mailto:informatica@elgrullo.gob.mx">✉️ Informática</a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-divider" />
+    <div class="footer-bottom">
+      <span id="ft-copyright">© 2026 H. Ayuntamiento de El Grullo, Jalisco · Todos los derechos reservados.</span>
+      <span id="ft-creditos">Desarrollado como proyecto de Residencias Profesionales — ITJMM Campus El Grullo</span>
+    </div>
+  </div>
+</footer>
+
+
+<script src="js/mock-data.js"></script>
+<script>
+/* ── Render Campaigns ── */
+function renderCampaigns() {
+  const campaigns = getCampanas();
+  const container = document.getElementById('campaignsContainer');
+  container.innerHTML = campaigns.map(c => `
+    <div class="campaign-card">
+      <div class="campaign-banner" style="background:${c.banner_color};">
+        <div class="campaign-icon">${c.icono}</div>
+        <div class="campaign-banner-text">
+          <div class="campaign-banner-tag">Campaña activa</div>
+          <div class="campaign-banner-title">${c.titulo}</div>
+        </div>
+      </div>
+      <div class="campaign-body">
+        <p class="campaign-desc">${c.descripcion}</p>
+        <div class="campaign-footer">
+          <span class="campaign-date">📅 ${formatDate(c.fecha_inicio)}${c.fecha_fin ? ` — ${formatDate(c.fecha_fin)}` : ''}</span>
+          <a href="login.html" class="btn btn-primary btn-sm">Ver más →</a>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Render Articles ── */
+function renderArticles() {
+  const articles = getArticulos();
+  const container = document.getElementById('articlesContainer');
+  container.innerHTML = articles.map(a => `
+    <div class="article-card">
+      <span class="article-icon">${a.imagen_icono}</span>
+      <div class="article-title">${a.titulo}</div>
+      <div class="article-excerpt">${a.contenido.substring(0, 100)}...</div>
+      <a href="#" class="article-link">Leer más <span>→</span></a>
+    </div>
+  `).join('');
+}
+
+/* ── Render FAQ ── */
+function renderFAQ() {
+  const faqs = getFaq();
+  const container = document.getElementById('faqContainer');
+  container.innerHTML = faqs.map((f, i) => `
+    <div class="faq-item" id="faq-${i}">
+      <div class="faq-question" onclick="toggleFaq(${i})">
+        <span>${f.pregunta}</span>
+        <div class="faq-arrow">▼</div>
+      </div>
+      <div class="faq-answer">${f.respuesta}</div>
+    </div>
+  `).join('');
+}
+
+function toggleFaq(i) {
+  const items = document.querySelectorAll('.faq-item');
+  items.forEach((item, idx) => {
+    if (idx === i) item.classList.toggle('open');
+    else item.classList.remove('open');
+  });
+}
+
+/* ── Counters Animation ── */
+function animateCounters() {
+  document.querySelectorAll('.counter').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    let current = 0;
+    const step = target / 60;
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = Math.floor(current);
+      if (current >= target) clearInterval(timer);
+    }, 20);
+  });
+}
+
+/* ── Navbar Mobile ── */
+function toggleNav() {
+  const nav = document.getElementById('navMenu');
+  nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+}
+
+/* ── Smooth Scroll ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+/* ── Intersection Observer for counters ── */
+const heroObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) animateCounters(); });
+}, { threshold: 0.3 });
+const heroStats = document.querySelector('.hero-stats');
+if (heroStats) heroObs.observe(heroStats);
+
+/* ── Utility ── */
+function formatDate(d) {
+  const date = new Date(d + 'T12:00:00');
+  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/* ── Footer dinámico (sincroniza con admin panel) ── */
+function applyFooterConfig() {
+  const raw = localStorage.getItem('padron_site_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    const href = (id, val) => { const el = document.getElementById(id); if (el && val) el.href = val; };
+
+    set('ft-nombre',    cfg.nombre);
+    set('ft-slogan',    cfg.slogan);
+    set('ft-copyright', cfg.copyright);
+    set('ft-creditos',  cfg.creditos);
+
+    // Desc paragraph
+    if (cfg.descripcion) {
+      const el = document.getElementById('ft-desc');
+      if (el) el.innerHTML = cfg.descripcion.replace(/\n/g, '<br/>');
+    }
+
+    // Social links
+    href('ft-instagram', cfg.instagram);
+    href('ft-facebook',  cfg.facebook);
+    href('ft-web',       cfg.web_oficial);
+
+    // Contactos column
+    if (cfg.contactos) {
+      const el = document.getElementById('ft-contactos');
+      if (el) {
+        el.innerHTML = `
+          <a href="#">📍 ${cfg.contactos.direccion || 'El Grullo, Jalisco'}</a>
+          <a href="tel:${(cfg.contactos.telefono||'').replace(/\D/g,'')}">📞 ${cfg.contactos.telefono || ''}</a>
+          ${cfg.contactos.email_medioambiente ? `<a href="mailto:${cfg.contactos.email_medioambiente}">✉️ Medio Ambiente</a>` : ''}
+          ${cfg.contactos.email_informatica  ? `<a href="mailto:${cfg.contactos.email_informatica}">✉️ Informática</a>`   : ''}
+        `;
+      }
+    }
+  } catch(e) { /* silently ignore corrupt config */ }
+}
+
+/* ── Apariencia (iconos personalizados desde admin) ── */
+function applyAppearanceConfig() {
+  const raw = localStorage.getItem('padron_appearance_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    Object.entries(cfg).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el || !val) return;
+      // val is { type: 'emoji'|'image'|'gif', value: '...' }
+      if (val.type === 'emoji') {
+        el.innerHTML = val.value;
+        el.style.backgroundImage = '';
+      } else {
+        // image or gif — render as <img>
+        el.innerHTML = `<img src="${val.value}" alt="icon" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;" onerror="this.style.display='none'" />`;
+      }
+    });
+  } catch(e) { /* silently ignore */ }
+}
+
+/* ── Init ── */
+renderCampaigns();
+renderArticles();
+renderFAQ();
+applyFooterConfig();
+applyAppearanceConfig();
+</script>
+
+</body>
+</html>

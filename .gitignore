@@ -1,0 +1,21 @@
+# Archivos PDF y documentación interna
+Guia_Backend_Mascotas.pdf
+PDF/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+*.code-workspace
+.idea/
+
+# Variables de entorno
+.env
+.env.local
+
+# Dependencias (futuro)
+node_modules/
+vendor/

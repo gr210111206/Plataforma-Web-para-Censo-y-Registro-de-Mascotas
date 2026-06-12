@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mi portal ciudadano — Padrón Municipal de Mascotas, El Grullo, Jalisco." />
+  <title>Mi Portal — Padrón de Mascotas · El Grullo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ── Dashboard extras ── */
+    .stat-trend {
+      font-size: .7rem;
+      color: #4CAF50;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* ── Pet card premium ── */
+    .pet-card {
+      background: white;
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: var(--transition);
+      position: relative;
+    }
+    .pet-card:hover {
+      border-color: var(--orange);
+      box-shadow: 0 8px 24px rgba(242,122,0,.12);
+      transform: translateY(-2px);
+    }
+    .pet-card-banner {
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .pet-card-banner img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .pet-card-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.18), transparent);
+    }
+    .pet-card-body { padding: 16px; }
+    .pet-card-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--dark);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .pet-card-info {
+      font-size: .76rem;
+      color: var(--gray-2);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .pet-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .pet-card-folio {
+      font-size: .7rem;
+      color: var(--gray-3);
+      font-family: monospace;
+      margin-bottom: 12px;
+    }
+    .pet-card-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* ── Quick actions ── */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .quick-action-btn {
+      background: white;
+      border: 1.5px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .quick-action-btn:hover {
+      border-color: var(--orange);
+      background: var(--orange-pale);
+      color: var(--orange-dark);
+      transform: translateY(-1px);
+    }
+    .quick-action-icon {
+      font-size: 1.6rem;
+    }
+
+    /* ── Notification dot ── */
+    .notif-dot {
+      width: 8px; height: 8px;
+      background: #EF5350;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 4px;
+      animation: pulse-dot 1.5s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: .7; }
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border: 2px dashed var(--gray-4);
+      border-radius: var(--radius-lg);
+    }
+    .empty-state-icon { font-size: 3.5rem; margin-bottom: 14px; }
+    .empty-state-title { font-size: 1.1rem; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .empty-state-sub { font-size: .88rem; color: var(--gray-2); margin-bottom: 22px; }
+
+    /* ── Report extravío ── */
+    .report-banner {
+      background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+      border: 1.5px solid #FF9800;
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .report-banner-icon { font-size: 2rem; flex-shrink: 0; }
+    .report-banner-text { flex: 1; }
+    .report-banner-title { font-weight: 700; font-size: .9rem; color: #E65100; }
+    .report-banner-sub { font-size: .78rem; color: #BF360C; margin-top: 2px; }
+
+    /* ── Timeline (historial mascota) ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding-bottom: 16px;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 28px;
+      bottom: 0;
+      width: 2px;
+      background: var(--gray-4);
+    }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-dot {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--orange-pale);
+      border: 2px solid var(--orange);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+    .timeline-content { flex: 1; padding-top: 4px; }
+    .timeline-label { font-size: .78rem; font-weight: 700; color: var(--dark); }
+    .timeline-date { font-size: .68rem; color: var(--gray-2); margin-top: 1px; }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon" id="dash-logo-icon">🐾</div>
+      <div>
+        <div class="sidebar-logo-title">Padrón Mascotas</div>
+        <div class="sidebar-logo-sub">El Grullo · 2024-2027</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Principal</div>
+    <a class="sidebar-link active" id="nav-mis-mascotas" onclick="showSection('mis-mascotas', this)">
+      <span class="icon">🐾</span> Mis mascotas
+    </a>
+    <a class="sidebar-link" id="nav-campanas" onclick="showSection('campanas', this)">
+      <span class="icon">📢</span> Campañas
+    </a>
+    <a class="sidebar-link" id="nav-articulos" onclick="showSection('articulos', this)">
+      <span class="icon">📰</span> Artículos / Tips
+    </a>
+
+    <div class="sidebar-section" style="margin-top:8px;">Mi cuenta</div>
+    <a class="sidebar-link" id="nav-mi-perfil" onclick="showSection('mi-perfil', this)">
+      <span class="icon">👤</span> Mi perfil
+    </a>
+    <a class="sidebar-link" href="index.html">
+      <span class="icon">🏠</span> Ir al inicio
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user" onclick="showSection('mi-perfil', document.getElementById('nav-mi-perfil'))" style="cursor:pointer;">
+        <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebarName">Cargando...</div>
+          <div class="sidebar-user-role" id="sidebarRole">Ciudadano</div>
+        </div>
+      </div>
+      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="localStorage.removeItem('padron_session')">
+        <span class="icon">🚪</span> Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="dashboard-main">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div>
+        <div class="dashboard-title" id="headerTitle">Mis mascotas</div>
+        <div class="dashboard-subtitle" id="headerSubtitle">Administra el registro de tus animales de compañía</div>
+      </div>
+      <div class="flex gap-8 items-center">
+        <span class="badge badge-orange" id="headerBadge">👤 Ciudadano</span>
+        <button class="btn btn-primary btn-sm" id="headerActionBtn" onclick="openModal('modal-nueva-mascota')">
+          + Nueva mascota
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Sección: Mis Mascotas ── -->
+    <div class="dashboard-content" id="section-mis-mascotas">
+
+      <!-- Reporte de extravío (se muestra si hay mascotas extraviadas) -->
+      <div id="extravioBanner" style="display:none;" class="report-banner">
+        <div class="report-banner-icon">⚠️</div>
+        <div class="report-banner-text">
+          <div class="report-banner-title">Tienes una mascota reportada como extraviada</div>
+          <div class="report-banner-sub">Si ya la encontraste, actualiza su estatus para avisar a la comunidad.</div>
+        </div>
+        <button class="btn btn-sm" style="background:#FF9800; color:white; white-space:nowrap;" onclick="showSection('mis-mascotas', null)">Ver detalle</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" style="margin-bottom:28px;">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon" style="background:var(--orange-pale);">🐾</div>
+            <span class="badge badge-orange">Total</span>
+          </div>
+          <div class="stat-card-num" id="statTotal">0</div>
+          <div class="stat-card-label">Mascotas registradas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon" style="background:var(--green-light);">💉</div>
+            <span class="badge badge-green">Al día</span>
+          </div>
+          <div class="stat-card-num" id="statVacunadas">0</div>
+          <div class="stat-card-label">Con vacunas al día</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon" style="background:var(--blue-light);">📄</div>
+            <span class="badge badge-blue">Actas</span>
+          </div>
+          <div class="stat-card-num" id="statActas">0</div>
+          <div class="stat-card-label">Actas generadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-icon" style="background:var(--amber-light);">⭐</div>
+            <span class="badge badge-amber">Estado</span>
+          </div>
+          <div class="stat-card-num" id="statEstado">✓</div>
+          <div class="stat-card-label">Perfil completo</div>
+        </div>
+      </div>
+
+      <!-- Acciones rápidas -->
+      <div class="quick-actions">
+        <button class="quick-action-btn" onclick="openModal('modal-nueva-mascota')">
+          <span class="quick-action-icon">🐾</span>
+          Registrar mascota
+        </button>
+        <button class="quick-action-btn" onclick="openModal('modal-extraviado')">
+          <span class="quick-action-icon">🔍</span>
+          Reportar extravío
+        </button>
+        <button class="quick-action-btn" onclick="showSection('campanas', document.getElementById('nav-campanas'))">
+          <span class="quick-action-icon">💉</span>
+          Ver campañas
+        </button>
+        <button class="quick-action-btn" onclick="downloadActa()">
+          <span class="quick-action-icon">📄</span>
+          Descargar acta
+        </button>
+      </div>
+
+      <!-- Pets grid -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <h3 style="font-size:1rem; color:var(--dark); font-family:'Outfit',sans-serif; font-weight:700;">Mis animales de compañía</h3>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-mascota')">+ Agregar</button>
+      </div>
+      <div class="pets-grid" id="petsContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ── Sección: Campañas ── -->
+    <div class="dashboard-content" id="section-campanas" style="display:none;">
+      <div class="campaigns-grid" id="dashCampaignsContainer"></div>
+    </div>
+
+    <!-- ── Sección: Artículos ── -->
+    <div class="dashboard-content" id="section-articulos" style="display:none;">
+      <div class="articles-grid" id="dashArticlesContainer"></div>
+    </div>
+
+    <!-- ── Sección: Mi Perfil ── -->
+    <div class="dashboard-content" id="section-mi-perfil" style="display:none;">
+      <div style="max-width:640px;">
+        <!-- Avatar card -->
+        <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:18px; margin-bottom:24px;">
+            <div style="position:relative;">
+              <div style="width:72px; height:72px; background:var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:1.6rem; color:white; overflow:hidden;" id="profileAvatar">?</div>
+              <button onclick="document.getElementById('avatar-upload').click()"
+                style="position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; background:white; border:2px solid var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.7rem; cursor:pointer;">
+                ✏️
+              </button>
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none;" onchange="changeAvatar(this)" />
+            </div>
+            <div>
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:1.1rem;" id="profileName">—</div>
+              <div style="font-size:.82rem; color:var(--gray-2);" id="profileEmail">—</div>
+              <span class="badge badge-green" style="margin-top:6px;">Cuenta activa</span>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Nombre completo</label>
+              <input class="form-control" id="perfil-nombre" />
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input class="form-control" value="341-123-4567" id="perfil-telefono" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Correo electrónico</label>
+            <input class="form-control" type="email" id="perfil-email-field" />
+          </div>
+          <div class="form-row" style="margin-bottom:20px;">
+            <div class="form-group">
+              <label>Domicilio</label>
+              <input class="form-control" value="Calle Morelos #45" id="perfil-domicilio" />
+            </div>
+            <div class="form-group">
+              <label>Colonia</label>
+              <select class="form-control" id="perfil-colonia">
+                <option>Centro</option>
+                <option>El Sabino</option>
+                <option>La Loma</option>
+                <option>Las Flores</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
+        </div>
+
+        <!-- Historial -->
+        <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">📋 Historial de actividad</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot">🐾</div>
+              <div class="timeline-content">
+                <div class="timeline-label">Mascota registrada en el padrón</div>
+                <div class="timeline-date">Hoy · Sistema automático</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot">💉</div>
+              <div class="timeline-content">
+                <div class="timeline-label">Vacunación antirrábica registrada</div>
+                <div class="timeline-date">15 may 2026 · Campaña municipal</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot">📄</div>
+              <div class="timeline-content">
+                <div class="timeline-label">Acta de registro generada</div>
+                <div class="timeline-date">10 ene 2026 · Folio EG-2026-00001</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot">👤</div>
+              <div class="timeline-content">
+                <div class="timeline-label">Cuenta creada exitosamente</div>
+                <div class="timeline-date">5 ene 2026 · Portal ciudadano</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dashboard-main -->
+</div>
+
+<!-- ── Modal: Nueva Mascota ── -->
+<div class="modal-overlay" id="modal-nueva-mascota">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🐾 Registrar nueva mascota</h2>
+      <button class="modal-close" onclick="closeModal('modal-nueva-mascota')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-mascota" onsubmit="handleNewPet(event)">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="photo-upload" onclick="document.getElementById('foto-input').click()">
+            <div class="photo-upload-icon" id="photoPreviewIcon">📷</div>
+            <div class="photo-upload-text">
+              <strong>Subir foto</strong> (opcional)<br/>
+              <span>JPG o PNG, máximo 2 MB</span>
+            </div>
+            <input type="file" id="foto-input" accept="image/jpeg,image/png" style="display:none;" onchange="previewPhoto(this)" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-nombre">Nombre de la mascota *</label>
+              <input type="text" id="pet-nombre" class="form-control" placeholder="Ej. Max, Luna..." required />
+            </div>
+            <div class="form-group">
+              <label for="pet-especie">Especie *</label>
+              <select id="pet-especie" class="form-control" required>
+                <option value="">Seleccionar...</option>
+                <option value="perro">🐕 Perro</option>
+                <option value="gato">🐈 Gato</option>
+                <option value="conejo">🐇 Conejo</option>
+                <option value="ave">🦜 Ave</option>
+                <option value="otro">🐾 Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-raza">Raza</label>
+              <input type="text" id="pet-raza" class="form-control" placeholder="Ej. Labrador, Siamés..." />
+            </div>
+            <div class="form-group">
+              <label for="pet-edad">Edad (años)</label>
+              <input type="number" id="pet-edad" class="form-control" min="0" max="30" placeholder="Ej. 3" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-sexo">Sexo *</label>
+              <select id="pet-sexo" class="form-control" required>
+                <option value="">Seleccionar...</option>
+                <option value="macho">♂ Macho</option>
+                <option value="hembra">♀ Hembra</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pet-color">Color / descripción física</label>
+              <input type="text" id="pet-color" class="form-control" placeholder="Ej. Dorado, negro y blanco..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:14px; border:1.5px solid var(--gray-4); border-radius:var(--radius); font-size:.88rem; flex:1;">
+              <input type="checkbox" id="pet-vacunado" style="accent-color:var(--orange); width:16px; height:16px;" />
+              <div>
+                <div style="font-weight:600;">💉 Con vacunas al día</div>
+                <div style="font-size:.75rem; color:var(--gray-2);">Antirrábica vigente</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:14px; border:1.5px solid var(--gray-4); border-radius:var(--radius); font-size:.88rem; flex:1;">
+              <input type="checkbox" id="pet-esterilizado" style="accent-color:var(--orange); width:16px; height:16px;" />
+              <div>
+                <div style="font-weight:600;">✂️ Esterilizado/a</div>
+                <div style="font-size:.75rem; color:var(--gray-2);">Operación realizada</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nueva-mascota')">Cancelar</button>
+      <button class="btn btn-primary" onclick="handleNewPet()">🐾 Registrar mascota →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Reportar Extravío ── -->
+<div class="modal-overlay" id="modal-extraviado">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">🔍 Reportar mascota extraviada</h2>
+      <button class="modal-close" onclick="closeModal('modal-extraviado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#FFF3E0; border:1px solid #FF9800; border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; font-size:.82rem; color:#E65100;">
+        ⚠️ Al reportar a tu mascota como extraviada, el Ayuntamiento y la comunidad serán notificados para ayudarte a encontrarla.
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>¿Cuál de tus mascotas se extravió? *</label>
+        <select class="form-control" id="extraviado-mascota">
+          <!-- Filled by JS -->
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Fecha en que se extravió *</label>
+        <input type="date" class="form-control" id="extraviado-fecha" />
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Zona o colonia donde fue visto(a) por última vez</label>
+        <input type="text" class="form-control" id="extraviado-zona" placeholder="Ej. Centro, cerca del mercado..." />
+      </div>
+      <div class="form-group">
+        <label>Señas particulares adicionales</label>
+        <textarea class="form-control" id="extraviado-senas" rows="2" placeholder="Ej. Usa collar azul, tiene una mancha en la pata derecha..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-extraviado')">Cancelar</button>
+      <button class="btn btn-primary" style="background:#FF9800;" onclick="reportarExtravio()">🔍 Enviar reporte</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Detalle Mascota ── -->
+<div class="modal-overlay" id="modal-detalle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="detalle-titulo">Detalle de mascota</h2>
+      <button class="modal-close" onclick="closeModal('modal-detalle')">✕</button>
+    </div>
+    <div class="modal-body" id="detalle-body">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
+      <button class="btn btn-primary" id="detalle-acta-btn">📄 Descargar Acta PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/mock-data.js"></script>
+<script>
+/* ══════════════════════════════════════════════════ */
+/*  SESSION — read from localStorage (set by login)  */
+/* ══════════════════════════════════════════════════ */
+const session = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('padron_session')) || {};
+  } catch { return {}; }
+})();
+
+const sessionNombre = session.nombre || 'Ciudadano';
+const sessionEmail  = session.email  || 'ciudadano@demo.com';
+const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+
+// Apply to sidebar
+document.getElementById('sidebarAvatar').textContent = initials;
+document.getElementById('sidebarName').textContent   = sessionNombre.split(' ').slice(0, 2).join(' ');
+document.getElementById('sidebarRole').textContent   = session.rol === 'admin' ? 'Administrador' : 'Ciudadano';
+if (session.rol === 'admin') {
+  document.getElementById('sidebarRole').style.color = 'var(--orange-light)';
+}
+
+// Apply to profile section
+document.getElementById('profileAvatar').textContent    = initials;
+document.getElementById('profileName').textContent      = sessionNombre;
+document.getElementById('profileEmail').textContent     = sessionEmail;
+document.getElementById('perfil-nombre').value          = sessionNombre;
+document.getElementById('perfil-email-field').value     = sessionEmail;
+
+/* ══════════════════════════════════════════════════ */
+/*  DATA                                              */
+/* ══════════════════════════════════════════════════ */
+let myPets = [...getMisMascotas()];
+let currentPetIndex = null;
+
+/* ══════════════════════════════════════════════════ */
+/*  NAVIGATION                                        */
+/* ══════════════════════════════════════════════════ */
+const SECTIONS = {
+  'mis-mascotas': { title: 'Mis mascotas',      sub: 'Administra el registro de tus animales de compañía', btn: '+ Nueva mascota', btnAction: "openModal('modal-nueva-mascota')" },
+  'campanas':     { title: 'Campañas activas',   sub: 'Avisos y eventos de salud animal del Ayuntamiento',   btn: null },
+  'articulos':    { title: 'Artículos y Tips',   sub: 'Consejos de cuidado animal de nuestros veterinarios', btn: null },
+  'mi-perfil':    { title: 'Mi perfil',          sub: 'Actualiza tus datos de contacto y preferencias',      btn: null },
+};
+
+function showSection(name, linkEl) {
+  Object.keys(SECTIONS).forEach(s => {
+    const el = document.getElementById('section-' + s);
+    if (el) el.style.display = s === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  if (linkEl) linkEl.classList.add('active');
+
+  const info = SECTIONS[name] || {};
+  document.getElementById('headerTitle').textContent    = info.title || '';
+  document.getElementById('headerSubtitle').textContent = info.sub   || '';
+
+  const btn = document.getElementById('headerActionBtn');
+  if (info.btn) {
+    btn.textContent = info.btn;
+    btn.setAttribute('onclick', info.btnAction || '');
+    btn.style.display = '';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  RENDER PETS                                       */
+/* ══════════════════════════════════════════════════ */
+function renderPets() {
+  const container = document.getElementById('petsContainer');
+  const total     = myPets.length;
+  const vacunadas = myPets.filter(p => p.vacunado).length;
+  const extraviadas = myPets.filter(p => p.estatus === 'extraviado').length;
+
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statVacunadas').textContent = vacunadas;
+  document.getElementById('statActas').textContent    = total;
+  document.getElementById('statEstado').textContent   = total > 0 ? '✓' : '—';
+
+  // Show/hide extravío banner
+  document.getElementById('extravioBanner').style.display = extraviadas > 0 ? 'flex' : 'none';
+
+  // Populate extravío select
+  const sel = document.getElementById('extraviado-mascota');
+  sel.innerHTML = myPets.map((p, i) => `<option value="${i}">${p.nombre} (${p.especie})</option>`).join('');
+
+  // Set default date for extravío
+  document.getElementById('extraviado-fecha').valueAsDate = new Date();
+
+  if (total === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🐾</div>
+        <div class="empty-state-title">Aún no tienes mascotas registradas</div>
+        <div class="empty-state-sub">¡Registra a tu primer amigo peludo de forma gratuita!</div>
+        <button class="btn btn-primary" onclick="openModal('modal-nueva-mascota')">+ Registrar mi primera mascota</button>
+      </div>`;
+    return;
+  }
+
+  const SPECIES_ICONS = { perro:'🐕', gato:'🐈', conejo:'🐇', ave:'🦜' };
+  const CARD_COLORS   = ['#FFF3E6','#E8F5E9','#E3F2FD','#FFF8E1','#FCE4EC','#EDE7F6'];
+
+  container.innerHTML = myPets.map((pet, i) => {
+    const icon  = SPECIES_ICONS[pet.especie] || '🐾';
+    const color = CARD_COLORS[i % CARD_COLORS.length];
+    const statusBadge = {
+      activo:    '<span class="badge badge-green">✓ Activo</span>',
+      extraviado:'<span class="badge badge-amber">⚠ Extraviado</span>',
+      fallecido: '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">• Fallecido</span>',
+    }[pet.estatus] || '';
+
+    const bannerContent = pet.foto
+      ? `<img src="${pet.foto}" alt="${pet.nombre}" /><div class="pet-card-banner-overlay"></div>`
+      : icon;
+
+    return `
+      <div class="pet-card" id="petcard-${i}">
+        <div class="pet-card-banner" style="background:${color};">
+          ${bannerContent}
+          ${pet.estatus === 'extraviado' ? '<div style="position:absolute;top:10px;right:10px;"><span class="badge badge-amber">⚠ Extraviado</span></div>' : ''}
+        </div>
+        <div class="pet-card-body">
+          <div class="pet-card-name">${icon} ${pet.nombre} ${statusBadge}</div>
+          <div class="pet-card-info">
+            ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'} · ${pet.edad_anios ?? '?'} años · ${capitalize(pet.sexo || '')}
+          </div>
+          <div class="pet-card-tags">
+            ${pet.vacunado    ? '<span class="badge badge-green">💉 Vacunado</span>'   : '<span class="badge badge-red">💉 Sin vacunar</span>'}
+            ${pet.esterilizado ? '<span class="badge badge-blue">✂️ Esterilizado</span>' : ''}
+          </div>
+          <div class="pet-card-folio">Folio: ${pet.folio}</div>
+          <div class="pet-card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">👁️ Ver</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadActa('${pet.folio}')" style="flex:1;">📄 Acta</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  RENDER CAMPAIGNS & ARTICLES                       */
+/* ══════════════════════════════════════════════════ */
+function renderDashCampaigns() {
+  const container = document.getElementById('dashCampaignsContainer');
+  container.innerHTML = getCampanas().map(c => `
+    <div class="campaign-card">
+      <div class="campaign-banner" style="background:${c.banner_color};">
+        <div class="campaign-icon">${c.icono}</div>
+        <div class="campaign-banner-text">
+          <div class="campaign-banner-tag">Campaña activa</div>
+          <div class="campaign-banner-title">${c.titulo}</div>
+        </div>
+      </div>
+      <div class="campaign-body">
+        <p class="campaign-desc">${c.descripcion}</p>
+        <div class="campaign-footer">
+          <span class="campaign-date">📅 ${c.fecha_inicio}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderDashArticles() {
+  document.getElementById('dashArticlesContainer').innerHTML = getArticulos().map(a => `
+    <div class="article-card">
+      <span class="article-icon">${a.imagen_icono}</span>
+      <div class="article-title">${a.titulo}</div>
+      <div class="article-excerpt">${a.contenido.substring(0, 110)}...</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  VER DETALLE                                       */
+/* ══════════════════════════════════════════════════ */
+function verDetalle(i) {
+  currentPetIndex = i;
+  const pet  = myPets[i];
+  const SPECIES_ICONS = { perro:'🐕', gato:'🐈', conejo:'🐇', ave:'🦜' };
+  const icon = SPECIES_ICONS[pet.especie] || '🐾';
+  document.getElementById('detalle-titulo').textContent = `${icon} ${pet.nombre}`;
+  document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(pet.folio);
+
+  document.getElementById('detalle-body').innerHTML = `
+    ${pet.foto ? `<img src="${pet.foto}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      ${field('Nombre',      pet.nombre)}
+      ${field('Especie',     capitalize(pet.especie))}
+      ${field('Raza',        pet.raza || 'No especificada')}
+      ${field('Edad',        `${pet.edad_anios ?? '?'} años`)}
+      ${field('Sexo',        capitalize(pet.sexo || ''))}
+      ${field('Color',       pet.color || 'No especificado')}
+      ${field('Vacunado',    pet.vacunado    ? '✅ Sí' : '❌ No')}
+      ${field('Esterilizado',pet.esterilizado ? '✅ Sí' : '❌ No')}
+      ${field('Estatus',     capitalize(pet.estatus))}
+      ${field('Folio',       pet.folio)}
+      ${field('Registro',    pet.created_at || 'N/D')}
+    </div>`;
+  openModal('modal-detalle');
+}
+
+function field(label, value) {
+  return `
+    <div style="background:var(--surface); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--gray-2); margin-bottom:3px;">${label}</div>
+      <div style="font-size:.88rem; font-weight:600; color:var(--dark);">${value}</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  NEW PET                                           */
+/* ══════════════════════════════════════════════════ */
+function handleNewPet(e) {
+  if (e) e.preventDefault();
+  const nombre  = document.getElementById('pet-nombre').value.trim();
+  const especie = document.getElementById('pet-especie').value;
+  const sexo    = document.getElementById('pet-sexo').value;
+
+  if (!nombre || !especie || !sexo) {
+    showToast('⚠️ Completa los campos obligatorios', 'error'); return;
+  }
+
+  const folio  = 'EG-2026-' + String(myPets.length + 101).padStart(5, '0');
+  const newPet = {
+    id: Date.now(), nombre, especie, sexo, folio,
+    raza:        document.getElementById('pet-raza').value,
+    edad_anios:  parseInt(document.getElementById('pet-edad').value) || null,
+    color:       document.getElementById('pet-color').value,
+    vacunado:    document.getElementById('pet-vacunado').checked,
+    esterilizado:document.getElementById('pet-esterilizado').checked,
+    estatus:     'activo',
+    foto:        window._pendingFoto || null,
+    created_at:  new Date().toISOString().split('T')[0],
+  };
+
+  myPets.push(newPet);
+  window._pendingFoto = null;
+  renderPets();
+  closeModal('modal-nueva-mascota');
+  document.getElementById('form-mascota').reset();
+  document.getElementById('photoPreviewIcon').textContent = '📷';
+  showToast(`✅ ${nombre} registrado/a · Folio: ${folio}`, 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  REPORTAR EXTRAVÍO                                 */
+/* ══════════════════════════════════════════════════ */
+function reportarExtravio() {
+  const idx   = parseInt(document.getElementById('extraviado-mascota').value);
+  const fecha = document.getElementById('extraviado-fecha').value;
+  if (isNaN(idx) || !fecha) { showToast('⚠️ Completa los campos requeridos', 'error'); return; }
+
+  myPets[idx].estatus = 'extraviado';
+  renderPets();
+  closeModal('modal-extraviado');
+  showToast(`🔍 Reporte enviado — ${myPets[idx].nombre} marcado como extraviado. El Ayuntamiento fue notificado.`, 'success');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  DOWNLOAD ACTA                                     */
+/* ══════════════════════════════════════════════════ */
+function downloadActa(folio) {
+  const f = folio || (myPets[0]?.folio) || 'EG-2026-00000';
+  showToast(`📄 Generando acta ${f}...`, 'info');
+  setTimeout(() => showToast('✅ Acta descargada correctamente (simulado)', 'success'), 1500);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PROFILE                                           */
+/* ══════════════════════════════════════════════════ */
+function saveProfile() {
+  const nombre = document.getElementById('perfil-nombre').value.trim();
+  if (nombre) {
+    document.getElementById('sidebarName').textContent = nombre.split(' ').slice(0,2).join(' ');
+    document.getElementById('profileName').textContent = nombre;
+    const ini = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('sidebarAvatar').textContent = ini;
+    const av = document.getElementById('profileAvatar');
+    if (!av.querySelector('img')) av.textContent = ini;
+    // Update session
+    session.nombre = nombre;
+    localStorage.setItem('padron_session', JSON.stringify(session));
+  }
+  showToast('✅ Perfil actualizado correctamente', 'success');
+}
+
+function changeAvatar(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('profileAvatar').innerHTML =
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    document.getElementById('sidebarAvatar').innerHTML =
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PHOTO PREVIEW (modal nueva mascota)               */
+/* ══════════════════════════════════════════════════ */
+function previewPhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('❌ La foto no debe superar 2 MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._pendingFoto = e.target.result;
+    document.getElementById('photoPreviewIcon').innerHTML =
+      `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MODALS                                            */
+/* ══════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
+/* ══════════════════════════════════════════════════ */
+/*  TOAST                                             */
+/* ══════════════════════════════════════════════════ */
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  APPEARANCE CONFIG (from admin)                    */
+/* ══════════════════════════════════════════════════ */
+function applyAppearance() {
+  const raw = localStorage.getItem('padron_appearance_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    const logoVal = cfg['nav-logo-icon'];
+    if (logoVal) {
+      const el = document.getElementById('dash-logo-icon');
+      if (el) el.innerHTML = logoVal.type === 'emoji'
+        ? logoVal.value
+        : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
+    }
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  UTILITIES                                         */
+/* ══════════════════════════════════════════════════ */
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+/* ══════════════════════════════════════════════════ */
+/*  INIT                                              */
+/* ══════════════════════════════════════════════════ */
+renderPets();
+renderDashCampaigns();
+renderDashArticles();
+applyAppearance();
+</script>
+
+</body>
+</html>
