@@ -7,6 +7,9 @@
   <title>Padrón Municipal de Mascotas — El Grullo, Jalisco</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -31,7 +34,7 @@
 
       <div class="navbar-actions">
         <a href="login.html" class="btn btn-ghost btn-sm">Iniciar sesión</a>
-        <a href="login.html#registro" class="btn btn-primary btn-sm">Registrarme</a>
+        <a href="login.html#registro" class="btn btn-primary btn-sm">Registrar mascota</a>
         <div class="navbar-hamburger" id="hamburger" onclick="toggleNav()">
           <span></span><span></span><span></span>
         </div>
@@ -88,7 +91,7 @@
           <div class="hero-mascot-steps">
             <div class="hero-step">
               <div class="hero-step-num">1</div>
-              <div class="hero-step-text">Crea tu cuenta con tu correo electrónico</div>
+              <div class="hero-step-text">Ingresa tus datos y tu CURP como identificador</div>
             </div>
             <div class="hero-step">
               <div class="hero-step-num">2</div>
@@ -129,17 +132,17 @@
       <h2 class="section-title">¿Cómo funciona el padrón?</h2>
       <p class="section-desc">
         Registrar a tu mascota es completamente gratuito y tarda menos de 5 minutos.
-        Solo necesitas un correo electrónico.
+        Solo necesitas tu CURP y datos básicos.
       </p>
     </div>
 
     <div class="steps-grid">
       <div class="step-card">
-        <div class="step-icon" id="step-1-icon">📧</div>
+        <div class="step-icon" id="step-1-icon">🆔</div>
         <div class="step-num">1</div>
-        <div class="step-title">Crea tu cuenta</div>
+        <div class="step-title">Ingresa tus datos</div>
         <p class="step-desc">
-          Regístrate con tu correo electrónico y datos básicos. No se requieren documentos físicos.
+          Proporciona tu CURP y datos de contacto. Será tu identificador para acceder después.
         </p>
       </div>
       <div class="step-card">
@@ -166,9 +169,9 @@
       <div>
         <div style="font-family:'Outfit',sans-serif; font-weight:700; color:var(--orange-dark); font-size:1rem; margin-bottom:4px;">¿Por qué registrar a tu mascota?</div>
         <p style="font-size:.88rem; color:var(--gray-1); line-height:1.6;">
-          El registro oficial te permite acceder a campañas de vacunación gratuitas, 
-          reportar extravíos con mayor efectividad y cumplir con el Reglamento Municipal de 
-          Tenencia Responsable de Animales.
+          El Padrón Municipal de Mascotas es una iniciativa del H. Ayuntamiento para
+          llevar un control sanitario más efectivo y cumplir con el Reglamento Municipal de
+          Tenencia Responsable de Mascotas.
         </p>
       </div>
       <a href="login.html" class="btn btn-primary" style="flex-shrink:0;">Comenzar →</a>
@@ -252,13 +255,6 @@
             <div class="chart-bar-val" style="color:white;">330</div>
           </div>
           <div class="chart-bar-item">
-            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Extraviado</div>
-            <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:2%; background:#FF9800;"></div>
-            </div>
-            <div class="chart-bar-val" style="color:white;">8</div>
-          </div>
-          <div class="chart-bar-item">
             <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Fallecido</div>
             <div class="chart-bar-track">
               <div class="chart-bar-fill" style="width:1%; background:#9E9E9E;"></div>
@@ -268,6 +264,18 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ── Mapa de Mascotas Registradas ── -->
+<section class="section" style="background:#f8f9fa;">
+  <div class="container">
+    <div class="section-header center">
+      <div class="section-eyebrow">Mapa Ciudadano</div>
+      <h2 class="section-title">Distribución de Mascotas</h2>
+      <p class="section-desc">Conoce la distribución geográfica de las mascotas registradas en El Grullo.</p>
+    </div>
+    <div id="map" style="height: 500px; width: 100%; border-radius: var(--radius-lg); border: 2px solid var(--gray-4); z-index: 1;"></div>
   </div>
 </section>
 
@@ -307,7 +315,7 @@
         <p class="cta-banner-desc">Es gratuito, tarda 5 minutos y obtienes tu acta oficial al instante.</p>
       </div>
       <div class="cta-banner-actions">
-        <a href="login.html#registro" class="btn btn-white btn-lg">🐾 Registrarme ahora</a>
+        <a href="login.html#registro" class="btn btn-white btn-lg">🐾 Registrar mascota</a>
         <a href="login.html" class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,.5); color:white;">Iniciar sesión</a>
       </div>
     </div>
@@ -341,7 +349,7 @@
       <div>
         <div class="footer-col-title">Portal ciudadano</div>
         <div class="footer-links">
-          <a href="login.html#registro">Crear cuenta</a>
+          <a href="login.html#registro">Registrar mascota</a>
           <a href="login.html">Iniciar sesión</a>
           <a href="dashboard.html">Mi dashboard</a>
           <a href="#como-funciona">¿Cómo funciona?</a>
@@ -546,12 +554,67 @@ function applyAppearanceConfig() {
   } catch(e) { /* silently ignore */ }
 }
 
+/* ── Render Map ── */
+function initMap() {
+  const EL_GRULLO = [19.8056, -104.2139];
+  const colonias = {
+    'Centro':    [19.8056, -104.2139],
+    'El Sabino': [19.8100, -104.2080],
+    'La Loma':   [19.8000, -104.2200],
+    'Las Flores':[19.8020, -104.2060],
+    'Otra':      [19.8090, -104.2170],
+  };
+
+  const leafletMap = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView(EL_GRULLO, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18,
+  }).addTo(leafletMap);
+
+  const orangeIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background:var(--orange);
+      width:24px; height:24px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:2px solid white;
+      box-shadow:0 2px 5px rgba(0,0,0,.3);
+    "></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -26],
+  });
+
+  const allPets = getTodasMascotas().filter(p => p.estatus !== 'fallecido');
+
+  allPets.forEach(pet => {
+    const base = colonias[pet.colonia] || EL_GRULLO;
+    const lat  = base[0] + (Math.random() - 0.5) * 0.012;
+    const lng  = base[1] + (Math.random() - 0.5) * 0.016;
+    L.marker([lat, lng], { icon: orangeIcon })
+      .addTo(leafletMap)
+      .bindPopup(`
+        <div style="font-family:'Inter',sans-serif; min-width:120px;">
+          <div style="font-weight:700; font-size:.85rem; margin-bottom:2px;">
+            ${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}
+          </div>
+          <div style="font-size:.75rem; color:#666;">
+            ${pet.especie.charAt(0).toUpperCase() + pet.especie.slice(1)} · ${pet.raza || 'Sin raza'}<br/>
+            <b>Colonia:</b> ${pet.colonia || 'No especificada'}
+          </div>
+        </div>
+      `);
+  });
+}
+
 /* ── Init ── */
 renderCampaigns();
 renderArticles();
 renderFAQ();
 applyFooterConfig();
 applyAppearanceConfig();
+initMap();
 </script>
 
 </body>

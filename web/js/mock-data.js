@@ -16,7 +16,7 @@ const MOCK = {
     vacunados: 187,
     esterilizados: 134,
     por_especie: { perro: 218, gato: 124 },
-    por_estatus: { activo: 330, extraviado: 8, fallecido: 4 },
+    por_estatus: { activo: 338, fallecido: 4 },
     registros_este_mes: 23,
   },
 
@@ -99,7 +99,7 @@ const MOCK = {
       color: "Café",
       vacunado: true,
       esterilizado: false,
-      estatus: "extraviado",
+      estatus: "activo",
       foto_url: null,
       dueno: "Laura Mendoza Cruz",
       colonia: "El Sabino",
@@ -218,14 +218,6 @@ const MOCK = {
       imagen_icono: "❤️",
       created_at: "2026-03-20",
     },
-    {
-      id: 4,
-      titulo: "¿Qué hacer si encuentras una mascota extraviada?",
-      contenido:
-        "Repórtala en este portal o acude a la Dirección de Medio Ambiente del Ayuntamiento. No la abandones. Juntos podemos reunirla con su familia.",
-      imagen_icono: "🔍",
-      created_at: "2026-04-01",
-    },
   ],
 
   faq: [
@@ -233,7 +225,7 @@ const MOCK = {
       id: 1,
       pregunta: "¿Por qué debo registrar a mi mascota?",
       respuesta:
-        "El registro es gratuito y te permite obtener el acta oficial de tu mascota, acceder a campañas de vacunación y esterilización a bajo costo, y contar con un respaldo digital en caso de extravío.",
+        "El registro es gratuito y te permite obtener el acta oficial de tu mascota, acceder a campañas de vacunación y esterilización a bajo costo, y contar con un respaldo digital oficial.",
     },
     {
       id: 2,
@@ -252,19 +244,13 @@ const MOCK = {
       pregunta: "¿Puedo registrar más de una mascota?",
       respuesta:
         "Sí. Con una sola cuenta puedes registrar todos los perros y gatos que tengas bajo tu cuidado. Cada mascota recibirá su propio folio único.",
-    },
-    {
-      id: 5,
-      pregunta: "¿Qué pasa si mi mascota se extravía?",
-      respuesta:
-        "Puedes reportar el extravío directamente en tu dashboard. El estatus de la mascota cambiará a 'extraviado' y el Ayuntamiento podrá ayudarte en la búsqueda.",
-    },
+    }
   ],
 
   usuario_actual: {
     id: 1,
     nombre: "Luis Fernando Vargas Ramírez",
-    correo: "luis.vargas@ejemplo.com",
+    curp: "VARL900101HJCXX00",
     rol: "ciudadano",
     activo: true,
     dueno: {

@@ -257,16 +257,6 @@
     <!-- ── Sección: Mis Mascotas ── -->
     <div class="dashboard-content" id="section-mis-mascotas">
 
-      <!-- Reporte de extravío (se muestra si hay mascotas extraviadas) -->
-      <div id="extravioBanner" style="display:none;" class="report-banner">
-        <div class="report-banner-icon">⚠️</div>
-        <div class="report-banner-text">
-          <div class="report-banner-title">Tienes una mascota reportada como extraviada</div>
-          <div class="report-banner-sub">Si ya la encontraste, actualiza su estatus para avisar a la comunidad.</div>
-        </div>
-        <button class="btn btn-sm" style="background:#FF9800; color:white; white-space:nowrap;" onclick="showSection('mis-mascotas', null)">Ver detalle</button>
-      </div>
-
       <!-- Stats row -->
       <div class="stats-grid" style="margin-bottom:28px;">
         <div class="stat-card">
@@ -308,10 +298,6 @@
         <button class="quick-action-btn" onclick="openModal('modal-nueva-mascota')">
           <span class="quick-action-icon">🐾</span>
           Registrar mascota
-        </button>
-        <button class="quick-action-btn" onclick="openModal('modal-extraviado')">
-          <span class="quick-action-icon">🔍</span>
-          Reportar extravío
         </button>
         <button class="quick-action-btn" onclick="showSection('campanas', document.getElementById('nav-campanas'))">
           <span class="quick-action-icon">💉</span>
@@ -359,7 +345,7 @@
             </div>
             <div>
               <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:1.1rem;" id="profileName">—</div>
-              <div style="font-size:.82rem; color:var(--gray-2);" id="profileEmail">—</div>
+              <div style="font-size:.82rem; color:var(--gray-2); letter-spacing: .05em;" id="profileCurp">—</div>
               <span class="badge badge-green" style="margin-top:6px;">Cuenta activa</span>
             </div>
           </div>
@@ -375,8 +361,8 @@
             </div>
           </div>
           <div class="form-group" style="margin-bottom:16px;">
-            <label>Correo electrónico</label>
-            <input class="form-control" type="email" id="perfil-email-field" />
+            <label>CURP (Identificador único)</label>
+            <input class="form-control" type="text" id="perfil-curp-field" readonly style="background: var(--surface); color: var(--gray-2);" />
           </div>
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
@@ -463,21 +449,18 @@
             <div class="form-group">
               <label for="pet-especie">Especie *</label>
               <select id="pet-especie" class="form-control" required>
-                <option value="">Seleccionar...</option>
-                <option value="perro">🐕 Perro</option>
-                <option value="gato">🐈 Gato</option>
-                <option value="conejo">🐇 Conejo</option>
-                <option value="ave">🦜 Ave</option>
-                <option value="otro">🐾 Otro</option>
-              </select>
+              <option value="">Seleccionar...</option>
+              <option value="perro">🐕 Perro</option>
+              <option value="gato">🐈 Gato</option>
+            </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="pet-raza">Raza</label>
-              <input type="text" id="pet-raza" class="form-control" placeholder="Ej. Labrador, Siamés..." />
-            </div>
+            <label for="pet-raza">Raza (Opcional)</label>
+            <input type="text" id="pet-raza" class="form-control" placeholder="Ej. Labrador, Cruzado, No se sabe..." />
+          </div>
             <div class="form-group">
               <label for="pet-edad">Edad (años)</label>
               <input type="number" id="pet-edad" class="form-control" min="0" max="30" placeholder="Ej. 3" />
@@ -525,39 +508,6 @@
   </div>
 </div>
 
-<!-- ── Modal: Reportar Extravío ── -->
-<div class="modal-overlay" id="modal-extraviado">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title">🔍 Reportar mascota extraviada</h2>
-      <button class="modal-close" onclick="closeModal('modal-extraviado')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:#FFF3E0; border:1px solid #FF9800; border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; font-size:.82rem; color:#E65100;">
-        ⚠️ Al reportar a tu mascota como extraviada, el Ayuntamiento y la comunidad serán notificados para ayudarte a encontrarla.
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>¿Cuál de tus mascotas se extravió? *</label>
-        <select class="form-control" id="extraviado-mascota">
-          <!-- Filled by JS -->
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>Fecha en que se extravió *</label>
-        <input type="date" class="form-control" id="extraviado-fecha" />
-      </div>
-      <div class="form-group" style="margin-bottom:14px;">
-        <label>Zona o colonia donde fue visto(a) por última vez</label>
-        <input type="text" class="form-control" id="extraviado-zona" placeholder="Ej. Centro, cerca del mercado..." />
-      </div>
-      <div class="form-group">
-        <label>Señas particulares adicionales</label>
-        <textarea class="form-control" id="extraviado-senas" rows="2" placeholder="Ej. Usa collar azul, tiene una mancha en la pata derecha..."></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-extraviado')">Cancelar</button>
-      <button class="btn btn-primary" style="background:#FF9800;" onclick="reportarExtravio()">🔍 Enviar reporte</button>
     </div>
   </div>
 </div>
@@ -594,7 +544,7 @@ const session = (() => {
 })();
 
 const sessionNombre = session.nombre || 'Ciudadano';
-const sessionEmail  = session.email  || 'ciudadano@demo.com';
+const sessionCurp   = session.curp   || 'VARL900101HJCXX00';
 const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
 // Apply to sidebar
@@ -608,9 +558,9 @@ if (session.rol === 'admin') {
 // Apply to profile section
 document.getElementById('profileAvatar').textContent    = initials;
 document.getElementById('profileName').textContent      = sessionNombre;
-document.getElementById('profileEmail').textContent     = sessionEmail;
+document.getElementById('profileCurp').textContent      = sessionCurp;
 document.getElementById('perfil-nombre').value          = sessionNombre;
-document.getElementById('perfil-email-field').value     = sessionEmail;
+document.getElementById('perfil-curp-field').value      = sessionCurp;
 
 /* ══════════════════════════════════════════════════ */
 /*  DATA                                              */
@@ -657,22 +607,11 @@ function renderPets() {
   const container = document.getElementById('petsContainer');
   const total     = myPets.length;
   const vacunadas = myPets.filter(p => p.vacunado).length;
-  const extraviadas = myPets.filter(p => p.estatus === 'extraviado').length;
 
   document.getElementById('statTotal').textContent    = total;
   document.getElementById('statVacunadas').textContent = vacunadas;
   document.getElementById('statActas').textContent    = total;
   document.getElementById('statEstado').textContent   = total > 0 ? '✓' : '—';
-
-  // Show/hide extravío banner
-  document.getElementById('extravioBanner').style.display = extraviadas > 0 ? 'flex' : 'none';
-
-  // Populate extravío select
-  const sel = document.getElementById('extraviado-mascota');
-  sel.innerHTML = myPets.map((p, i) => `<option value="${i}">${p.nombre} (${p.especie})</option>`).join('');
-
-  // Set default date for extravío
-  document.getElementById('extraviado-fecha').valueAsDate = new Date();
 
   if (total === 0) {
     container.innerHTML = `
@@ -693,7 +632,6 @@ function renderPets() {
     const color = CARD_COLORS[i % CARD_COLORS.length];
     const statusBadge = {
       activo:    '<span class="badge badge-green">✓ Activo</span>',
-      extraviado:'<span class="badge badge-amber">⚠ Extraviado</span>',
       fallecido: '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">• Fallecido</span>',
     }[pet.estatus] || '';
 
@@ -705,7 +643,6 @@ function renderPets() {
       <div class="pet-card" id="petcard-${i}">
         <div class="pet-card-banner" style="background:${color};">
           ${bannerContent}
-          ${pet.estatus === 'extraviado' ? '<div style="position:absolute;top:10px;right:10px;"><span class="badge badge-amber">⚠ Extraviado</span></div>' : ''}
         </div>
         <div class="pet-card-body">
           <div class="pet-card-name">${icon} ${pet.nombre} ${statusBadge}</div>
@@ -830,19 +767,7 @@ function handleNewPet(e) {
   showToast(`✅ ${nombre} registrado/a · Folio: ${folio}`, 'success');
 }
 
-/* ══════════════════════════════════════════════════ */
-/*  REPORTAR EXTRAVÍO                                 */
-/* ══════════════════════════════════════════════════ */
-function reportarExtravio() {
-  const idx   = parseInt(document.getElementById('extraviado-mascota').value);
-  const fecha = document.getElementById('extraviado-fecha').value;
-  if (isNaN(idx) || !fecha) { showToast('⚠️ Completa los campos requeridos', 'error'); return; }
 
-  myPets[idx].estatus = 'extraviado';
-  renderPets();
-  closeModal('modal-extraviado');
-  showToast(`🔍 Reporte enviado — ${myPets[idx].nombre} marcado como extraviado. El Ayuntamiento fue notificado.`, 'success');
-}
 
 /* ══════════════════════════════════════════════════ */
 /*  DOWNLOAD ACTA                                     */

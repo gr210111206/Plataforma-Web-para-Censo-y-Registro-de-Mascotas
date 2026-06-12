@@ -825,12 +825,6 @@
       <span class="icon">⚙️</span> Configuración sitio
     </a>
 
-    <div class="sidebar-section" style="margin-top:8px;">Alertas</div>
-    <a class="sidebar-link" onclick="showAdmin('seguimiento'); filtrarPorEstatus('extraviado')">
-      <span class="icon">⚠️</span> Extraviadas
-      <span class="sidebar-badge amber">8</span>
-    </a>
-
     <div class="sidebar-bottom">
       <div class="sidebar-user">
         <div class="sidebar-avatar" style="background:#C96200;">AD</div>
@@ -943,7 +937,6 @@
         <select class="form-control" id="segFilterEstatus" onchange="filterSeguimiento()" style="width:150px;">
           <option value="">Estatus...</option>
           <option value="activo">Activo</option>
-          <option value="extraviado">Extraviado</option>
           <option value="fallecido">Fallecido</option>
         </select>
       </div>
@@ -1898,27 +1891,14 @@ function initMap() {
     popupAnchor: [0, -30],
   });
 
-  const extraIcon = L.divIcon({
-    className: '',
-    html: `<div style="
-      background:#FF9800;
-      width:28px; height:28px;
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      border:3px solid white;
-      box-shadow:0 2px 8px rgba(0,0,0,.3);
-    "></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
-  });
+
 
   // Plot all pets with small random offsets around their colonia
   allPets.forEach(pet => {
     const base = colonias[pet.colonia] || EL_GRULLO;
     const lat  = base[0] + (Math.random() - 0.5) * 0.012;
     const lng  = base[1] + (Math.random() - 0.5) * 0.016;
-    const icon = pet.estatus === 'extraviado' ? extraIcon : orangeIcon;
+    const icon = orangeIcon;
     L.marker([lat, lng], { icon })
       .addTo(leafletMap)
       .bindPopup(`
@@ -1930,7 +1910,7 @@ function initMap() {
             ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'}<br/>
             Dueño: ${pet.dueno || '—'}<br/>
             <b>Folio:</b> ${pet.folio}<br/>
-            <b>Estatus:</b> <span style="color:${pet.estatus === 'extraviado' ? '#FF9800' : '#4CAF50'};">${capitalize(pet.estatus)}</span>
+            <b>Estatus:</b> <span style="color:#4CAF50;">${capitalize(pet.estatus)}</span>
           </div>
         </div>
       `);
@@ -1943,7 +1923,6 @@ function initMap() {
     div.style.cssText = 'background:white;padding:8px 12px;border-radius:8px;font-size:.72rem;box-shadow:0 2px 8px rgba(0,0,0,.1);font-family:Inter,sans-serif;';
     div.innerHTML = `
       <div style="margin-bottom:4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F27A00;margin-right:6px;"></span>Activo</div>
-      <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF9800;margin-right:6px;"></span>Extraviado</div>
     `;
     return div;
   };
@@ -2046,7 +2025,7 @@ function renderSeguimiento(data) {
   }
   grid.innerHTML = data.map((pet, i) => {
     const icon = pet.especie === 'gato' ? '🐈' : '🐕';
-    const statusColor = { activo: 'var(--green)', extraviado: 'var(--amber)', fallecido: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
+    const statusColor = { activo: 'var(--green)', fallecido: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
     return `
     <div class="pet-detail-card">
       <div style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-2); margin-bottom:12px;">Datos de la mascota</div>
@@ -2102,7 +2081,7 @@ function filterSeguimiento() {
 }
 
 function changeEstatus(i) {
-  const opts = ['activo', 'extraviado', 'fallecido'];
+  const opts = ['activo', 'fallecido'];
   const cur = allPets[i].estatus;
   const next = opts[(opts.indexOf(cur) + 1) % opts.length];
   allPets[i].estatus = next;
