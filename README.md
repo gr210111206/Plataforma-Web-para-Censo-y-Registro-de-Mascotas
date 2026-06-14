@@ -55,7 +55,6 @@ web/
 ### Panel Ciudadano (`dashboard.html`)
 - Registro y administración de mascotas
 - Descarga de acta oficial con folio único
-- Reporte de mascota extraviada
 - Perfil editable con foto de avatar
 - Sección de campañas y artículos
 
