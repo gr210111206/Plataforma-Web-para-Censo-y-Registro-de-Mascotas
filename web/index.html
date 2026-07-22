@@ -600,9 +600,10 @@ function initMap() {
   const allPets = getTodasMascotas().filter(p => p.estatus !== 'fallecido');
 
   allPets.forEach(pet => {
-    const base = colonias[pet.colonia] || EL_GRULLO;
-    const lat  = base[0] + (Math.random() - 0.5) * 0.012;
-    const lng  = base[1] + (Math.random() - 0.5) * 0.016;
+    const colKey = Object.keys(colonias).find(k => k.toLowerCase() === (pet.colonia || '').toLowerCase());
+    const base   = colKey ? colonias[colKey] : EL_GRULLO;
+    const lat    = base[0] + (Math.random() - 0.5) * 0.012;
+    const lng    = base[1] + (Math.random() - 0.5) * 0.016;
     L.marker([lat, lng], { icon: orangeIcon })
       .addTo(leafletMap)
       .bindPopup(`
