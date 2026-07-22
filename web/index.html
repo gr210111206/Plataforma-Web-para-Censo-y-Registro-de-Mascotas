@@ -158,8 +158,8 @@
         <div class="step-num">3</div>
         <div class="step-title">Descarga tu acta</div>
         <p class="step-desc">
-          Recibe de inmediato el acta oficial con folio único (<code>EG-2026-XXXXX</code>) 
-          firmada por el Ayuntamiento.
+          Recibe de inmediato la ficha oficial con folio único (<code>REMAC-GRU-XXXXX</code>) 
+          y código QR generado por el Ayuntamiento.
         </p>
       </div>
     </div>
@@ -248,14 +248,14 @@
         <div style="font-family:'Outfit',sans-serif; font-weight:700; color:white; margin-bottom:20px; font-size:1rem;">Por estatus</div>
         <div class="chart-bar-container">
           <div class="chart-bar-item">
-            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Activo</div>
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Alta</div>
             <div class="chart-bar-track">
               <div class="chart-bar-fill" style="width:96%; background:#4CAF50;"></div>
             </div>
-            <div class="chart-bar-val" style="color:white;">330</div>
+            <div class="chart-bar-val" style="color:white;">338</div>
           </div>
           <div class="chart-bar-item">
-            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Fallecido</div>
+            <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Baja</div>
             <div class="chart-bar-track">
               <div class="chart-bar-fill" style="width:1%; background:#9E9E9E;"></div>
             </div>
@@ -558,11 +558,22 @@ function applyAppearanceConfig() {
 function initMap() {
   const EL_GRULLO = [19.8056, -104.2139];
   const colonias = {
-    'Centro':    [19.8056, -104.2139],
-    'El Sabino': [19.8100, -104.2080],
-    'La Loma':   [19.8000, -104.2200],
-    'Las Flores':[19.8020, -104.2060],
-    'Otra':      [19.8090, -104.2170],
+    'El Grullo centro':      [19.8056, -104.2139],
+    '10 de mayo':            [19.8070, -104.2155],
+    '7 de abril':            [19.8045, -104.2120],
+    'Charco de los adobes':  [19.8020, -104.2170],
+    'Colomos':               [19.8090, -104.2110],
+    'Del álamo':             [19.8030, -104.2090],
+    'Del sur':               [19.8000, -104.2140],
+    'El álamo':              [19.8040, -104.2080],
+    'El cerrito':            [19.8080, -104.2180],
+    'Jardines de manantlán': [19.8100, -104.2060],
+    'La cañada':             [19.8010, -104.2160],
+    'Las flores':            [19.8060, -104.2100],
+    'Los pinos':             [19.8075, -104.2130],
+    'Magisterial':           [19.8015, -104.2115],
+    'Nueva creación':        [19.8085, -104.2145],
+    'San José':              [19.8050, -104.2165],
   };
 
   const leafletMap = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView(EL_GRULLO, 14);

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Perfil público de mascota registrada en el Padrón Municipal REMAC de El Grullo, Jalisco." />
+  <title>Mascota REMAC — El Grullo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #fff7ed 0%, #fff3e0 50%, #fde8c8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 20px 60px rgba(242,122,0,.18), 0 4px 16px rgba(0,0,0,.08);
+      max-width: 400px;
+      width: 100%;
+      overflow: hidden;
+      animation: slideUp .45s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(32px) scale(.96); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);   }
+    }
+
+    /* ── Header ── */
+    .card-header {
+      background: linear-gradient(135deg, #F27A00 0%, #FF9A2E 100%);
+      padding: 28px 28px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .card-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: .72rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: .04em;
+      margin-bottom: 16px;
+    }
+    .card-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid white;
+      background: rgba(255,255,255,.25);
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    }
+    .card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .card-pet-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -.02em;
+    }
+    .card-pet-sub {
+      font-size: .9rem;
+      color: rgba(255,255,255,.85);
+      margin-top: 4px;
+    }
+
+    /* ── Body ── */
+    .card-body { padding: 24px 28px; }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon {
+      width: 38px;
+      height: 38px;
+      background: #FFF3E6;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .info-content {}
+    .info-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #B0B0B0;
+      margin-bottom: 2px;
+    }
+    .info-value {
+      font-size: .95rem;
+      font-weight: 600;
+      color: #1A1A1A;
+      line-height: 1.3;
+    }
+    .info-value.mono {
+      font-family: monospace;
+      font-size: .88rem;
+      color: #C96200;
+    }
+
+    /* ── Call button ── */
+    .call-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #F27A00, #FF9A2E);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 20px;
+      transition: all .25s ease;
+      box-shadow: 0 4px 16px rgba(242,122,0,.35);
+    }
+    .call-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,122,0,.45); }
+    .call-btn:active { transform: translateY(0); }
+
+    .sms-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px;
+      background: white;
+      color: #1A1A1A;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 10px;
+      transition: all .25s ease;
+    }
+    .sms-btn:hover { border-color: #F27A00; color: #F27A00; }
+
+    /* ── Footer ── */
+    .card-footer {
+      background: #fafafa;
+      border-top: 1px solid #f0f0f0;
+      padding: 16px 28px;
+      text-align: center;
+    }
+    .card-footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #B0B0B0;
+      font-size: .78rem;
+    }
+    .card-footer-logo strong { color: #F27A00; }
+
+    /* ── Estatus badge ── */
+    .estatus-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .pill-alta { background: #E8F5E9; color: #2E7D32; }
+    .pill-baja { background: #F5F5F5; color: #9E9E9E; }
+
+    /* ── Not found ── */
+    .not-found {
+      text-align: center;
+      padding: 40px 28px;
+    }
+    .not-found-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .not-found h2 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: #1A1A1A; margin-bottom: 8px; }
+    .not-found p  { font-size: .88rem; color: #7A7A7A; }
+  </style>
+</head>
+<body>
+
+<div class="card" id="pet-card">
+  <!-- JS will render content here -->
+  <div class="not-found">
+    <div class="not-found-icon">🔍</div>
+    <h2>Cargando...</h2>
+    <p>Buscando información de la mascota.</p>
+  </div>
+</div>
+
+<script src="js/mock-data.js"></script>
+<script>
+// ── Read ID from URL params ──
+const params = new URLSearchParams(window.location.search);
+const petId  = params.get('id') || params.get('folio');
+
+function renderPet(pet) {
+  const estaEspecie = pet.especie === 'gato' ? '🐈' : '🐕';
+  const estatusPill = pet.estatus === 'Alta'
+    ? '<span class="estatus-pill pill-alta">● Alta</span>'
+    : '<span class="estatus-pill pill-baja">● Baja</span>';
+
+  const avatarContent = pet.foto_url && pet.foto_url.length > 10
+    ? `<img src="${pet.foto_url}" alt="${pet.nombre}" />`
+    : estaEspecie;
+
+  const telefono = pet.telefono || '';
+  const telefonoLimpio = telefono.replace(/\D/g, '');
+
+  document.getElementById('pet-card').innerHTML = `
+    <div class="card-header">
+      <div class="card-header-badge">🐾 Padrón Municipal REMAC · El Grullo</div>
+      <div class="card-avatar">${avatarContent}</div>
+      <div class="card-pet-name">${pet.nombre}</div>
+      <div class="card-pet-sub">${pet.especie.charAt(0).toUpperCase() + pet.especie.slice(1)}${pet.raza ? ' · ' + pet.raza : ''} &nbsp; ${estatusPill}</div>
+    </div>
+
+    <div class="card-body">
+
+      <div class="info-row">
+        <div class="info-icon">🆔</div>
+        <div class="info-content">
+          <div class="info-label">Folio REMAC</div>
+          <div class="info-value mono">${pet.id}</div>
+        </div>
+      </div>
+
+      ${pet.sexo ? `
+      <div class="info-row">
+        <div class="info-icon">${pet.sexo === 'hembra' ? '♀️' : '♂️'}</div>
+        <div class="info-content">
+          <div class="info-label">Sexo · Edad</div>
+          <div class="info-value">${pet.sexo.charAt(0).toUpperCase() + pet.sexo.slice(1)}${pet.edad_label ? ' · ' + pet.edad_label : ''}</div>
+        </div>
+      </div>` : ''}
+
+      ${pet.color ? `
+      <div class="info-row">
+        <div class="info-icon">🎨</div>
+        <div class="info-content">
+          <div class="info-label">Color</div>
+          <div class="info-value">${pet.color}</div>
+        </div>
+      </div>` : ''}
+
+      ${pet.senias_particulares ? `
+      <div class="info-row">
+        <div class="info-icon">🔍</div>
+        <div class="info-content">
+          <div class="info-label">Señas particulares</div>
+          <div class="info-value">${pet.senias_particulares}</div>
+        </div>
+      </div>` : ''}
+
+      <div class="info-row">
+        <div class="info-icon">👤</div>
+        <div class="info-content">
+          <div class="info-label">Dueño / Responsable</div>
+          <div class="info-value">${pet.persona || '—'}</div>
+        </div>
+      </div>
+
+      ${telefono ? `
+      <div class="info-row">
+        <div class="info-icon">📞</div>
+        <div class="info-content">
+          <div class="info-label">Número de contacto</div>
+          <div class="info-value">${telefono}</div>
+        </div>
+      </div>` : ''}
+
+      ${pet.colonia ? `
+      <div class="info-row">
+        <div class="info-icon">📍</div>
+        <div class="info-content">
+          <div class="info-label">Colonia</div>
+          <div class="info-value">${pet.colonia}${pet.direccion ? ' · ' + pet.direccion : ''}</div>
+        </div>
+      </div>` : ''}
+
+      ${telefono ? `
+        <a class="call-btn" href="tel:${telefonoLimpio}">
+          📞 Llamar al dueño
+        </a>
+        <a class="sms-btn" href="sms:${telefonoLimpio}">
+          💬 Enviar mensaje
+        </a>
+      ` : ''}
+    </div>
+
+    <div class="card-footer">
+      <div class="card-footer-logo">
+        🐾 &nbsp; Registrado en &nbsp; <strong>REMAC</strong> &nbsp;—&nbsp; H. Ayuntamiento de El Grullo, Jal.
+      </div>
+    </div>
+  `;
+}
+
+function renderNotFound(id) {
+  document.getElementById('pet-card').innerHTML = `
+    <div class="not-found">
+      <div class="not-found-icon">❓</div>
+      <h2>Mascota no encontrada</h2>
+      <p>No se encontró ninguna mascota con el folio <strong>${id || '—'}</strong> en el padrón REMAC.</p>
+      <p style="margin-top:12px; font-size:.8rem;">Si crees que es un error, contacta al Ayuntamiento.</p>
+    </div>
+    <div class="card-footer">
+      <div class="card-footer-logo">
+        🐾 &nbsp; <strong>REMAC</strong> &nbsp;—&nbsp; H. Ayuntamiento de El Grullo, Jal.
+      </div>
+    </div>
+  `;
+}
+
+// ── Find pet ──
+function findPet(id) {
+  if (!id) return null;
+  const todasMock = getTodasMascotas();
+  return todasMock.find(p => p.id === id) || null;
+}
+
+const pet = findPet(petId);
+if (pet) {
+  renderPet(pet);
+  document.title = `${pet.nombre} — REMAC · El Grullo`;
+} else {
+  renderNotFound(petId);
+}
+</script>
+
+</body>
+</html>

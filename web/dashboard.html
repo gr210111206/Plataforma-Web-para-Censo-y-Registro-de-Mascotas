@@ -532,6 +532,8 @@
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/mock-data.js"></script>
 <script>
 /* ══════════════════════════════════════════════════ */
@@ -630,14 +632,19 @@ function renderPets() {
   container.innerHTML = myPets.map((pet, i) => {
     const icon  = SPECIES_ICONS[pet.especie] || '🐾';
     const color = CARD_COLORS[i % CARD_COLORS.length];
-    const statusBadge = {
-      activo:    '<span class="badge badge-green">✓ Activo</span>',
-      fallecido: '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">• Fallecido</span>',
-    }[pet.estatus] || '';
 
-    const bannerContent = pet.foto
-      ? `<img src="${pet.foto}" alt="${pet.nombre}" /><div class="pet-card-banner-overlay"></div>`
+    // REMAC: Alta/Baja estatus
+    const estatusOk = (pet.estatus === 'Alta' || pet.estatus === 'activo');
+    const statusBadge = estatusOk
+      ? '<span class="badge badge-green">✓ Alta</span>'
+      : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Baja</span>';
+
+    const bannerContent = (pet.foto_url && pet.foto_url.length > 10)
+      ? `<img src="${pet.foto_url}" alt="${pet.nombre}" /><div class="pet-card-banner-overlay"></div>`
       : icon;
+
+    const folio = pet.id || pet.folio || '—';
+    const edad  = pet.edad_label || (pet.edad_anios ? pet.edad_anios + ' años' : '');
 
     return `
       <div class="pet-card" id="petcard-${i}">
@@ -647,16 +654,18 @@ function renderPets() {
         <div class="pet-card-body">
           <div class="pet-card-name">${icon} ${pet.nombre} ${statusBadge}</div>
           <div class="pet-card-info">
-            ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'} · ${pet.edad_anios ?? '?'} años · ${capitalize(pet.sexo || '')}
+            ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'} · ${edad}
           </div>
           <div class="pet-card-tags">
             ${pet.vacunado    ? '<span class="badge badge-green">💉 Vacunado</span>'   : '<span class="badge badge-red">💉 Sin vacunar</span>'}
             ${pet.esterilizado ? '<span class="badge badge-blue">✂️ Esterilizado</span>' : ''}
+            ${pet.color ? `<span class="badge" style="background:#F5F5F5;color:var(--gray-1);">&#127912; ${pet.color}</span>` : ''}
           </div>
-          <div class="pet-card-folio">Folio: ${pet.folio}</div>
+          <div class="pet-card-folio">${folio}</div>
           <div class="pet-card-actions">
             <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">👁️ Ver</button>
-            <button class="btn btn-primary btn-sm" onclick="downloadActa('${pet.folio}')" style="flex:1;">📄 Acta</button>
+            <button class="btn btn-ghost btn-sm" onclick="verQR(${i})"    style="flex:1;">🔲 QR</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadActa('${folio}')" style="flex:1;">📄 Acta</button>
           </div>
         </div>
       </div>`;
@@ -703,25 +712,113 @@ function verDetalle(i) {
   const pet  = myPets[i];
   const SPECIES_ICONS = { perro:'🐕', gato:'🐈', conejo:'🐇', ave:'🦜' };
   const icon = SPECIES_ICONS[pet.especie] || '🐾';
+  const folio = pet.id || pet.folio || '—';
+  const edad  = pet.edad_label || (pet.edad_anios ? pet.edad_anios + ' años' : 'N/D');
+
   document.getElementById('detalle-titulo').textContent = `${icon} ${pet.nombre}`;
-  document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(pet.folio);
+  document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(folio);
 
   document.getElementById('detalle-body').innerHTML = `
-    ${pet.foto ? `<img src="${pet.foto}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
+    ${(pet.foto_url && pet.foto_url.length > 10) ? `<img src="${pet.foto_url}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      ${field('Nombre',      pet.nombre)}
-      ${field('Especie',     capitalize(pet.especie))}
-      ${field('Raza',        pet.raza || 'No especificada')}
-      ${field('Edad',        `${pet.edad_anios ?? '?'} años`)}
-      ${field('Sexo',        capitalize(pet.sexo || ''))}
-      ${field('Color',       pet.color || 'No especificado')}
-      ${field('Vacunado',    pet.vacunado    ? '✅ Sí' : '❌ No')}
-      ${field('Esterilizado',pet.esterilizado ? '✅ Sí' : '❌ No')}
-      ${field('Estatus',     capitalize(pet.estatus))}
-      ${field('Folio',       pet.folio)}
-      ${field('Registro',    pet.created_at || 'N/D')}
-    </div>`;
+      ${field('ID / Folio',    folio)}
+      ${field('ANIMAL',        pet.nombre)}
+      ${field('ESPECIE',       capitalize(pet.especie))}
+      ${field('RAZA',          pet.raza || 'No especificada')}
+      ${field('EDAD',          edad)}
+      ${field('SEXO',          capitalize(pet.sexo || ''))}
+      ${field('COLOR',         pet.color || '—')}
+      ${field('SEÑAS',         pet.senias_particulares || 'Ninguna')}
+      ${field('PERSONA',       pet.persona || '—')}
+      ${field('TELÉFONO',      pet.telefono || '—')}
+      ${field('DIRECCIÓN',     pet.direccion || '—')}
+      ${field('COLONIA',       pet.colonia || '—')}
+      ${field('FECHA',         pet.fecha_registro || pet.created_at || 'N/D')}
+      ${field('ESTATUS',       pet.estatus || 'Alta')}
+      ${field('Vacunado',      pet.vacunado    ? '✅ Sí' : '❌ No')}
+      ${field('Esterilizado',  pet.esterilizado ? '✅ Sí' : '❌ No')}
+    </div>
+    ${pet.link_publico ? `
+    <div style="margin-top:14px; padding:12px; background:var(--orange-pale); border-radius:var(--radius); border:1px solid rgba(242,122,0,.2);">
+      <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; color:var(--orange-dark); margin-bottom:4px;">Link público</div>
+      <a href="${pet.link_publico}" target="_blank" style="font-size:.8rem; color:var(--orange); word-break:break-all;">${pet.link_publico}</a>
+    </div>` : ''}`;
   openModal('modal-detalle');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  VER QR                                            */
+/* ══════════════════════════════════════════════════ */
+function verQR(i) {
+  const pet   = myPets[i];
+  const folio = pet.id || pet.folio || 'REMAC-GRU-00001';
+  const link  = pet.link_publico || `mascota.html?id=${folio}`;
+
+  // Build or reuse QR modal
+  let qrModal = document.getElementById('modal-qr');
+  if (!qrModal) {
+    qrModal = document.createElement('div');
+    qrModal.className = 'modal-overlay';
+    qrModal.id = 'modal-qr';
+    qrModal.innerHTML = `
+      <div class="modal" style="max-width:340px; text-align:center;">
+        <div class="modal-header">
+          <h2 class="modal-title" id="qr-titulo">Código QR</h2>
+          <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+          <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
+          <div id="qr-info" style="font-size:.82rem; color:var(--gray-1); text-align:center;"></div>
+          <a id="qr-link-btn" href="#" target="_blank" class="btn btn-primary" style="width:100%;">🌐 Abrir página pública</a>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="document.getElementById('modal-qr').classList.remove('open')">Cerrar</button>
+          <button class="btn btn-primary" onclick="printQR()">🖨️ Imprimir QR</button>
+        </div>
+      </div>`;
+    document.body.appendChild(qrModal);
+  }
+
+  // Clear previous QR
+  const qrCanvas = document.getElementById('qr-canvas');
+  qrCanvas.innerHTML = '';
+
+  // Generate QR
+  new QRCode(qrCanvas, {
+    text: link,
+    width:  200,
+    height: 200,
+    colorDark:  '#1A1A1A',
+    colorLight: '#FFFFFF',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+
+  // Info below QR
+  document.getElementById('qr-titulo').textContent = `🔲 QR — ${pet.nombre}`;
+  document.getElementById('qr-info').innerHTML = `
+    <strong style="font-size:.95rem; color:var(--dark);">🐾 ${pet.nombre}</strong><br/>
+    ${capitalize(pet.especie)}${pet.raza ? ' · ' + pet.raza : ''}<br/>
+    ${pet.persona ? '👤 ' + pet.persona : ''}
+    ${pet.telefono ? '<br/>📞 <strong>' + pet.telefono + '</strong>' : ''}<br/>
+    <span style="font-family:monospace; font-size:.75rem; color:var(--orange-dark);">${folio}</span>
+  `;
+  document.getElementById('qr-link-btn').href = link;
+  qrModal.classList.add('open');
+}
+
+function printQR() {
+  const canvas = document.querySelector('#qr-canvas canvas');
+  if (!canvas) return;
+  const win = window.open('');
+  win.document.write(`
+    <html><head><title>QR - Mascota REMAC</title></head>
+    <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Arial;gap:12px;">
+      <img src="${canvas.toDataURL()}" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
+      <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('🔲 QR — ','')}</div>
+      <div style="font-size:12px;color:#888;">Padrón Municipal REMAC · H. Ayuntamiento El Grullo</div>
+    </body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
 }
 
 function field(label, value) {

@@ -1,6 +1,6 @@
 /**
  * MOCK DATA — Plataforma Web Censo y Registro de Mascotas
- * H. Ayuntamiento de El Grullo, Jalisco
+ * H. Ayuntamiento de El Grullo, Jalisco — Sistema REMAC
  *
  * NOTA: Cuando el backend esté listo, reemplaza las funciones de este
  * archivo con llamadas fetch() a la API REST.
@@ -9,6 +9,60 @@
  *   return res.json();
  */
 
+/* ── Catálogos ── */
+const RAZAS_PERRO = [
+  'Chihuahua', 'Labrador Retriever', 'Pastor alemán', 'Bulldog',
+  'Golden retriever', 'Pug', 'Mestizo', 'Husky siberiano',
+  'Pitbull terrier', 'Poodle/Caniche', 'Dálmata', 'Beagle',
+  'Rottweiler', 'Doberman', 'Boxer', 'Schnauzer', 'Cocker Spaniel',
+  'Yorkshire Terrier', 'Shih Tzu', 'Dachshund', 'Border Collie',
+  'French Bulldog', 'Pomerania', 'Maltés', 'Otro'
+];
+
+const RAZAS_GATO = [
+  'Siamés', 'Persa', 'Maine Coon', 'Ragdoll', 'Bengalí',
+  'Abisinio', 'Birmano', 'Sphynx', 'Angora', 'Scottish Fold',
+  'Doméstico de pelo corto', 'Doméstico de pelo largo', 'Mestizo', 'Otro'
+];
+
+const COLONIAS_EL_GRULLO = [
+  '10 de mayo', '7 de abril', 'Charco de los adobes', 'Colomos',
+  'Del álamo', 'Del sur', 'El álamo', 'El cerrito',
+  'El Grullo centro', 'Jardines de manantlán', 'La cañada',
+  'Las flores', 'Los pinos', 'Magisterial', 'Nueva creación',
+  'Potrero grande', 'San José', 'Villas del sol'
+];
+
+const EDADES_OPCIONES = [
+  { valor: '0.1',  label: '1 mes' },
+  { valor: '0.2',  label: '2 meses' },
+  { valor: '0.3',  label: '3 meses' },
+  { valor: '0.4',  label: '4 meses' },
+  { valor: '0.5',  label: '5 meses' },
+  { valor: '0.6',  label: '6 meses' },
+  { valor: '0.7',  label: '7 meses' },
+  { valor: '0.8',  label: '8 meses' },
+  { valor: '0.9',  label: '9 meses' },
+  { valor: '0.10', label: '10 meses' },
+  { valor: '0.11', label: '11 meses' },
+  { valor: '1',    label: '1 año' },
+  { valor: '2',    label: '2 años' },
+  { valor: '3',    label: '3 años' },
+  { valor: '4',    label: '4 años' },
+  { valor: '5',    label: '5 años' },
+  { valor: '6',    label: '6 años' },
+  { valor: '7',    label: '7 años' },
+  { valor: '8',    label: '8 años' },
+  { valor: '9',    label: '9 años' },
+  { valor: '10',   label: '10 años' },
+  { valor: '11',   label: '11 años' },
+  { valor: '12',   label: '12 años' },
+  { valor: '13',   label: '13 años' },
+  { valor: '14',   label: '14 años' },
+  { valor: '15',   label: '15 años' },
+  { valor: '15+',  label: 'Más de 15 años' },
+];
+
 const MOCK = {
   stats: {
     total_mascotas: 342,
@@ -16,291 +70,354 @@ const MOCK = {
     vacunados: 187,
     esterilizados: 134,
     por_especie: { perro: 218, gato: 124 },
-    por_estatus: { activo: 338, fallecido: 4 },
+    por_estatus: { alta: 338, baja: 4 },
     registros_este_mes: 23,
   },
 
   mascotas: [
     {
-      id: 1,
-      nombre: "Max",
-      especie: "perro",
-      raza: "Labrador",
-      edad_anios: 3,
-      sexo: "macho",
-      color: "Dorado",
+      id: 'REMAC-GRU-00001',
+      nombre: 'Max',
+      especie: 'perro',
+      raza: 'Labrador Retriever',
+      edad: '3',
+      edad_label: '3 años',
+      sexo: 'macho',
+      color: 'Dorado',
+      senias_particulares: 'Mancha blanca en el pecho',
       vacunado: true,
       esterilizado: false,
-      estatus: "activo",
+      estatus: 'Alta',
       foto_url: null,
-      dueno: "María García López",
-      colonia: "Centro",
-      folio: "EG-2026-00012",
-      created_at: "2026-01-15",
+      persona: 'María García López',
+      telefono: '341-123-4567',
+      direccion: 'Morelos 45',
+      colonia: 'El Grullo centro',
+      fecha_registro: '2026-01-15',
+      link_publico: 'https://remac-elgrullo.vercel.app/?id=REMAC-GRU-00001',
+      ficha: 'REMAC-GRU-00001.pdf',
     },
     {
-      id: 2,
-      nombre: "Luna",
-      especie: "gato",
-      raza: "Siamés",
-      edad_anios: 2,
-      sexo: "hembra",
-      color: "Blanco y gris",
+      id: 'REMAC-GRU-00002',
+      nombre: 'Luna',
+      especie: 'gato',
+      raza: 'Siamés',
+      edad: '2',
+      edad_label: '2 años',
+      sexo: 'hembra',
+      color: 'Blanco y gris',
+      senias_particulares: 'Ojos azules, cola corta',
       vacunado: true,
       esterilizado: true,
-      estatus: "activo",
+      estatus: 'Alta',
       foto_url: null,
-      dueno: "Carlos Ramírez Flores",
-      colonia: "El Sabino",
-      folio: "EG-2026-00031",
-      created_at: "2026-02-03",
+      persona: 'Carlos Ramírez Flores',
+      telefono: '341-234-5678',
+      direccion: 'Hidalgo 12',
+      colonia: '10 de mayo',
+      fecha_registro: '2026-02-03',
+      link_publico: 'https://remac-elgrullo.vercel.app/?id=REMAC-GRU-00002',
+      ficha: 'REMAC-GRU-00002.pdf',
     },
     {
-      id: 3,
-      nombre: "Rocky",
-      especie: "perro",
-      raza: "Pastor Alemán",
-      edad_anios: 5,
-      sexo: "macho",
-      color: "Negro y café",
+      id: 'REMAC-GRU-00003',
+      nombre: 'Rocky',
+      especie: 'perro',
+      raza: 'Pastor alemán',
+      edad: '5',
+      edad_label: '5 años',
+      sexo: 'macho',
+      color: 'Negro y café',
+      senias_particulares: 'Cicatriz en oreja izquierda',
       vacunado: false,
       esterilizado: false,
-      estatus: "activo",
+      estatus: 'Alta',
       foto_url: null,
-      dueno: "Ana Pérez Morales",
-      colonia: "La Loma",
-      folio: "EG-2026-00047",
-      created_at: "2026-02-20",
+      persona: 'Ana Pérez Morales',
+      telefono: '341-345-6789',
+      direccion: 'Juárez 78',
+      colonia: 'Del sur',
+      fecha_registro: '2026-02-20',
+      link_publico: 'mascota.html?id=REMAC-GRU-00003',
+      ficha: 'REMAC-GRU-00003.pdf',
     },
     {
-      id: 4,
-      nombre: "Mishi",
-      especie: "gato",
-      raza: "Persa",
-      edad_anios: 4,
-      sexo: "hembra",
-      color: "Naranja",
-      vacunado: true,
-      esterilizado: true,
-      estatus: "activo",
-      foto_url: null,
-      dueno: "José Hernández Ruiz",
-      colonia: "Centro",
-      folio: "EG-2026-00058",
-      created_at: "2026-03-10",
-    },
-    {
-      id: 5,
-      nombre: "Toby",
-      especie: "perro",
-      raza: "Chihuahua",
-      edad_anios: 1,
-      sexo: "macho",
-      color: "Café",
+      id: 'REMAC-GRU-00004',
+      nombre: 'Solovino',
+      especie: 'perro',
+      raza: 'Mestizo',
+      edad: '5',
+      edad_label: '5 años',
+      sexo: 'macho',
+      color: 'Amarillo con blanco',
+      senias_particulares: 'Ninguna en especial',
       vacunado: true,
       esterilizado: false,
-      estatus: "activo",
+      estatus: 'Alta',
       foto_url: null,
-      dueno: "Laura Mendoza Cruz",
-      colonia: "El Sabino",
-      folio: "EG-2026-00073",
-      created_at: "2026-03-22",
+      persona: 'Nacho Tello',
+      telefono: '321 387 4444',
+      direccion: 'Obregón 53',
+      colonia: 'El Grullo centro',
+      fecha_registro: '2026-05-11',
+      link_publico: 'mascota.html?id=REMAC-GRU-00004',
+      ficha: 'REMAC-GRU-00004.pdf',
     },
     {
-      id: 6,
-      nombre: "Canela",
-      especie: "perro",
-      raza: "Criolla",
-      edad_anios: 7,
-      sexo: "hembra",
-      color: "Canela",
+      id: 'REMAC-GRU-00005',
+      nombre: 'Toby',
+      especie: 'perro',
+      raza: 'Chihuahua',
+      edad: '1',
+      edad_label: '1 año',
+      sexo: 'macho',
+      color: 'Café',
+      senias_particulares: 'Manchas en la espalda',
+      vacunado: true,
+      esterilizado: false,
+      estatus: 'Alta',
+      foto_url: null,
+      persona: 'Laura Mendoza Cruz',
+      telefono: '341-567-8901',
+      direccion: 'Reforma 56',
+      colonia: 'Jardines de manantlán',
+      fecha_registro: '2026-03-22',
+      link_publico: 'mascota.html?id=REMAC-GRU-00005',
+      ficha: 'REMAC-GRU-00005.pdf',
+    },
+    {
+      id: 'REMAC-GRU-00006',
+      nombre: 'Canela',
+      especie: 'perro',
+      raza: 'Mestizo',
+      edad: '7',
+      edad_label: '7 años',
+      sexo: 'hembra',
+      color: 'Canela',
+      senias_particulares: 'Pata trasera derecha más corta',
       vacunado: false,
       esterilizado: true,
-      estatus: "activo",
+      estatus: 'Baja',
       foto_url: null,
-      dueno: "Roberto Vargas Soto",
-      colonia: "La Loma",
-      folio: "EG-2026-00089",
-      created_at: "2026-04-05",
+      persona: 'Roberto Vargas Soto',
+      telefono: '341-678-9012',
+      direccion: 'Constitución 89',
+      colonia: 'Del álamo',
+      fecha_registro: '2026-04-05',
+      link_publico: 'mascota.html?id=REMAC-GRU-00006',
+      ficha: 'REMAC-GRU-00006.pdf',
     },
   ],
 
   // Mascotas del usuario ciudadano en sesión (para el dashboard)
   mis_mascotas: [
     {
-      id: 1,
-      nombre: "Max",
-      especie: "perro",
-      raza: "Labrador",
-      edad_anios: 3,
-      sexo: "macho",
-      color: "Dorado",
+      id: 'REMAC-GRU-00001',
+      nombre: 'Max',
+      especie: 'perro',
+      raza: 'Labrador Retriever',
+      edad: '3',
+      edad_label: '3 años',
+      sexo: 'macho',
+      color: 'Dorado',
+      senias_particulares: 'Mancha blanca en el pecho',
       vacunado: true,
       esterilizado: false,
-      estatus: "activo",
-      folio: "EG-2026-00012",
-      created_at: "2026-01-15",
+      estatus: 'Alta',
+      foto_url: null,
+      persona: 'Luis Fernando Vargas Ramírez',
+      telefono: '341-123-4567',
+      direccion: 'Morelos 45',
+      colonia: 'El Grullo centro',
+      fecha_registro: '2026-01-15',
+      link_publico: 'https://remac-elgrullo.vercel.app/?id=REMAC-GRU-00001',
+      ficha: 'REMAC-GRU-00001.pdf',
     },
     {
-      id: 2,
-      nombre: "Luna",
-      especie: "gato",
-      raza: "Siamés",
-      edad_anios: 2,
-      sexo: "hembra",
-      color: "Blanco y gris",
+      id: 'REMAC-GRU-00002',
+      nombre: 'Luna',
+      especie: 'gato',
+      raza: 'Siamés',
+      edad: '2',
+      edad_label: '2 años',
+      sexo: 'hembra',
+      color: 'Blanco y gris',
+      senias_particulares: 'Ojos azules, cola corta',
       vacunado: true,
       esterilizado: true,
-      estatus: "activo",
-      folio: "EG-2026-00031",
-      created_at: "2026-02-03",
+      estatus: 'Alta',
+      foto_url: null,
+      persona: 'Luis Fernando Vargas Ramírez',
+      telefono: '341-123-4567',
+      direccion: 'Morelos 45',
+      colonia: 'El Grullo centro',
+      fecha_registro: '2026-02-03',
+      link_publico: 'https://remac-elgrullo.vercel.app/?id=REMAC-GRU-00002',
+      ficha: 'REMAC-GRU-00002.pdf',
     },
   ],
 
   campanas: [
     {
       id: 1,
-      titulo: "Campaña de Vacunación Antirrábica 2026",
-      descripcion:
-        "Vacunación gratuita contra la rabia para perros y gatos. Presentate con tu mascota en el Centro de Salud Municipal los días 15 y 16 de julio.",
-      fecha_inicio: "2026-07-15",
-      fecha_fin: "2026-07-16",
+      titulo: 'Campaña de Vacunación Antirrábica 2026',
+      descripcion: 'Vacunación gratuita contra la rabia para perros y gatos. Preséntate con tu mascota en el Centro de Salud Municipal los días 15 y 16 de julio.',
+      fecha_inicio: '2026-07-15',
+      fecha_fin: '2026-07-16',
       publicado: true,
-      banner_color: "#1B6B3A",
-      icono: "💉",
+      banner_color: '#1B6B3A',
+      icono: '💉',
     },
     {
       id: 2,
-      titulo: "Esterilización a Bajo Costo — Julio 2026",
-      descripcion:
-        "La Dirección de Medio Ambiente ofrece esterilizaciones a precio preferencial. Cupo limitado. Registro previo en el portal.",
-      fecha_inicio: "2026-07-20",
-      fecha_fin: "2026-07-31",
+      titulo: 'Esterilización a Bajo Costo — Julio 2026',
+      descripcion: 'La Dirección de Medio Ambiente ofrece esterilizaciones a precio preferencial. Cupo limitado. Registro previo en el portal.',
+      fecha_inicio: '2026-07-20',
+      fecha_fin: '2026-07-31',
       publicado: true,
-      banner_color: "#C8882A",
-      icono: "🏥",
+      banner_color: '#C8882A',
+      icono: '🏥',
     },
     {
       id: 3,
-      titulo: "Taller de Tenencia Responsable",
-      descripcion:
-        "Aprende sobre nutrición, higiene y cuidado básico de tu mascota. Impartido por veterinarios municipales. Entrada libre.",
-      fecha_inicio: "2026-08-05",
-      fecha_fin: "2026-08-05",
+      titulo: 'Taller de Tenencia Responsable',
+      descripcion: 'Aprende sobre nutrición, higiene y cuidado básico de tu mascota. Impartido por veterinarios municipales. Entrada libre.',
+      fecha_inicio: '2026-08-05',
+      fecha_fin: '2026-08-05',
       publicado: true,
-      banner_color: "#2A6B8A",
-      icono: "📚",
+      banner_color: '#2A6B8A',
+      icono: '📚',
     },
   ],
 
   articulos: [
     {
       id: 1,
-      titulo: "¿Con qué frecuencia debo vacunar a mi perro?",
-      contenido:
-        "Los perros necesitan la vacuna antirrábica anualmente. Además, la vacuna pentavalente se aplica en cachorros y se refuerza cada año. Consulta a tu veterinario para el calendario completo.",
-      imagen_icono: "🐕",
-      created_at: "2026-01-10",
+      titulo: '¿Con qué frecuencia debo vacunar a mi perro?',
+      contenido: 'Los perros necesitan la vacuna antirrábica anualmente. Además, la vacuna pentavalente se aplica en cachorros y se refuerza cada año. Consulta a tu veterinario para el calendario completo.',
+      imagen_icono: '🐕',
+      created_at: '2026-01-10',
     },
     {
       id: 2,
-      titulo: "Señales de alerta en la salud de tu gato",
-      contenido:
-        "Si tu gato deja de comer, tiene fiebre, ojos llorosos o cambia de comportamiento, visita al veterinario. La detección temprana salva vidas.",
-      imagen_icono: "🐈",
-      created_at: "2026-02-15",
+      titulo: 'Señales de alerta en la salud de tu gato',
+      contenido: 'Si tu gato deja de comer, tiene fiebre, ojos llorosos o cambia de comportamiento, visita al veterinario. La detección temprana salva vidas.',
+      imagen_icono: '🐈',
+      created_at: '2026-02-15',
     },
     {
       id: 3,
-      titulo: "Importancia de la esterilización",
-      contenido:
-        "La esterilización reduce la sobrepoblación animal, previene enfermedades como el cáncer de mama en hembras y hace a tu mascota más tranquila y saludable.",
-      imagen_icono: "❤️",
-      created_at: "2026-03-20",
+      titulo: 'Importancia de la esterilización',
+      contenido: 'La esterilización reduce la sobrepoblación animal, previene enfermedades como el cáncer de mama en hembras y hace a tu mascota más tranquila y saludable.',
+      imagen_icono: '❤️',
+      created_at: '2026-03-20',
     },
   ],
 
   faq: [
     {
       id: 1,
-      pregunta: "¿Por qué debo registrar a mi mascota?",
-      respuesta:
-        "El registro es gratuito y te permite obtener el acta oficial de tu mascota, acceder a campañas de vacunación y esterilización a bajo costo, y contar con un respaldo digital oficial.",
+      pregunta: '¿Por qué debo registrar a mi mascota?',
+      respuesta: 'El registro es gratuito y te permite obtener la ficha oficial REMAC de tu mascota, acceder a campañas de vacunación y esterilización, y contar con un respaldo digital oficial del Ayuntamiento.',
     },
     {
       id: 2,
-      pregunta: "¿Qué documentos necesito para registrar a mi mascota?",
-      respuesta:
-        "Solo necesitas crear una cuenta en el portal con tu correo electrónico. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.",
+      pregunta: '¿Qué documentos necesito para registrar a mi mascota?',
+      respuesta: 'Solo necesitas tu nombre, CURP y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.',
     },
     {
       id: 3,
-      pregunta: "¿El registro tiene algún costo?",
-      respuesta:
-        "No. El registro en el padrón municipal de mascotas es completamente gratuito para todos los ciudadanos de El Grullo, Jalisco.",
+      pregunta: '¿El registro tiene algún costo?',
+      respuesta: 'No. El registro en el padrón REMAC del municipio de El Grullo es completamente gratuito para todos los ciudadanos.',
     },
     {
       id: 4,
-      pregunta: "¿Puedo registrar más de una mascota?",
-      respuesta:
-        "Sí. Con una sola cuenta puedes registrar todos los perros y gatos que tengas bajo tu cuidado. Cada mascota recibirá su propio folio único.",
-    }
+      pregunta: '¿Puedo registrar más de una mascota?',
+      respuesta: 'Sí. Con una sola cuenta puedes registrar todos los perros y gatos que tengas. Cada mascota recibirá su propio folio REMAC-GRU único.',
+    },
+    {
+      id: 5,
+      pregunta: '¿Qué es el estatus Alta y Baja?',
+      respuesta: 'Alta significa que la mascota está activa en el padrón. Baja se aplica cuando la mascota ha fallecido o fue dada de baja del registro.',
+    },
   ],
 
   usuario_actual: {
     id: 1,
-    nombre: "Luis Fernando Vargas Ramírez",
-    curp: "VARL900101HJCXX00",
-    rol: "ciudadano",
+    nombre: 'Luis Fernando Vargas Ramírez',
+    curp: 'VARL900101HJCXX00',
+    rol: 'ciudadano',
     activo: true,
     dueno: {
-      nombre_completo: "Luis Fernando Vargas Ramírez",
-      telefono: "341-123-4567",
-      domicilio: "Calle Morelos #45",
-      colonia: "Centro",
+      nombre_completo: 'Luis Fernando Vargas Ramírez',
+      telefono: '341-123-4567',
+      direccion: 'Morelos 45',
+      colonia: 'El Grullo centro',
     },
   },
 };
 
 // ─── Utilidades de datos ───────────────────────────────────────────────────
 
-function getStats() {
-  return MOCK.stats;
-}
-
-function getCampanas() {
-  return MOCK.campanas.filter((c) => c.publicado);
-}
-
-function getArticulos() {
-  return MOCK.articulos;
-}
-
-function getFaq() {
-  return MOCK.faq;
-}
+function getStats() { return MOCK.stats; }
+function getCampanas() { return MOCK.campanas.filter((c) => c.publicado); }
+function getArticulos() { return MOCK.articulos; }
+function getFaq() { return MOCK.faq; }
 
 function getMisMascotas() {
-  return MOCK.mis_mascotas;
+  const stored = getStoredMascotas();
+  return [...MOCK.mis_mascotas, ...stored];
 }
 
 function getTodasMascotas(filtros = {}) {
-  let mascotas = [...MOCK.mascotas];
+  let mascotas = [...MOCK.mascotas, ...getStoredMascotas()];
   if (filtros.especie) mascotas = mascotas.filter((m) => m.especie === filtros.especie);
   if (filtros.estatus) mascotas = mascotas.filter((m) => m.estatus === filtros.estatus);
-  if (filtros.vacunado !== undefined) mascotas = mascotas.filter((m) => m.vacunado === filtros.vacunado);
+  if (filtros.colonia) mascotas = mascotas.filter((m) => m.colonia === filtros.colonia);
   if (filtros.busqueda) {
     const q = filtros.busqueda.toLowerCase();
     mascotas = mascotas.filter(
       (m) =>
         m.nombre.toLowerCase().includes(q) ||
-        m.dueno.toLowerCase().includes(q) ||
-        m.folio.toLowerCase().includes(q)
+        (m.persona || '').toLowerCase().includes(q) ||
+        m.id.toLowerCase().includes(q) ||
+        (m.colonia || '').toLowerCase().includes(q)
     );
   }
   return mascotas;
 }
 
-function getUsuarioActual() {
-  return MOCK.usuario_actual;
+function getUsuarioActual() { return MOCK.usuario_actual; }
+function getRazas(especie) { return especie === 'gato' ? RAZAS_GATO : RAZAS_PERRO; }
+function getColonias() { return COLONIAS_EL_GRULLO; }
+function getEdades() { return EDADES_OPCIONES; }
+
+/* ── Generador de folio REMAC ── */
+function generarFolioREMAC() {
+  const stored = getStoredMascotas();
+  const total  = MOCK.mascotas.length + stored.length + 1;
+  return 'REMAC-GRU-' + String(total).padStart(5, '0');
+}
+
+/* ── localStorage para nuevos registros ── */
+function getStoredMascotas() {
+  try {
+    const raw = localStorage.getItem('remac_mascotas');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveStoredMascota(mascota) {
+  // Make sure link_publico points to mascota.html
+  if (!mascota.link_publico || mascota.link_publico.includes('vercel')) {
+    mascota.link_publico = `mascota.html?id=${mascota.id}`;
+  }
+  const lista = getStoredMascotas();
+  lista.push(mascota);
+  localStorage.setItem('remac_mascotas', JSON.stringify(lista));
+}
+
+function deleteStoredMascota(id) {
+  const lista = getStoredMascotas().filter(m => m.id !== id);
+  localStorage.setItem('remac_mascotas', JSON.stringify(lista));
 }

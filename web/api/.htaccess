@@ -1,0 +1,30 @@
+# REMAC — Apache .htaccess para la API
+# Coloca este archivo en la carpeta /api/
+
+Options -Indexes
+RewriteEngine On
+
+# Seguridad: bloquear acceso a config/
+RewriteRule ^config/ - [F,L]
+
+# Ruteo de la API
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# POST/GET /api/auth?action=login  → auth.php
+RewriteRule ^auth$ auth.php [QSA,L]
+
+# GET/POST/PUT/DELETE /api/mascotas → mascotas.php
+RewriteRule ^mascotas$ mascotas.php [QSA,L]
+
+# GET /api/stats → stats.php
+RewriteRule ^stats$ stats.php [QSA,L]
+
+# GET /api/campanas, /api/articulos → contenido.php
+RewriteRule ^campanas$  contenido.php?resource=campanas  [QSA,L]
+RewriteRule ^articulos$ contenido.php?resource=articulos [QSA,L]
+
+# Headers de seguridad
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
