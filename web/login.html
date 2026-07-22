@@ -399,6 +399,7 @@ function switchTab(tab) {
   document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('form-' + tab).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ── Quick fill credentials ── */

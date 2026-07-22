@@ -722,8 +722,11 @@ input, select, textarea { font-family: inherit; }
   flex-direction: column;
   justify-content: center;
   padding: 64px;
-  position: relative;
-  overflow: hidden;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
 }
 .auth-aside::before {
   content: '';
