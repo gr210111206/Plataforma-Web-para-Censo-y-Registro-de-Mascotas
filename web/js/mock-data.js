@@ -363,7 +363,7 @@ const MOCK = {
     {
       id: 2,
       pregunta: '¿Qué documentos necesito para registrar a mi mascota?',
-      respuesta: 'Solo necesitas tu nombre, CURP y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.',
+      respuesta: 'Solo necesitas tu correo electrónico, teléfono de contacto y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.',
     },
     {
       id: 3,
@@ -385,7 +385,8 @@ const MOCK = {
   usuario_actual: {
     id: 1,
     nombre: 'Luis Fernando Vargas Ramírez',
-    curp: 'VARL900101HJCXX00',
+    email: 'ciudadano@demo.com',
+    telefono: '341-123-4567',
     rol: 'ciudadano',
     activo: true,
     dueno: {

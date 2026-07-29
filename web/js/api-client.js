@@ -53,18 +53,37 @@ async function _fetch(url, options = {}) {
    ══════════════════════════════════════════════ */
 
 /**
- * Login de ciudadano con CURP + Nombre
+ * Registro de cuenta de usuario (nombre, email, telefono, password)
  */
-async function apiLoginCiudadano(nombre, curp) {
-  const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
+async function apiRegisterUser(nombre, email, telefono, password) {
+  const data = await _fetch(`${API_BASE_URL}/auth?action=register`, {
     method: 'POST',
-    body: JSON.stringify({ nombre, curp }),
+    body: JSON.stringify({ nombre, email, telefono, password }),
   });
   localStorage.setItem('padron_session', JSON.stringify({
-    token:  data.token,
-    nombre: data.nombre,
-    curp:   data.curp,
-    rol:    data.rol,
+    token:    data.token,
+    nombre:   data.nombre,
+    email:    data.email,
+    telefono: data.telefono,
+    rol:      data.rol,
+  }));
+  return data;
+}
+
+/**
+ * Login de usuario con email + password
+ */
+async function apiLoginUser(email, password) {
+  const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  localStorage.setItem('padron_session', JSON.stringify({
+    token:    data.token,
+    nombre:   data.nombre,
+    email:    data.email,
+    telefono: data.telefono,
+    rol:      data.rol,
   }));
   return data;
 }

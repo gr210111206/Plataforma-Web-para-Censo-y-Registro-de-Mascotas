@@ -2,7 +2,7 @@
 /**
  * REMAC — API: Autenticación
  * POST /api/auth.php?action=register → Crear cuenta de usuario
- * POST /api/auth.php?action=login    → Iniciar sesión (email/curp + password)
+ * POST /api/auth.php?action=login    → Iniciar sesión (email + password)
  * POST /api/auth.php?action=logout   → Cierra la sesión
  * GET  /api/auth.php?action=me       → Datos del usuario autenticado
  */
@@ -22,13 +22,15 @@ if ($method === 'POST' && $action === 'register') {
     $email    = strtolower(trim($body['email'] ?? ''));
     $password = $body['password'] ?? '';
     $telefono = trim($body['telefono'] ?? '');
-    $curp     = strtoupper(trim($body['curp'] ?? ''));
 
     if (empty($nombre)) {
         jsonError('El nombre completo es obligatorio.', 400);
     }
     if (empty($email)) {
         jsonError('El correo electrónico es obligatorio.', 400);
+    }
+    if (empty($telefono)) {
+        jsonError('El teléfono de contacto es obligatorio.', 400);
     }
     if (empty($password) || strlen($password) < 4) {
         jsonError('La contraseña debe tener al menos 4 caracteres.', 400);
@@ -47,10 +49,10 @@ if ($method === 'POST' && $action === 'register') {
     $token = bin2hex(random_bytes(32));
 
     $ins = $db->prepare('
-        INSERT INTO duenos (nombre, email, password_hash, telefono, curp, rol, token_sesion)
-        VALUES (?, ?, ?, ?, ?, "ciudadano", ?)
+        INSERT INTO duenos (nombre, email, password_hash, telefono, rol, token_sesion)
+        VALUES (?, ?, ?, ?, "ciudadano", ?)
     ');
-    $ins->execute([$nombre, $email, $hash, $telefono ?: null, $curp ?: null, $token]);
+    $ins->execute([$nombre, $email, $hash, $telefono, $token]);
     $userId = $db->lastInsertId();
 
     jsonOk([
@@ -74,8 +76,8 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $pass  = $body['password'];
 
         $db   = getDB();
-        $stmt = $db->prepare("SELECT id, nombre, email, curp, telefono, rol, password_hash FROM duenos WHERE (email = ? OR curp = ?) AND activo = 1");
-        $stmt->execute([$email, strtoupper($email)]);
+        $stmt = $db->prepare("SELECT id, nombre, email, telefono, rol, password_hash FROM duenos WHERE email = ? AND activo = 1");
+        $stmt->execute([$email]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($pass, $user['password_hash'])) {
@@ -90,37 +92,8 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
             'id'       => $user['id'],
             'nombre'   => $user['nombre'],
             'email'    => $user['email'],
-            'curp'     => $user['curp'],
             'telefono' => $user['telefono'],
             'rol'      => $user['rol'],
-        ]);
-    }
-
-    // Login con CURP y Nombre (Compatibilidad previa)
-    if (!empty($body['curp']) && !empty($body['nombre'])) {
-        $curp   = strtoupper(trim($body['curp']));
-        $nombre = trim($body['nombre']);
-
-        $db   = getDB();
-        $stmt = $db->prepare('SELECT id, nombre, email, curp, rol FROM duenos WHERE curp = ? AND activo = 1');
-        $stmt->execute([$curp]);
-        $user = $stmt->fetch();
-
-        if (!$user) {
-            $ins = $db->prepare('INSERT INTO duenos (nombre, curp, rol) VALUES (?, ?, "ciudadano")');
-            $ins->execute([$nombre, $curp]);
-            $user = ['id' => $db->lastInsertId(), 'nombre' => $nombre, 'curp' => $curp, 'rol' => 'ciudadano'];
-        }
-
-        $token = bin2hex(random_bytes(32));
-        $db->prepare('UPDATE duenos SET token_sesion = ? WHERE id = ?')->execute([$token, $user['id']]);
-
-        jsonOk([
-            'token'  => $token,
-            'id'     => $user['id'],
-            'nombre' => $user['nombre'],
-            'curp'   => $user['curp'],
-            'rol'    => $user['rol'],
         ]);
     }
 

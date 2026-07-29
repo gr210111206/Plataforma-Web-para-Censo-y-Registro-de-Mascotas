@@ -145,10 +145,10 @@
         </div>
 
         <div class="form-group">
-          <label for="login-email">Correo electrónico o CURP *</label>
+          <label for="login-email">Correo electrónico *</label>
           <div class="input-group">
             <span class="input-icon">✉️</span>
-            <input type="text" id="login-email" class="form-control" placeholder="tu@correo.com o tu CURP" required />
+            <input type="email" id="login-email" class="form-control" placeholder="tu@correo.com" required />
           </div>
         </div>
 
@@ -222,18 +222,10 @@
         </div>
 
         <div class="form-group">
-          <label for="reg-user-telefono">Teléfono de contacto</label>
+          <label for="reg-user-telefono">Teléfono de contacto *</label>
           <div class="input-group">
             <span class="input-icon">📞</span>
-            <input type="tel" id="reg-user-telefono" class="form-control" placeholder="341-123-4567" />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="reg-user-curp">CURP (Opcional)</label>
-          <div class="input-group">
-            <span class="input-icon">🆔</span>
-            <input type="text" id="reg-user-curp" class="form-control" placeholder="18 caracteres (opcional)" maxlength="18" style="text-transform:uppercase;" />
+            <input type="tel" id="reg-user-telefono" class="form-control" placeholder="341-123-4567" required />
           </div>
         </div>
 
@@ -333,10 +325,7 @@ function handleLogin(e) {
 
   // Check locally registered users
   const registered = JSON.parse(localStorage.getItem('padron_registered_users') || '[]');
-  const userMatch = registered.find(u =>
-    (u.email && u.email.toLowerCase() === inputEmail.toLowerCase()) ||
-    (u.curp  && u.curp.toUpperCase() === inputEmail.toUpperCase())
-  );
+  const userMatch = registered.find(u => u.email && u.email.toLowerCase() === inputEmail.toLowerCase());
 
   if (userMatch) {
     if (userMatch.password && userMatch.password !== inputPass) {
@@ -347,7 +336,6 @@ function handleLogin(e) {
       email: userMatch.email,
       nombre: userMatch.nombre,
       telefono: userMatch.telefono || '',
-      curp: userMatch.curp || '',
       rol: 'ciudadano'
     }));
     showToast(`✅ ¡Bienvenido de nuevo, ${userMatch.nombre}!`, 'success');
@@ -356,11 +344,11 @@ function handleLogin(e) {
   }
 
   // Demo user fallback
-  if ((inputEmail.toLowerCase() === 'ciudadano@demo.com' || inputEmail.toUpperCase() === 'VARL900101HJCXX00') && (inputPass === 'Demo1234' || inputPass.length >= 4)) {
+  if (inputEmail.toLowerCase() === 'ciudadano@demo.com' && (inputPass === 'Demo1234' || inputPass.length >= 4)) {
     localStorage.setItem('padron_session', JSON.stringify({
       email: 'ciudadano@demo.com',
       nombre: 'Luis Fernando Vargas Ramírez',
-      curp: 'VARL900101HJCXX00',
+      telefono: '341-123-4567',
       rol: 'ciudadano'
     }));
     showToast('✅ ¡Bienvenido, Luis Fernando!', 'success');
@@ -374,6 +362,7 @@ function handleLogin(e) {
     localStorage.setItem('padron_session', JSON.stringify({
       email: inputEmail,
       nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+      telefono: '341-123-4567',
       rol: 'ciudadano'
     }));
     showToast('✅ ¡Bienvenido a tu portal de mascotas!', 'success');
@@ -402,12 +391,12 @@ function handleRegistroUsuario(e) {
   const nombre   = document.getElementById('reg-user-nombre').value.trim();
   const email    = document.getElementById('reg-user-email').value.trim().toLowerCase();
   const telefono = document.getElementById('reg-user-telefono').value.trim();
-  const curp     = document.getElementById('reg-user-curp').value.trim().toUpperCase();
   const pass     = document.getElementById('reg-user-password').value;
   const passConf = document.getElementById('reg-user-password-confirm').value;
 
   if (!nombre)   { showToast('❌ Ingrese su nombre completo', 'error'); return; }
   if (!email)    { showToast('❌ Ingrese su correo electrónico', 'error'); return; }
+  if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
   if (pass.length < 4) { showToast('❌ La contraseña debe tener al menos 4 caracteres', 'error'); return; }
   if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
 
@@ -417,11 +406,11 @@ function handleRegistroUsuario(e) {
     return;
   }
 
-  const newUser = { nombre, email, telefono, curp, password: pass, rol: 'ciudadano', created_at: new Date().toISOString() };
+  const newUser = { nombre, email, telefono, password: pass, rol: 'ciudadano', created_at: new Date().toISOString() };
   registered.push(newUser);
   localStorage.setItem('padron_registered_users', JSON.stringify(registered));
 
-  localStorage.setItem('padron_session', JSON.stringify({ email, nombre, telefono, curp, rol: 'ciudadano' }));
+  localStorage.setItem('padron_session', JSON.stringify({ email, nombre, telefono, rol: 'ciudadano' }));
   showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido, ${nombre}`, 'success');
   setTimeout(() => window.location.href = 'dashboard.html', 1500);
 }

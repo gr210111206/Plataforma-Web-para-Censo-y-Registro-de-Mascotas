@@ -52,7 +52,7 @@ function requireAuth(): array {
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
     $db   = getDB();
-    $stmt = $db->prepare('SELECT id, nombre, curp, rol FROM duenos WHERE token_sesion = ? AND activo = 1');
+    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol FROM duenos WHERE token_sesion = ? AND activo = 1');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
 
@@ -79,11 +79,6 @@ function generarFolioREMAC(): string {
         $db->rollBack();
         throw $e;
     }
-}
-
-/* ── Validar CURP básica ────────────────────────── */
-function validarCurp(string $curp): bool {
-    return (bool) preg_match('/^[A-Z]{4}\d{6}[HM][A-Z]{5}\d{2}$/', strtoupper($curp));
 }
 
 /* ── Sanitizar string ───────────────────────────── */

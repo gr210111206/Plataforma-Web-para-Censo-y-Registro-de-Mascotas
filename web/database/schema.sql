@@ -15,19 +15,18 @@ USE remac_db;
 CREATE TABLE IF NOT EXISTS duenos (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nombre        VARCHAR(150)  NOT NULL,
-  curp          VARCHAR(18)   NOT NULL UNIQUE,
-  telefono      VARCHAR(20)   DEFAULT NULL,
+  telefono      VARCHAR(20)   NOT NULL,
+  email         VARCHAR(150)  NOT NULL UNIQUE,
   direccion     VARCHAR(200)  DEFAULT NULL,
   colonia       VARCHAR(100)  DEFAULT NULL,
-  email         VARCHAR(150)  DEFAULT NULL,
   password_hash VARCHAR(255)  DEFAULT NULL,
   rol           ENUM('ciudadano','admin') NOT NULL DEFAULT 'ciudadano',
   activo        TINYINT(1)   NOT NULL DEFAULT 1,
   token_sesion  VARCHAR(64)   DEFAULT NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_curp (curp),
-  INDEX idx_rol  (rol)
+  INDEX idx_email (email),
+  INDEX idx_rol   (rol)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de mascotas ────────────────────────────

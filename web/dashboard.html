@@ -345,7 +345,7 @@
             </div>
             <div>
               <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:1.1rem;" id="profileName">—</div>
-              <div style="font-size:.82rem; color:var(--gray-2); letter-spacing: .05em;" id="profileCurp">—</div>
+              <div style="font-size:.82rem; color:var(--gray-2); letter-spacing: .05em;" id="profilePhone">—</div>
               <span class="badge badge-green" style="margin-top:6px;">Cuenta activa</span>
             </div>
           </div>
@@ -356,13 +356,13 @@
               <input class="form-control" id="perfil-nombre" />
             </div>
             <div class="form-group">
-              <label>Teléfono</label>
-              <input class="form-control" value="341-123-4567" id="perfil-telefono" />
+              <label>Teléfono *</label>
+              <input class="form-control" id="perfil-telefono" required />
             </div>
           </div>
           <div class="form-group" style="margin-bottom:16px;">
-            <label>CURP (Identificador único)</label>
-            <input class="form-control" type="text" id="perfil-curp-field" readonly style="background: var(--surface); color: var(--gray-2);" />
+            <label>Correo electrónico (Cuenta)</label>
+            <input class="form-control" type="email" id="perfil-email-field" readonly style="background: var(--surface); color: var(--gray-2);" />
           </div>
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
@@ -545,8 +545,9 @@ const session = (() => {
   } catch { return {}; }
 })();
 
-const sessionNombre = session.nombre || 'Ciudadano';
-const sessionCurp   = session.curp   || 'VARL900101HJCXX00';
+const sessionNombre = session.nombre   || 'Ciudadano';
+const sessionEmail  = session.email    || 'ciudadano@demo.com';
+const sessionPhone  = session.telefono || '341-123-4567';
 const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
 // Apply to sidebar
@@ -560,9 +561,10 @@ if (session.rol === 'admin') {
 // Apply to profile section
 document.getElementById('profileAvatar').textContent    = initials;
 document.getElementById('profileName').textContent      = sessionNombre;
-document.getElementById('profileCurp').textContent      = sessionCurp;
+document.getElementById('profilePhone').textContent     = '📞 ' + sessionPhone;
 document.getElementById('perfil-nombre').value          = sessionNombre;
-document.getElementById('perfil-curp-field').value      = sessionCurp;
+document.getElementById('perfil-telefono').value        = sessionPhone;
+document.getElementById('perfil-email-field').value     = sessionEmail;
 
 /* ══════════════════════════════════════════════════ */
 /*  DATA                                              */

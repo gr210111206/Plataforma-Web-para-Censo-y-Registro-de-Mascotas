@@ -6,14 +6,14 @@
 USE remac_db;
 
 -- ── Dueños / Usuarios ────────────────────────────
-INSERT INTO duenos (nombre, curp, telefono, direccion, colonia, email, password_hash, rol) VALUES
-('Administrador REMAC',   'ADMIN0000000000000', NULL,            NULL,          NULL,                'admin@remac.elgrullo.mx', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
-('María García López',   'GALM800101HJCXX00', '341-123-4567', 'Morelos 45',   'El Grullo centro', NULL, NULL, 'ciudadano'),
-('Carlos Ramírez Flores','RAFC850210HJCLR01', '341-234-5678', 'Hidalgo 12',   '10 de mayo',       NULL, NULL, 'ciudadano'),
-('Ana Pérez Morales',    'PEMA900315MJCRL05', '341-345-6789', 'Juárez 78',    'Del sur',          NULL, NULL, 'ciudadano'),
-('Nacho Tello',          'TELN780520HJCLL00', '321-387-4444', 'Obregón 53',   'El Grullo centro', NULL, NULL, 'ciudadano'),
-('Laura Mendoza Cruz',   'MECL920105MJCNRL0', '341-567-8901', 'Reforma 56',   'Jardines de manantlán', NULL, NULL, 'ciudadano'),
-('Roberto Vargas Soto',  'VASR750830HJCRGB0', '341-678-9012', 'Constitución 89','Del álamo',     NULL, NULL, 'ciudadano');
+INSERT INTO duenos (nombre, telefono, email, direccion, colonia, password_hash, rol) VALUES
+('Administrador REMAC',   '341-000-0000', 'admin@remac.elgrullo.mx', NULL,          NULL,                '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
+('María García López',   '341-123-4567', 'maria@demo.com',        'Morelos 45',   'El Grullo centro', NULL, 'ciudadano'),
+('Carlos Ramírez Flores','341-234-5678', 'carlos@demo.com',       'Hidalgo 12',   '10 de mayo',       NULL, 'ciudadano'),
+('Ana Pérez Morales',    '341-345-6789', 'ana@demo.com',          'Juárez 78',    'Del sur',          NULL, 'ciudadano'),
+('Nacho Tello',          '321-387-4444', 'nacho@demo.com',        'Obregón 53',   'El Grullo centro', NULL, 'ciudadano'),
+('Laura Mendoza Cruz',   '341-567-8901', 'laura@demo.com',        'Reforma 56',   'Jardines de manantlán', NULL, 'ciudadano'),
+('Roberto Vargas Soto',  '341-678-9012', 'roberto@demo.com',      'Constitución 89','Del álamo',     NULL, 'ciudadano');
 
 -- Actualiza el contador de folios
 UPDATE folio_counter SET ultimo = 6;
