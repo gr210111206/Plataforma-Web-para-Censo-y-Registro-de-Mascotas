@@ -10,9 +10,9 @@ Este documento registra cronológicamente todos los cambios, mejoras, correccion
    - Previene errores silenciosos de cuota en `localStorage` (`QuotaExceededError`) y garantiza un almacenamiento liviano e instantáneo.
 
 2. **Ajustes de Estilos CSS e Imágenes (`styles.css`, `index.html`, `login.html`):**
+   - **Corrección de Llave de Cierre en CSS:** Se corrigió un cierre de llave `}` faltante en la regla `.step-num` de `styles.css` que impedía la lectura del resto de la hoja de estilos y provocaba que la página `login.html` se visualizara desestructurada.
    - Se definieron dimensiones fijas, alineación flexbox y reglas `overflow: hidden` con `object-fit: contain` para los contenedores de íconos/imágenes (`.hero-mascot-icon`, `.navbar-logo .logo-icon`, `.step-icon`, `.footer-logo-icon`).
-   - Se removieron restricciones como `onerror="this.style.display='none'"` que ocultaban las imágenes en caso de demoras en renderizado.
-   - Las imágenes seleccionadas o subidas desde cualquier ubicación se reflejan al instante tanto en el Panel de Administración como en el Portal Público (`index.html`).
+   - Las imágenes seleccionadas o subidas se reflejan al instante con el diseño estilizado completo en `index.html`, `login.html` y `admin.html`.
 
 3. **Eliminación del Mapa Ciudadano en `index.html`:**
    - Se eliminó la sección de mapa sin contenido de `index.html` y se protegió la llamada a `initMap()`.
