@@ -84,7 +84,9 @@
   <aside class="auth-aside">
     <div class="auth-aside-content">
       <div class="auth-aside-logo">
-        <img src="Imagenes/Logo blanco.png" alt="H. Ayuntamiento de El Grullo" class="aside-brand-img" />
+        <div class="auth-aside-logo-icon" id="nav-logo-icon" style="width:48px; height:48px; background:var(--orange); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+          <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="Escudo El Grullo" style="height:36px; width:auto; object-fit:contain;" />
+        </div>
         <div class="auth-aside-logo-text">
           <div class="title">REMAC</div>
           <div class="subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
@@ -623,7 +625,26 @@ document.addEventListener('DOMContentLoaded', () => {
   buildList('raza-list', getRazas('perro'));
   buildList('edad-list', getEdades());
   buildList('colonia-list', getColonias());
+  
+  applyAppearanceConfig();
 });
+
+function applyAppearanceConfig() {
+  const raw = localStorage.getItem('padron_appearance_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    Object.entries(cfg).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el || !val) return;
+      if (val.type === 'emoji') {
+        el.innerHTML = val.value;
+      } else {
+        el.innerHTML = `<img src="${val.value}" alt="icon" style="width:100%; height:100%; object-fit:contain; border-radius:inherit;" onerror="this.style.display='none'" />`;
+      }
+    });
+  } catch(e) { /* ignore */ }
+}
 
 /* ── Check for #registro hash ── */
 if (window.location.hash === '#registro') switchTab('registro');

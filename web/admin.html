@@ -2886,13 +2886,21 @@ function buildIconSelectors() {
 
       <!-- Image upload panel (hidden) -->
       <div class="icon-sel-input" id="inp-image-${el.id}" style="display:none;">
+        <div style="font-size:.7rem; font-weight:700; color:var(--gray-2); margin-bottom:4px;">Logos oficiales de El Grullo:</div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:.65rem; padding:3px 6px; border:1px solid var(--gray-4);" onclick="selectPresetImage('${el.id}','Imagenes/Distintivo HAyto El Grullo CB.png')">🏛️ Escudo</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:.65rem; padding:3px 6px; border:1px solid var(--gray-4);" onclick="selectPresetImage('${el.id}','Imagenes/Logo blanco.png')">⚪ Blanco</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:.65rem; padding:3px 6px; border:1px solid var(--gray-4);" onclick="selectPresetImage('${el.id}','Imagenes/Logo negro.png')">🖤 Negro</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="font-size:.65rem; padding:3px 6px; border:1px solid var(--gray-4);" onclick="selectPresetImage('${el.id}','Imagenes/CIUDAD MÁGICA LOGO.png')">✨ Ciudad Mágica</button>
+        </div>
+
         <div class="icon-sel-drop"
              id="drop-${el.id}"
              onclick="document.getElementById('file-${el.id}').click()"
              ondragover="event.preventDefault(); this.classList.add('drag-over')"
              ondragleave="this.classList.remove('drag-over')"
              ondrop="handleIconDrop(event,'${el.id}')">
-          <div>⬆️ Arrastra una imagen o haz clic</div>
+          <div>⬆️ Subir propia imagen o arrastrar</div>
           <div style="font-size:.65rem; color:var(--gray-3); margin-top:4px;">JPG · PNG · GIF · SVG · Máx. 1 MB</div>
         </div>
         <input type="file" id="file-${el.id}" accept="image/*,.gif,.svg" style="display:none;" onchange="handleIconFile(this,'${el.id}')" />
@@ -2951,6 +2959,16 @@ function updateIconPreviewUrl(id) {
   appearanceState[id] = { type: 'gif', value: url };
   document.getElementById(`prev-${id}`).innerHTML =
     `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
+}
+
+// ── Select a preset official municipal logo ───────
+function selectPresetImage(id, url) {
+  appearanceState[id] = { type: 'image', value: url };
+  document.getElementById(`prev-${id}`).innerHTML =
+    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+  const name = url.split('/').pop();
+  document.getElementById(`drop-${id}`).innerHTML =
+    `<div>✅ Seleccionado: ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar o subir otra</div>`;
 }
 
 // ── Handle file upload ────────────────────────────
