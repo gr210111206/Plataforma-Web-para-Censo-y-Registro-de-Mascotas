@@ -2,6 +2,15 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-07-29] — Creación del Archivo de Contexto para Claude Code (CLAUDE.md)
+
+### 🚀 Novedades y Ajustes Principales
+1. **Archivo `CLAUDE.md` Creado en la Raíz:**
+   - Documento técnico exhaustivo que proporciona a Claude Code (y cualquier agente/desarrollador) el contexto completo del proyecto REMAC.
+   - Incluye visión general, arquitectura (HTML5, CSS Vanilla, JS, PHP, MySQL), eliminación total de CURP, obligatoriedad de teléfono, esquemas de BD, sistema de personalización admin con Canvas HTML5, mapa de archivos y reglas de desarrollo.
+
+---
+
 ## 📅 [2026-07-29] — Solución Definitiva para Imágenes Subidas desde Descargas y Apariencia
 
 ### 🚀 Novedades y Ajustes Principales
