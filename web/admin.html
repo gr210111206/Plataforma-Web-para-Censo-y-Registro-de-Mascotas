@@ -1077,7 +1077,12 @@
 
       <!-- Card nav -->
       <div class="config-card-nav">
-        <div class="config-nav-item active" id="cnav-reglamento" onclick="switchConfig('reglamento', this)">
+        <div class="config-nav-item active" id="cnav-portada" onclick="switchConfig('portada', this)">
+          <div class="config-nav-badge saved"></div>
+          <div class="config-nav-icon">🏠</div>
+          <div class="config-nav-label">Contenidos de Portada</div>
+        </div>
+        <div class="config-nav-item" id="cnav-reglamento" onclick="switchConfig('reglamento', this)">
           <div class="config-nav-badge saved"></div>
           <div class="config-nav-icon">📋</div>
           <div class="config-nav-label">Reglamento</div>
@@ -1117,8 +1122,232 @@
         </div>
       </div>
 
+      <!-- TAB: Contenidos de Portada (index.html) -->
+      <div class="config-panel active" id="cfg-portada">
+        <div style="max-width:960px; display:flex; flex-direction:column; gap:24px;">
+
+          <div style="background:linear-gradient(135deg, #1A0F00, #5C3000); border-radius:var(--radius-lg); padding:24px; color:white;">
+            <h3 style="font-size:1.2rem; font-family:'Outfit',sans-serif; margin-bottom:6px; color:white;">🏠 Editor de Contenidos de la Página Principal (index.html)</h3>
+            <p style="font-size:.85rem; color:rgba(255,255,255,.8); margin-bottom:0;">Edita y personaliza cualquier título, descripción, contadores y textos de la portada del portal.</p>
+          </div>
+
+          <!-- 1. HERO SECTION -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif; display:flex; align-items:center; gap:8px;">
+              🚀 Encabezado Principal (Hero)
+            </h4>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Etiqueta superior (Eyebrow)</label>
+              <input type="text" id="edit-hero-eyebrow" class="form-control" value="🏛️ Gobierno Municipal 2024–2027 · La Ciudad de la Gente" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Título Principal (Soporta HTML como &lt;span class="highlight"&gt;mascota&lt;/span&gt;)</label>
+              <input type="text" id="edit-hero-title" class="form-control" value='Registra a tu <span class="highlight">mascota</span> en el Padrón Municipal' />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Descripción Principal</label>
+              <textarea id="edit-hero-desc" class="form-control" rows="3">El H. Ayuntamiento de El Grullo pone a tu disposición este portal para registrar a tus perros y gatos. Gratuito, oficial y con acta digital incluida.</textarea>
+            </div>
+            <div class="form-row" style="margin-bottom:14px;">
+              <div class="form-group">
+                <label>Texto Botón Principal (Naranja)</label>
+                <input type="text" id="edit-hero-btn-1" class="form-control" value="🐶 Registrar mi mascota" />
+              </div>
+              <div class="form-group">
+                <label>Texto Botón Secundario (Blanco)</label>
+                <input type="text" id="edit-hero-btn-2" class="form-control" value="Ver cómo funciona" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. CONTADORES ESTADÍSTICOS -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
+              📊 Tarjetas de Estadísticas (Hero)
+            </h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+              <div>
+                <label style="font-weight:600; font-size:.82rem;">Contador 1 (Número)</label>
+                <input type="number" id="edit-stat-1-num" class="form-control" value="342" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 1 (Nombre)</label>
+                <input type="text" id="edit-stat-1-label" class="form-control" value="Mascotas registradas" />
+              </div>
+              <div>
+                <label style="font-weight:600; font-size:.82rem;">Contador 2 (Número)</label>
+                <input type="number" id="edit-stat-2-num" class="form-control" value="289" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 2 (Nombre)</label>
+                <input type="text" id="edit-stat-2-label" class="form-control" value="Familias registradas" />
+              </div>
+              <div>
+                <label style="font-weight:600; font-size:.82rem;">Contador 3 (Número)</label>
+                <input type="number" id="edit-stat-3-num" class="form-control" value="187" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 3 (Nombre)</label>
+                <input type="text" id="edit-stat-3-label" class="form-control" value="Vacunadas al día" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. TARJETA PASOS DESTACADA -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
+              🐾 Tarjeta de Pasos Rápidos (Lateral Hero)
+            </h4>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Título de la tarjeta</label>
+              <input type="text" id="edit-hero-mascot-title" class="form-control" value="Registro en 3 sencillos pasos" />
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Paso 1 (Resumen)</label>
+              <input type="text" id="edit-hero-step-1" class="form-control" value="Ingresa tus datos y tu CURP como identificador" />
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Paso 2 (Resumen)</label>
+              <input type="text" id="edit-hero-step-2" class="form-control" value="Llena los datos de tu mascota (foto opcional)" />
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Paso 3 (Resumen)</label>
+              <input type="text" id="edit-hero-step-3" class="form-control" value="Descarga tu acta oficial — folio único garantizado" />
+            </div>
+          </div>
+
+          <!-- 4. BANNER DE AVISO DESTACADO -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
+              💉 Banner de Aviso Destacado (Cinta Naranja)
+            </h4>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Título del aviso</label>
+              <input type="text" id="edit-banner-title" class="form-control" value="Campaña de Vacunación Antirrábica · Julio 2026" />
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Descripción del aviso</label>
+              <input type="text" id="edit-banner-desc" class="form-control" value="Gratuita para todos los perros y gatos registrados en el padrón municipal." />
+            </div>
+            <div class="form-group">
+              <label>Texto del botón</label>
+              <input type="text" id="edit-banner-btn" class="form-control" value="Regístrate ahora →" />
+            </div>
+          </div>
+
+          <!-- 5. SECCIÓN CÓMO FUNCIONA -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
+              📋 Sección "¿Cómo funciona el padrón?"
+            </h4>
+            <div class="form-row" style="margin-bottom:14px;">
+              <div class="form-group">
+                <label>Subtítulo de sección (Eyebrow)</label>
+                <input type="text" id="edit-proc-eyebrow" class="form-control" value="Proceso de registro" />
+              </div>
+              <div class="form-group">
+                <label>Título de sección</label>
+                <input type="text" id="edit-proc-title" class="form-control" value="¿Cómo funciona el padrón?" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+              <label>Descripción de sección</label>
+              <textarea id="edit-proc-desc" class="form-control" rows="2">Registrar a tu mascota es completamente gratuito y tarda menos de 5 minutos. Solo necesitas tu CURP y datos básicos.</textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+              <div style="background:var(--surface); padding:14px; border-radius:var(--radius);">
+                <strong style="font-size:.85rem; display:block; margin-bottom:8px;">Paso 1 (Detalle)</strong>
+                <input type="text" id="edit-step-1-title" class="form-control" value="Ingresa tus datos" style="margin-bottom:6px;" placeholder="Título paso 1" />
+                <textarea id="edit-step-1-desc" class="form-control" rows="3">Proporciona tu CURP y datos de contacto. Será tu identificador para acceder después.</textarea>
+              </div>
+              <div style="background:var(--surface); padding:14px; border-radius:var(--radius);">
+                <strong style="font-size:.85rem; display:block; margin-bottom:8px;">Paso 2 (Detalle)</strong>
+                <input type="text" id="edit-step-2-title" class="form-control" value="Registra a tu mascota" style="margin-bottom:6px;" placeholder="Título paso 2" />
+                <textarea id="edit-step-2-desc" class="form-control" rows="3">Proporciona nombre, especie, raza, edad y estado de vacunación. Puedes subir una foto.</textarea>
+              </div>
+              <div style="background:var(--surface); padding:14px; border-radius:var(--radius);">
+                <strong style="font-size:.85rem; display:block; margin-bottom:8px;">Paso 3 (Detalle)</strong>
+                <input type="text" id="edit-step-3-title" class="form-control" value="Descarga tu acta" style="margin-bottom:6px;" placeholder="Título paso 3" />
+                <textarea id="edit-step-3-desc" class="form-control" rows="3">Recibe de inmediato la ficha oficial con folio único (REMAC-GRU-XXXXX) y código QR generado por el Ayuntamiento.</textarea>
+              </div>
+            </div>
+
+            <div style="background:var(--surface); padding:16px; border-radius:var(--radius); border-left:4px solid var(--orange);">
+              <strong style="font-size:.9rem; display:block; margin-bottom:8px;">Bloque: "¿Por qué registrar a tu mascota?"</strong>
+              <div class="form-row" style="margin-bottom:10px;">
+                <div class="form-group">
+                  <label>Título del bloque</label>
+                  <input type="text" id="edit-why-title" class="form-control" value="¿Por qué registrar a tu mascota?" />
+                </div>
+                <div class="form-group">
+                  <label>Texto del botón</label>
+                  <input type="text" id="edit-why-btn" class="form-control" value="Comenzar →" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Descripción del bloque</label>
+                <textarea id="edit-why-desc" class="form-control" rows="2">El Padrón Municipal de Mascotas es una iniciativa del H. Ayuntamiento para llevar un control sanitario más efectivo y cumplir con el Reglamento Municipal de Tenencia Responsable de Mascotas.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. ENCABEZADOS DE CAMPAÑAS Y TIPS -->
+          <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+            <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
+              📢 Encabezados de Campañas, Tips y FAQ
+            </h4>
+            <div class="form-row" style="margin-bottom:14px;">
+              <div class="form-group">
+                <label>Campañas (Eyebrow)</label>
+                <input type="text" id="edit-camp-eyebrow" class="form-control" value="Avisos y campañas" />
+              </div>
+              <div class="form-group">
+                <label>Campañas (Título de sección)</label>
+                <input type="text" id="edit-camp-title" class="form-control" value="Campañas activas" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+              <label>Campañas (Descripción)</label>
+              <input type="text" id="edit-camp-desc" class="form-control" value="El Ayuntamiento coordina campañas de salud animal. ¡Mantente informado!" />
+            </div>
+
+            <div class="form-row" style="margin-bottom:14px;">
+              <div class="form-group">
+                <label>Tips de Salud (Eyebrow)</label>
+                <input type="text" id="edit-tips-eyebrow" class="form-control" value="Consejos y cuidados" />
+              </div>
+              <div class="form-group">
+                <label>Tips de Salud (Título de sección)</label>
+                <input type="text" id="edit-tips-title" class="form-control" value="Tips de salud animal" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+              <label>Tips de Salud (Descripción)</label>
+              <input type="text" id="edit-tips-desc" class="form-control" value="Información de nuestros veterinarios para mantener a tu mascota sana." />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Preguntas FAQ (Eyebrow)</label>
+                <input type="text" id="edit-faq-eyebrow" class="form-control" value="Preguntas frecuentes" />
+              </div>
+              <div class="form-group">
+                <label>Preguntas FAQ (Título)</label>
+                <input type="text" id="edit-faq-title" class="form-control" value="Resolvemos tus dudas" />
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTONES GUARDAR -->
+          <div style="display:flex; gap:12px;">
+            <button class="btn btn-primary btn-lg" style="flex:1;" onclick="saveSiteContentConfig()">
+              💾 Guardar todos los contenidos de la Portada
+            </button>
+            <button class="btn btn-ghost btn-lg" onclick="resetSiteContentConfig()">
+              ♻️ Restablecer a valores por defecto
+            </button>
+          </div>
+
+        </div>
+      </div>
+
       <!-- TAB: Reglamento -->
-      <div class="config-panel active" id="cfg-reglamento">
+      <div class="config-panel" id="cfg-reglamento">
         <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; max-width:700px;">
           <h3 style="font-size:1rem; margin-bottom:16px;">📋 Reglamento Municipal de Tenencia Responsable</h3>
           <div class="form-group" style="margin-bottom:16px;">
@@ -2828,8 +3057,80 @@ function loadSiteConfig() {
   } catch(e) { /* ignore */ }
 }
 
+/* ══════════════════════════════════════════════════ */
+/*  CONTENIDOS PORTADA (index.html Editor)            */
+/* ══════════════════════════════════════════════════ */
+function getSiteContentValues() {
+  const g = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    hero_eyebrow:      g('edit-hero-eyebrow'),
+    hero_title:        g('edit-hero-title'),
+    hero_desc:         g('edit-hero-desc'),
+    hero_btn_1:        g('edit-hero-btn-1'),
+    hero_btn_2:        g('edit-hero-btn-2'),
+    stat_1_num:        g('edit-stat-1-num'),
+    stat_1_label:      g('edit-stat-1-label'),
+    stat_2_num:        g('edit-stat-2-num'),
+    stat_2_label:      g('edit-stat-2-label'),
+    stat_3_num:        g('edit-stat-3-num'),
+    stat_3_label:      g('edit-stat-3-label'),
+    hero_mascot_title: g('edit-hero-mascot-title'),
+    hero_step_1:       g('edit-hero-step-1'),
+    hero_step_2:       g('edit-hero-step-2'),
+    hero_step_3:       g('edit-hero-step-3'),
+    banner_title:      g('edit-banner-title'),
+    banner_desc:       g('edit-banner-desc'),
+    banner_btn:        g('edit-banner-btn'),
+    proc_eyebrow:      g('edit-proc-eyebrow'),
+    proc_title:        g('edit-proc-title'),
+    proc_desc:         g('edit-proc-desc'),
+    step_1_title:      g('edit-step-1-title'),
+    step_1_desc:       g('edit-step-1-desc'),
+    step_2_title:      g('edit-step-2-title'),
+    step_2_desc:       g('edit-step-2-desc'),
+    step_3_title:      g('edit-step-3-title'),
+    step_3_desc:       g('edit-step-3-desc'),
+    why_title:         g('edit-why-title'),
+    why_desc:          g('edit-why-desc'),
+    why_btn:           g('edit-why-btn'),
+    camp_eyebrow:      g('edit-camp-eyebrow'),
+    camp_title:        g('edit-camp-title'),
+    camp_desc:         g('edit-camp-desc'),
+    tips_eyebrow:      g('edit-tips-eyebrow'),
+    tips_title:        g('edit-tips-title'),
+    tips_desc:         g('edit-tips-desc'),
+    faq_eyebrow:       g('edit-faq-eyebrow'),
+    faq_title:         g('edit-faq-title'),
+  };
+}
+
+function saveSiteContentConfig() {
+  const content = getSiteContentValues();
+  localStorage.setItem('padron_site_content', JSON.stringify(content));
+  showToast('✅ Contenidos de la portada guardados y publicados con éxito', 'success');
+}
+
+function loadSiteContentConfig() {
+  const raw = localStorage.getItem('padron_site_content');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+    Object.entries(cfg).forEach(([k, v]) => {
+      set('edit-' + k.replace(/_/g, '-'), v);
+    });
+  } catch(e) {}
+}
+
+function resetSiteContentConfig() {
+  localStorage.removeItem('padron_site_content');
+  showToast('♻️ Contenidos de portada restablecidos a valores por defecto', 'info');
+  setTimeout(() => location.reload(), 800);
+}
+
 // Run on init
 loadSiteConfig();
+loadSiteContentConfig();
 previewFooter();
 
 /* ══════════════════════════════════════════════════ */
