@@ -88,8 +88,8 @@
           <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="Escudo El Grullo" style="height:36px; width:auto; object-fit:contain;" />
         </div>
         <div class="auth-aside-logo-text">
-          <div class="title">REMAC</div>
-          <div class="subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
+          <div class="title" id="auth-logo-title">REMAC</div>
+          <div class="subtitle" id="auth-logo-subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
         </div>
       </div>
 
@@ -630,6 +630,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function applyAppearanceConfig() {
+  const rawSite = localStorage.getItem('padron_site_config');
+  if (rawSite) {
+    try {
+      const cfg = JSON.parse(rawSite);
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+      set('auth-logo-title',    cfg.nombre || 'REMAC');
+      set('auth-logo-subtitle', cfg.header_sub || 'H. Ayuntamiento de El Grullo · 2024-2027');
+    } catch(e) {}
+  }
+
   const raw = localStorage.getItem('padron_appearance_config');
   if (!raw) return;
   try {

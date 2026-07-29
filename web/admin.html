@@ -1236,16 +1236,20 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
             <!-- Identidad del sitio -->
             <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:22px;">
-              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🏛️ Identidad del sitio</div>
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🏛️ Identidad y Encabezado del Sitio</div>
               <div class="form-row" style="margin-bottom:14px;">
                 <div class="form-group">
-                  <label>Nombre del portal</label>
+                  <label>Título del portal (Navbar / Header)</label>
                   <input type="text" class="form-control" id="cfg-nombre" value="Padrón de Mascotas" oninput="previewFooter()" />
                 </div>
                 <div class="form-group">
-                  <label>Slogan / subtítulo</label>
-                  <input type="text" class="form-control" id="cfg-slogan" value="La Ciudad de la Gente" oninput="previewFooter()" />
+                  <label>Subtítulo del encabezado (Ayuntamiento y Período)</label>
+                  <input type="text" class="form-control" id="cfg-header-sub" value="H. Ayuntamiento de El Grullo · 2024-2027" oninput="previewFooter()" />
                 </div>
+              </div>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label>Slogan del portal (Footer)</label>
+                <input type="text" class="form-control" id="cfg-slogan" value="La Ciudad de la Gente" oninput="previewFooter()" />
               </div>
               <div class="form-group">
                 <label>Descripción del footer</label>
@@ -2695,6 +2699,7 @@ function getSiteConfigValues() {
   const g = id => (document.getElementById(id)?.value || '').trim();
   return {
     nombre:      g('cfg-nombre'),
+    header_sub:  g('cfg-header-sub'),
     slogan:      g('cfg-slogan'),
     descripcion: g('cfg-desc'),
     telefono:    g('cfg-telefono'),
@@ -2758,7 +2763,7 @@ function previewFooter() {
 function saveSiteConfig() {
   const cfg = getSiteConfigValues();
   localStorage.setItem('padron_site_config', JSON.stringify(cfg));
-  showToast('✅ Configuración guardada — el footer del portal ha sido actualizado', 'success');
+  showToast('✅ Configuración guardada — el encabezado y footer del portal han sido actualizados', 'success');
 
   // Flash the preview border
   const prev = document.getElementById('footerPreview');
@@ -2776,6 +2781,7 @@ function saveSiteConfig() {
 function resetSiteConfig() {
   const defaults = {
     'cfg-nombre':     'Padrón de Mascotas',
+    'cfg-header-sub': 'H. Ayuntamiento de El Grullo · 2024-2027',
     'cfg-slogan':     'La Ciudad de la Gente',
     'cfg-desc':       'H. Ayuntamiento Constitucional de El Grullo, Jalisco.\nGobierno Municipal 2024–2027.\nDirección de Medio Ambiente e Informática Municipal.',
     'cfg-telefono':   '(341) 123-4567',
@@ -2804,14 +2810,15 @@ function loadSiteConfig() {
   try {
     const cfg = JSON.parse(raw);
     const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    set('cfg-nombre',    cfg.nombre);
-    set('cfg-slogan',    cfg.slogan);
-    set('cfg-desc',      cfg.descripcion);
-    set('cfg-copyright', cfg.copyright);
-    set('cfg-creditos',  cfg.creditos);
-    set('cfg-instagram', cfg.instagram);
-    set('cfg-facebook',  cfg.facebook);
-    set('cfg-web',       cfg.web_oficial);
+    set('cfg-nombre',     cfg.nombre);
+    set('cfg-header-sub', cfg.header_sub);
+    set('cfg-slogan',     cfg.slogan);
+    set('cfg-desc',       cfg.descripcion);
+    set('cfg-copyright',  cfg.copyright);
+    set('cfg-creditos',   cfg.creditos);
+    set('cfg-instagram',  cfg.instagram);
+    set('cfg-facebook',   cfg.facebook);
+    set('cfg-web',        cfg.web_oficial);
     if (cfg.contactos) {
       set('cfg-telefono',   cfg.contactos.telefono);
       set('cfg-direccion',  cfg.contactos.direccion);

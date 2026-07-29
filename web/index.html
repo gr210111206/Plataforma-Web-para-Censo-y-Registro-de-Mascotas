@@ -22,8 +22,8 @@
           <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento de El Grullo" style="height:34px; width:auto; object-fit:contain;" />
         </div>
         <div class="logo-text">
-          <div class="logo-title">Padrón de Mascotas</div>
-          <div class="logo-subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
+          <div class="logo-title" id="nav-logo-title">Padrón de Mascotas</div>
+          <div class="logo-subtitle" id="nav-logo-subtitle">H. Ayuntamiento de El Grullo · 2024-2027</div>
         </div>
       </a>
 
@@ -508,10 +508,12 @@ function applyFooterConfig() {
     const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
     const href = (id, val) => { const el = document.getElementById(id); if (el && val) el.href = val; };
 
-    set('ft-nombre',    cfg.nombre);
-    set('ft-slogan',    cfg.slogan);
-    set('ft-copyright', cfg.copyright);
-    set('ft-creditos',  cfg.creditos);
+    set('nav-logo-title',    cfg.nombre);
+    set('nav-logo-subtitle', cfg.header_sub);
+    set('ft-nombre',        cfg.nombre);
+    set('ft-slogan',        cfg.slogan);
+    set('ft-copyright',     cfg.copyright);
+    set('ft-creditos',      cfg.creditos);
 
     // Desc paragraph
     if (cfg.descripcion) {
