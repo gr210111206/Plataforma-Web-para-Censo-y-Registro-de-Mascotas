@@ -244,7 +244,10 @@ function renderPet(pet) {
 
   document.getElementById('pet-card').innerHTML = `
     <div class="card-header">
-      <div class="card-header-badge">🐾 Padrón Municipal REMAC · El Grullo</div>
+      <div class="card-header-badge">
+        <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="El Grullo" style="height:18px; width:auto; vertical-align:middle;" />
+        Padrón Municipal REMAC · El Grullo
+      </div>
       <div class="card-avatar">${avatarContent}</div>
       <div class="card-pet-name">${pet.nombre}</div>
       <div class="card-pet-sub">${pet.especie.charAt(0).toUpperCase() + pet.especie.slice(1)}${pet.raza ? ' · ' + pet.raza : ''} &nbsp; ${estatusPill}</div>
@@ -324,8 +327,9 @@ function renderPet(pet) {
     </div>
 
     <div class="card-footer">
-      <div class="card-footer-logo">
-        🐾 &nbsp; Registrado en &nbsp; <strong>REMAC</strong> &nbsp;—&nbsp; H. Ayuntamiento de El Grullo, Jal.
+      <div class="card-footer-logo" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento" style="height:22px; width:auto;" />
+        Registrado en <strong>REMAC</strong> — H. Ayuntamiento de El Grullo, Jal.
       </div>
     </div>
   `;
@@ -340,8 +344,9 @@ function renderNotFound(id) {
       <p style="margin-top:12px; font-size:.8rem;">Si crees que es un error, contacta al Ayuntamiento.</p>
     </div>
     <div class="card-footer">
-      <div class="card-footer-logo">
-        🐾 &nbsp; <strong>REMAC</strong> &nbsp;—&nbsp; H. Ayuntamiento de El Grullo, Jal.
+      <div class="card-footer-logo" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+        <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento" style="height:22px; width:auto;" />
+        <strong>REMAC</strong> — H. Ayuntamiento de El Grullo, Jal.
       </div>
     </div>
   `;
