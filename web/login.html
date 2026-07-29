@@ -132,31 +132,31 @@
 
       <!-- Tabs -->
       <div class="auth-tabs" role="tablist">
-        <div class="auth-tab active" id="tab-login"    onclick="switchTab('login')"    role="tab" style="font-size:.9rem;">Acceder con CURP</div>
-        <div class="auth-tab"        id="tab-registro" onclick="switchTab('registro')" role="tab" style="font-size:.9rem;">Registrar Mascota</div>
-        <div class="auth-tab"        id="tab-admin"    onclick="switchTab('admin')"    role="tab" style="font-size:.9rem;">Iniciar sesión</div>
+        <div class="auth-tab active" id="tab-login"    onclick="switchTab('login')"    role="tab" style="font-size:.9rem;">Iniciar sesión</div>
+        <div class="auth-tab"        id="tab-registro" onclick="switchTab('registro')" role="tab" style="font-size:.9rem;">Crear cuenta</div>
+        <div class="auth-tab"        id="tab-admin"    onclick="switchTab('admin')"    role="tab" style="font-size:.9rem;">Acceso Admin</div>
       </div>
 
       <!-- ══ Login Form ══ -->
       <form class="auth-form active" id="form-login" onsubmit="handleLogin(event)">
         <div>
           <div class="auth-title">¡Bienvenido de nuevo!</div>
-          <div class="auth-subtitle">Ingresa tu Nombre y CURP para consultar tus mascotas.</div>
+          <div class="auth-subtitle">Ingresa tus credenciales para acceder a tu portal.</div>
         </div>
 
         <div class="form-group">
-          <label for="login-nombre">Nombre completo</label>
+          <label for="login-email">Correo electrónico o CURP *</label>
           <div class="input-group">
-            <span class="input-icon">👤</span>
-            <input type="text" id="login-nombre" class="form-control" placeholder="Tu nombre completo" required />
+            <span class="input-icon">✉️</span>
+            <input type="text" id="login-email" class="form-control" placeholder="tu@correo.com o tu CURP" required />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="login-curp">CURP</label>
+          <label for="login-password">Contraseña *</label>
           <div class="input-group">
-            <span class="input-icon">🆔</span>
-            <input type="text" id="login-curp" class="form-control" placeholder="18 caracteres" required maxlength="18" style="text-transform:uppercase;" />
+            <span class="input-icon">🔒</span>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required />
           </div>
         </div>
 
@@ -166,17 +166,17 @@
           </label>
         </div>
 
-        <!-- Demo credentials -->
+        <!-- Cuentas de prueba -->
         <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gray-1); margin-bottom:20px;">
-          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba — clic para rellenar:</strong>
+          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba rápida (clic para rellenar):</strong>
           <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
             <button type="button"
-              onclick="switchTab('login'); fillCredentials('Luis Fernando Vargas Ramírez','VARL900101HJCXX00');"
+              onclick="fillCitizenLogin('ciudadano@demo.com', 'Demo1234');"
               style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
               onmouseover="this.style.background='var(--orange)'; this.style.color='white';"
               onmouseout="this.style.background='white'; this.style.color='';">
               👤 Ciudadano<br/>
-              <span style="font-weight:400; font-size:.7rem;">VARL900101...</span>
+              <span style="font-weight:400; font-size:.7rem;">ciudadano@demo.com</span>
             </button>
             <button type="button"
               onclick="switchTab('admin'); fillAdmin('admin@demo.com','Admin1234');"
@@ -194,178 +194,76 @@
         <div class="form-divider">o</div>
 
         <div style="text-align:center; font-size:.85rem; color:var(--gray-2);">
-          ¿Nueva mascota? <a href="#" onclick="switchTab('registro')" style="color:var(--orange); font-weight:600;">Regístrala aquí</a>
+          ¿Aún no tienes cuenta? <a href="#" onclick="switchTab('registro')" style="color:var(--orange); font-weight:600;">Crea tu cuenta aquí</a>
         </div>
       </form>
 
-      <!-- ══ Register Form ══ -->
-      <form class="auth-form" id="form-registro" onsubmit="handleRegistro(event)">
+      <!-- ══ Register User Form ══ -->
+      <form class="auth-form" id="form-registro" onsubmit="handleRegistroUsuario(event)">
         <div>
-          <div class="auth-title">Registra a tu Mascota</div>
-          <div class="auth-subtitle">Sistema REMAC — Padrón Municipal El Grullo</div>
-        </div>
-
-        <!-- ID auto-generado -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-2);">ID *</label>
-          <div class="id-badge" id="reg-id-display">REMAC-GRU-00007</div>
-          <input type="hidden" id="reg-id" />
-        </div>
-
-        <!-- ─ Sección Mascota ─ -->
-        <div class="section-label">🐾 Animal</div>
-
-        <div class="form-group">
-          <label for="pet-nombre">ANIMAL *</label>
-          <input type="text" id="pet-nombre" class="form-control" placeholder="Nombre de la mascota" required />
+          <div class="auth-title">Crear Cuenta de Usuario</div>
+          <div class="auth-subtitle">Registra tu cuenta personal para acceder al portal municipal.</div>
         </div>
 
         <div class="form-group">
-          <label>ESPECIE *</label>
-          <div class="toggle-group" id="especie-group">
-            <button type="button" class="toggle-btn active" data-val="perro" onclick="selectToggle('especie-group','perro'); updateRazas();">🐕 Perro</button>
-            <button type="button" class="toggle-btn"        data-val="gato"  onclick="selectToggle('especie-group','gato');  updateRazas();">🐈 Gato</button>
-          </div>
-          <input type="hidden" id="pet-especie" value="perro" />
-        </div>
-
-        <div class="form-group">
-          <label>RAZA *</label>
-          <div class="searchable-select" id="raza-select">
-            <div class="ss-trigger" onclick="toggleDropdown('raza-dd')" id="raza-trigger">
-              <span id="raza-label">Seleccionar raza...</span><span>▾</span>
-            </div>
-            <div class="ss-dropdown" id="raza-dd">
-              <input type="text" class="ss-search" placeholder="Buscar..." oninput="filterDropdown('raza-dd', this.value)" />
-              <div class="ss-list" id="raza-list"></div>
-            </div>
-          </div>
-          <input type="hidden" id="pet-raza" required />
-        </div>
-
-        <div class="form-group">
-          <label>EDAD *</label>
-          <div class="searchable-select" id="edad-select">
-            <div class="ss-trigger" onclick="toggleDropdown('edad-dd')" id="edad-trigger">
-              <span id="edad-label">Seleccionar edad...</span><span>▾</span>
-            </div>
-            <div class="ss-dropdown" id="edad-dd">
-              <input type="text" class="ss-search" placeholder="Buscar..." oninput="filterDropdown('edad-dd', this.value)" />
-              <div class="ss-list" id="edad-list"></div>
-            </div>
-          </div>
-          <input type="hidden" id="pet-edad" required />
-        </div>
-
-        <div class="form-group">
-          <label>SEXO *</label>
-          <div class="toggle-group" id="sexo-group">
-            <button type="button" class="toggle-btn" data-val="hembra" onclick="selectToggle('sexo-group','hembra')">♀ Hembra</button>
-            <button type="button" class="toggle-btn" data-val="macho"  onclick="selectToggle('sexo-group','macho')">♂ Macho</button>
-          </div>
-          <input type="hidden" id="pet-sexo" />
-        </div>
-
-        <div class="form-group">
-          <label for="pet-color">COLOR</label>
-          <input type="text" id="pet-color" class="form-control" placeholder="Ej. Amarillo con blanco, Negro, Café..." />
-        </div>
-
-        <div class="form-group">
-          <label for="pet-senias">SEÑAS PARTICULARES</label>
-          <input type="text" id="pet-senias" class="form-control" placeholder="Ej. Mancha en el ojo, cicatriz, ninguna en especial..." />
-        </div>
-
-        <div class="form-group">
-          <label>FOTO</label>
-          <div class="foto-upload-box" id="foto-upload-box" onclick="document.getElementById('pet-foto-input').click()">
-            <div class="foto-upload-placeholder" id="foto-placeholder">
-              <div style="font-size:2rem;">📷</div>
-              <div style="font-size:.8rem; color:var(--gray-2); margin-top:4px;">Clic para subir foto</div>
-            </div>
-            <img id="foto-preview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:var(--radius);" />
-          </div>
-          <input type="file" id="pet-foto-input" accept="image/*" style="display:none;" onchange="previewFoto(this)" />
-        </div>
-
-        <!-- ─ Sección Dueño ─ -->
-        <div class="section-label">👤 Dueño</div>
-
-        <div class="form-group">
-          <label for="reg-nombre">PERSONA *</label>
+          <label for="reg-user-nombre">Nombre completo *</label>
           <div class="input-group">
             <span class="input-icon">👤</span>
-            <input type="text" id="reg-nombre" class="form-control" placeholder="Nombre completo del dueño" required />
+            <input type="text" id="reg-user-nombre" class="form-control" placeholder="Ej. Juan Pérez García" required />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="reg-curp">CURP *</label>
+          <label for="reg-user-email">Correo electrónico *</label>
           <div class="input-group">
-            <span class="input-icon">🆔</span>
-            <input type="text" id="reg-curp" class="form-control" placeholder="18 caracteres" required maxlength="18" style="text-transform:uppercase;" />
+            <span class="input-icon">✉️</span>
+            <input type="email" id="reg-user-email" class="form-control" placeholder="tu@correo.com" required />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="reg-telefono">TELÉFONO</label>
+          <label for="reg-user-telefono">Teléfono de contacto</label>
           <div class="input-group">
             <span class="input-icon">📞</span>
-            <input type="tel" id="reg-telefono" class="form-control" placeholder="341-123-4567" />
+            <input type="tel" id="reg-user-telefono" class="form-control" placeholder="341-123-4567" />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="reg-direccion">DIRECCIÓN</label>
+          <label for="reg-user-curp">CURP (Opcional)</label>
           <div class="input-group">
-            <span class="input-icon">🏠</span>
-            <input type="text" id="reg-direccion" class="form-control" placeholder="Ej. Morelos 45" />
+            <span class="input-icon">🆔</span>
+            <input type="text" id="reg-user-curp" class="form-control" placeholder="18 caracteres (opcional)" maxlength="18" style="text-transform:uppercase;" />
           </div>
         </div>
 
         <div class="form-group">
-          <label>COLONIA *</label>
-          <div class="searchable-select" id="colonia-select">
-            <div class="ss-trigger" onclick="toggleDropdown('colonia-dd')" id="colonia-trigger">
-              <span id="colonia-label">Seleccionar colonia...</span><span>▾</span>
-            </div>
-            <div class="ss-dropdown" id="colonia-dd">
-              <input type="text" class="ss-search" placeholder="Buscar..." oninput="filterDropdown('colonia-dd', this.value)" />
-              <div class="ss-list" id="colonia-list"></div>
-            </div>
-          </div>
-          <input type="hidden" id="pet-colonia" required />
-        </div>
-
-        <!-- ─ Sección Registro ─ -->
-        <div class="section-label">📋 Registro</div>
-
-        <div class="form-group">
-          <label for="reg-fecha">FECHA</label>
+          <label for="reg-user-password">Contraseña *</label>
           <div class="input-group">
-            <span class="input-icon">📅</span>
-            <input type="date" id="reg-fecha" class="form-control" />
+            <span class="input-icon">🔒</span>
+            <input type="password" id="reg-user-password" class="form-control" placeholder="Mínimo 4 caracteres" required minlength="4" />
           </div>
         </div>
 
         <div class="form-group">
-          <label>ESTATUS</label>
-          <div class="toggle-group" id="estatus-group">
-            <button type="button" class="toggle-btn active" data-val="Alta" onclick="selectToggle('estatus-group','Alta')">✅ Alta</button>
-            <button type="button" class="toggle-btn"        data-val="Baja" onclick="selectToggle('estatus-group','Baja')">❌ Baja</button>
+          <label for="reg-user-password-confirm">Confirmar contraseña *</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="reg-user-password-confirm" class="form-control" placeholder="Repite tu contraseña" required minlength="4" />
           </div>
-          <input type="hidden" id="reg-estatus" value="Alta" />
         </div>
 
-        <label style="display:flex; align-items:flex-start; gap:8px; font-size:.82rem; cursor:pointer; color:var(--gray-1); margin-top:16px;">
+        <label style="display:flex; align-items:flex-start; gap:8px; font-size:.82rem; cursor:pointer; color:var(--gray-1); margin-top:14px; margin-bottom:18px;">
           <input type="checkbox" required style="accent-color:var(--orange); margin-top:2px; flex-shrink:0;"/>
-          <span>Acepto el <a href="#" style="color:var(--orange);">Aviso de Privacidad</a> del H. Ayuntamiento de El Grullo y el uso de mis datos para el Padrón Municipal de Mascotas.</span>
+          <span>Acepto el <a href="#" style="color:var(--orange);">Aviso de Privacidad</a> del H. Ayuntamiento de El Grullo.</span>
         </label>
 
-        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">Registrar Mascota →</button>
+        <button type="submit" class="btn btn-primary btn-block">Crear mi cuenta →</button>
 
-        <div style="text-align:center; font-size:.85rem; color:var(--gray-2); margin-top:16px;">
-          ¿Ya tienes mascotas? <a href="#" onclick="switchTab('login')" style="color:var(--orange); font-weight:600;">Accede con tu CURP</a>
+        <div class="form-divider">o</div>
+
+        <div style="text-align:center; font-size:.85rem; color:var(--gray-2);">
+          ¿Ya tienes una cuenta? <a href="#" onclick="switchTab('login')" style="color:var(--orange); font-weight:600;">Inicia sesión aquí</a>
         </div>
       </form>
 
@@ -410,14 +308,14 @@ function switchTab(tab) {
 }
 
 /* ── Quick fill credentials ── */
-function fillCredentials(nombre, curp) {
-  document.getElementById('login-nombre').value = nombre;
-  document.getElementById('login-curp').value   = curp;
-  document.getElementById('login-nombre').style.borderColor = 'var(--orange)';
-  document.getElementById('login-curp').style.borderColor   = 'var(--orange)';
+function fillCitizenLogin(email, password) {
+  document.getElementById('login-email').value    = email;
+  document.getElementById('login-password').value = password;
+  document.getElementById('login-email').style.borderColor = 'var(--orange)';
+  document.getElementById('login-password').style.borderColor = 'var(--orange)';
   setTimeout(() => {
-    document.getElementById('login-nombre').style.borderColor = '';
-    document.getElementById('login-curp').style.borderColor   = '';
+    document.getElementById('login-email').style.borderColor = '';
+    document.getElementById('login-password').style.borderColor = '';
   }, 1500);
 }
 
@@ -426,111 +324,62 @@ function fillAdmin(email, password) {
   document.getElementById('admin-password').value = password;
 }
 
-/* ── Toggle group ── */
-function selectToggle(groupId, val) {
-  const group = document.getElementById(groupId);
-  group.querySelectorAll('.toggle-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.val === val);
-  });
-  // Update hidden input (same group id maps to input id)
-  const map = { 'especie-group': 'pet-especie', 'sexo-group': 'pet-sexo', 'estatus-group': 'reg-estatus' };
-  const inputId = map[groupId];
-  if (inputId) document.getElementById(inputId).value = val;
-}
-
-/* ── Searchable Select ── */
-function toggleDropdown(ddId) {
-  const dd = document.getElementById(ddId);
-  // close others
-  document.querySelectorAll('.ss-dropdown.open').forEach(el => { if (el.id !== ddId) el.classList.remove('open'); });
-  document.querySelectorAll('.ss-trigger.open').forEach(el => el.classList.remove('open'));
-  dd.classList.toggle('open');
-  const trigger = dd.previousElementSibling;
-  if (trigger) trigger.classList.toggle('open', dd.classList.contains('open'));
-  if (dd.classList.contains('open')) { const search = dd.querySelector('.ss-search'); if(search) search.focus(); }
-}
-
-function filterDropdown(ddId, query) {
-  const list = document.getElementById(ddId).querySelector('.ss-list');
-  const q = query.toLowerCase();
-  list.querySelectorAll('.ss-option').forEach(opt => {
-    opt.style.display = opt.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-}
-
-function pickOption(listId, val, label) {
-  // Map listId to trigger label and hidden input
-  const maps = {
-    'raza-list':    { label: 'raza-label',    input: 'pet-raza',    dd: 'raza-dd' },
-    'edad-list':    { label: 'edad-label',    input: 'pet-edad',    dd: 'edad-dd' },
-    'colonia-list': { label: 'colonia-label', input: 'pet-colonia', dd: 'colonia-dd' },
-  };
-  const m = maps[listId];
-  if (!m) return;
-  document.getElementById(m.label).textContent = label;
-  document.getElementById(m.input).value       = val;
-  // mark selected
-  document.getElementById(listId).querySelectorAll('.ss-option').forEach(o => o.classList.toggle('selected', o.dataset.val === val));
-  // close dropdown
-  const dd = document.getElementById(m.dd);
-  dd.classList.remove('open');
-  dd.previousElementSibling.classList.remove('open');
-}
-
-function buildList(listId, items) {
-  const list = document.getElementById(listId);
-  list.innerHTML = items.map(item => {
-    const val   = typeof item === 'string' ? item : item.valor;
-    const label = typeof item === 'string' ? item : item.label;
-    return `<div class="ss-option" data-val="${val}" onclick="pickOption('${listId}','${val}','${label}')">${label}</div>`;
-  }).join('');
-}
-
-function updateRazas() {
-  const especie = document.getElementById('pet-especie').value;
-  buildList('raza-list', getRazas(especie));
-  document.getElementById('raza-label').textContent = 'Seleccionar raza...';
-  document.getElementById('pet-raza').value = '';
-}
-
-/* ── Foto preview ── */
-function previewFoto(input) {
-  if (!input.files || !input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('foto-placeholder').style.display = 'none';
-    const img = document.getElementById('foto-preview');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.getElementById('foto-upload-box').style.minHeight = '160px';
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
 /* ── Login handler ── */
-const MOCK_USERS = [
-  { curp: 'VARL900101HJCXX00', nombre: 'Luis Fernando Vargas Ramírez', rol: 'ciudadano' },
-];
-
 function handleLogin(e) {
   e.preventDefault();
-  const nombre = document.getElementById('login-nombre').value.trim();
-  const curp   = document.getElementById('login-curp').value.trim().toUpperCase();
-  if (!nombre || !curp) { showToast('❌ Completa todos los campos', 'error'); return; }
+  const inputEmail = document.getElementById('login-email').value.trim();
+  const inputPass  = document.getElementById('login-password').value.trim();
+  if (!inputEmail || !inputPass) { showToast('❌ Completa correo y contraseña', 'error'); return; }
 
-  const user = MOCK_USERS.find(u => u.curp === curp);
-  if (user) {
-    localStorage.setItem('padron_session', JSON.stringify({ curp: user.curp, nombre: user.nombre, rol: user.rol }));
-    showToast(`✅ ¡Bienvenido, ${user.nombre}!`, 'success');
+  // Check locally registered users
+  const registered = JSON.parse(localStorage.getItem('padron_registered_users') || '[]');
+  const userMatch = registered.find(u =>
+    (u.email && u.email.toLowerCase() === inputEmail.toLowerCase()) ||
+    (u.curp  && u.curp.toUpperCase() === inputEmail.toUpperCase())
+  );
+
+  if (userMatch) {
+    if (userMatch.password && userMatch.password !== inputPass) {
+      showToast('❌ Contraseña incorrecta', 'error');
+      return;
+    }
+    localStorage.setItem('padron_session', JSON.stringify({
+      email: userMatch.email,
+      nombre: userMatch.nombre,
+      telefono: userMatch.telefono || '',
+      curp: userMatch.curp || '',
+      rol: 'ciudadano'
+    }));
+    showToast(`✅ ¡Bienvenido de nuevo, ${userMatch.nombre}!`, 'success');
     setTimeout(() => window.location.href = 'dashboard.html', 1200);
     return;
   }
-  if (curp.length >= 10) {
-    localStorage.setItem('padron_session', JSON.stringify({ curp, nombre, rol: 'ciudadano' }));
-    showToast('✅ ¡Bienvenido de nuevo!', 'success');
+
+  // Demo user fallback
+  if ((inputEmail.toLowerCase() === 'ciudadano@demo.com' || inputEmail.toUpperCase() === 'VARL900101HJCXX00') && (inputPass === 'Demo1234' || inputPass.length >= 4)) {
+    localStorage.setItem('padron_session', JSON.stringify({
+      email: 'ciudadano@demo.com',
+      nombre: 'Luis Fernando Vargas Ramírez',
+      curp: 'VARL900101HJCXX00',
+      rol: 'ciudadano'
+    }));
+    showToast('✅ ¡Bienvenido, Luis Fernando!', 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 1200);
+    return;
+  }
+
+  // Standard login acceptance
+  if (inputEmail.length >= 3 && inputPass.length >= 4) {
+    const nombre = inputEmail.includes('@') ? inputEmail.split('@')[0] : inputEmail;
+    localStorage.setItem('padron_session', JSON.stringify({
+      email: inputEmail,
+      nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
+      rol: 'ciudadano'
+    }));
+    showToast('✅ ¡Bienvenido a tu portal de mascotas!', 'success');
     setTimeout(() => window.location.href = 'dashboard.html', 1200);
   } else {
-    showToast('❌ CURP o Nombre incorrectos', 'error');
+    showToast('❌ Correo o contraseña incorrectos', 'error');
   }
 }
 
@@ -547,50 +396,34 @@ function handleAdminLogin(e) {
   }
 }
 
-/* ── Register handler ── */
-function handleRegistro(e) {
+/* ── Register User Account Handler ── */
+function handleRegistroUsuario(e) {
   e.preventDefault();
-  const curp   = document.getElementById('reg-curp').value.trim().toUpperCase();
-  const nombre = document.getElementById('reg-nombre').value.trim();
-  const raza   = document.getElementById('pet-raza').value;
-  const edad   = document.getElementById('pet-edad').value;
-  const colonia = document.getElementById('pet-colonia').value;
+  const nombre   = document.getElementById('reg-user-nombre').value.trim();
+  const email    = document.getElementById('reg-user-email').value.trim().toLowerCase();
+  const telefono = document.getElementById('reg-user-telefono').value.trim();
+  const curp     = document.getElementById('reg-user-curp').value.trim().toUpperCase();
+  const pass     = document.getElementById('reg-user-password').value;
+  const passConf = document.getElementById('reg-user-password-confirm').value;
 
-  if (curp.length < 10) { showToast('❌ La CURP debe tener al menos 10 caracteres', 'error'); return; }
-  if (!raza)   { showToast('❌ Selecciona la raza de la mascota', 'error'); return; }
-  if (!edad)   { showToast('❌ Selecciona la edad de la mascota', 'error'); return; }
-  if (!colonia){ showToast('❌ Selecciona la colonia', 'error'); return; }
+  if (!nombre)   { showToast('❌ Ingrese su nombre completo', 'error'); return; }
+  if (!email)    { showToast('❌ Ingrese su correo electrónico', 'error'); return; }
+  if (pass.length < 4) { showToast('❌ La contraseña debe tener al menos 4 caracteres', 'error'); return; }
+  if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
 
-  const id = document.getElementById('reg-id').value || generarFolioREMAC();
-  const edadOpt = getEdades().find(e => e.valor === edad);
+  const registered = JSON.parse(localStorage.getItem('padron_registered_users') || '[]');
+  if (registered.some(u => u.email === email)) {
+    showToast('⚠️ Este correo electrónico ya está registrado. Inicia sesión.', 'error');
+    return;
+  }
 
-  const mascota = {
-    id,
-    nombre: document.getElementById('pet-nombre').value.trim(),
-    especie: document.getElementById('pet-especie').value,
-    raza,
-    edad,
-    edad_label: edadOpt ? edadOpt.label : edad,
-    sexo:       document.getElementById('pet-sexo').value,
-    color:      document.getElementById('pet-color').value.trim(),
-    senias_particulares: document.getElementById('pet-senias').value.trim(),
-    foto_url:   document.getElementById('foto-preview').src || null,
-    persona:    nombre,
-    telefono:   document.getElementById('reg-telefono').value.trim(),
-    direccion:  document.getElementById('reg-direccion').value.trim(),
-    colonia,
-    fecha_registro: document.getElementById('reg-fecha').value || new Date().toISOString().split('T')[0],
-    estatus:    document.getElementById('reg-estatus').value || 'Alta',
-    link_publico: `mascota.html?id=${id}`,
-    ficha:      `${id}.pdf`,
-    vacunado:   false,
-    esterilizado: false,
-  };
+  const newUser = { nombre, email, telefono, curp, password: pass, rol: 'ciudadano', created_at: new Date().toISOString() };
+  registered.push(newUser);
+  localStorage.setItem('padron_registered_users', JSON.stringify(registered));
 
-  saveStoredMascota(mascota);
-  localStorage.setItem('padron_session', JSON.stringify({ curp, nombre, rol: 'ciudadano' }));
-  showToast(`✅ ¡Mascota registrada! Folio: ${id}`, 'success');
-  setTimeout(() => window.location.href = 'dashboard.html', 1800);
+  localStorage.setItem('padron_session', JSON.stringify({ email, nombre, telefono, curp, rol: 'ciudadano' }));
+  showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido, ${nombre}`, 'success');
+  setTimeout(() => window.location.href = 'dashboard.html', 1500);
 }
 
 /* ── Toast ── */
