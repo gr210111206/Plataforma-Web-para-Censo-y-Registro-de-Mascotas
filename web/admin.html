@@ -3280,20 +3280,55 @@ function selectPresetImage(id, url) {
     `<div>✅ Seleccionado: ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar o subir otra</div>`;
 }
 
-// ── Handle file upload ────────────────────────────
+// ── Handle file upload (con optimización Canvas) ──
 function handleIconFile(input, id) {
   const files = input.files || (input.target && input.target.files);
   const file = files ? files[0] : null;
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('❌ Imagen máximo 2 MB', 'error'); return; }
+
   const reader = new FileReader();
   reader.onload = e => {
-    const src = e.target.result;
-    appearanceState[id] = { type: 'image', value: src };
-    document.getElementById(`prev-${id}`).innerHTML =
-      `<img src="${src}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
-    document.getElementById(`drop-${id}`).innerHTML =
-      `<div>✅ ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar</div>`;
+    const rawSrc = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      // Redimensionar canvas a máx 400px para almacenamiento inmediato en localStorage sin rebasar cuota
+      const maxDim = 400;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const mime = (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) ? 'image/png' : 'image/jpeg';
+      const optimizedSrc = canvas.toDataURL(mime, 0.85);
+
+      appearanceState[id] = { type: 'image', value: optimizedSrc, name: file.name };
+
+      const prev = document.getElementById(`prev-${id}`);
+      if (prev) prev.innerHTML = `<img src="${optimizedSrc}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+
+      const drop = document.getElementById(`drop-${id}`);
+      if (drop) drop.innerHTML = `<div>✅ ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Imagen lista para guardar y publicar</div>`;
+    };
+
+    img.onerror = () => {
+      appearanceState[id] = { type: 'image', value: rawSrc, name: file.name };
+      const prev = document.getElementById(`prev-${id}`);
+      if (prev) prev.innerHTML = `<img src="${rawSrc}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+    };
+
+    img.src = rawSrc;
   };
   reader.readAsDataURL(file);
   if (input.value !== undefined) input.value = '';
@@ -3302,7 +3337,7 @@ function handleIconFile(input, id) {
 // ── Handle drag & drop file ───────────────────────
 function handleIconDrop(event, id) {
   event.preventDefault();
-  document.getElementById(`drop-${id}`).classList.remove('drag-over');
+  document.getElementById(`drop-${id}`)?.classList.remove('drag-over');
   const file = event.dataTransfer.files[0];
   if (!file) return;
   const fakeInput = { files: [file] };
@@ -3315,8 +3350,13 @@ function saveAppearance() {
     showToast('⚠️ No hay cambios que guardar', 'error');
     return;
   }
-  localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
-  showToast('✅ Apariencia e íconos guardados y publicados con éxito', 'success');
+  try {
+    localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
+    showToast('✅ Apariencia e íconos guardados y publicados con éxito', 'success');
+    if (typeof applyAppearanceConfig === 'function') applyAppearanceConfig();
+  } catch(err) {
+    showToast('❌ Error de almacenamiento: El archivo es demasiado grande', 'error');
+  }
 }
 
 // ── Reset all to defaults ─────────────────────────

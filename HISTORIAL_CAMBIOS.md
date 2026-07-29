@@ -2,17 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
-## 📅 [2026-07-29] — Eliminación de Sección de Mapa en Index y Corrección en Guardado de Imágenes de Apariencia
+## 📅 [2026-07-29] — Solución Definitiva para Imágenes Subidas desde Descargas y Apariencia
 
 ### 🚀 Novedades y Ajustes Principales
-1. **Eliminación del Mapa Ciudadano en `index.html`:**
-   - Se removió la sección *"Mapa Ciudadano / Distribución de Mascotas"* y su contenedor `#map` de la página de inicio `index.html`.
-   - Se añadió protección en la función `initMap()` en `index.html` para evitar errores cuando no exista el elemento contenedor `#map`.
+1. **Optimización con Canvas para Imágenes Subidas (`admin.html`):**
+   - Se implementó un procesador con Canvas HTML5 en `handleIconFile()` que redimensiona automáticamente imágenes grandes de la carpeta de Descargas (o cualquier ubicación local) a un tamaño óptimo (máx 400px).
+   - Previene errores silenciosos de cuota en `localStorage` (`QuotaExceededError`) y garantiza un almacenamiento liviano e instantáneo.
 
-2. **Corrección y Mejora en la Selección/Guardado de Imágenes de Apariencia (`admin.html`):**
-   - Se corrigió el manejador de archivos `handleIconFile()` y `handleIconDrop()` para gestionar correctamente imágenes subidas (formato DataURL `base64`) e imágenes locales (`web/Imagenes/`).
-   - Se añadió el hook `buildIconSelectors()` dentro del cambio de pestaña `switchConfig('apariencia')` en `admin.html` para sincronizar en tiempo real el estado y vistas previas.
-   - Se ajustó el escalado responsivo de imágenes dentro de contenedores (`.hero-mascot-icon`, `.step-icon`, `.footer-logo-icon`, etc.) en `styles.css` con `object-fit: contain` y restricciones de altura/anchura máxima.
+2. **Ajustes de Estilos CSS e Imágenes (`styles.css`, `index.html`, `login.html`):**
+   - Se definieron dimensiones fijas, alineación flexbox y reglas `overflow: hidden` con `object-fit: contain` para los contenedores de íconos/imágenes (`.hero-mascot-icon`, `.navbar-logo .logo-icon`, `.step-icon`, `.footer-logo-icon`).
+   - Se removieron restricciones como `onerror="this.style.display='none'"` que ocultaban las imágenes en caso de demoras en renderizado.
+   - Las imágenes seleccionadas o subidas desde cualquier ubicación se reflejan al instante tanto en el Panel de Administración como en el Portal Público (`index.html`).
+
+3. **Eliminación del Mapa Ciudadano en `index.html`:**
+   - Se eliminó la sección de mapa sin contenido de `index.html` y se protegió la llamada a `initMap()`.
 
 ---
 

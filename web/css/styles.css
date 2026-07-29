@@ -200,6 +200,12 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
+  overflow: hidden;
+}
+.navbar-logo .logo-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 .navbar-logo .logo-text { line-height: 1.1; }
 .navbar-logo .logo-title {
@@ -388,6 +394,20 @@ input, select, textarea { font-family: inherit; }
   text-align: center;
   margin-bottom: 16px;
   filter: drop-shadow(0 0 20px rgba(242,122,0,.5));
+  width: 120px;
+  height: 120px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.hero-mascot-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius);
 }
 .hero-mascot-title {
   color: var(--white);
@@ -498,8 +518,23 @@ input, select, textarea { font-family: inherit; }
   font-size: 1.4rem;
   font-weight: 800;
   color: var(--orange);
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  width: 56px;
+  height: 56px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
-.step-icon { font-size: 2rem; margin-bottom: 12px; }
+.step-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
 .step-title {
   font-size: 1.05rem;
   margin-bottom: 8px;
@@ -687,6 +722,12 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
+  overflow: hidden;
+}
+.footer-logo-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 .footer-logo-title {
   font-family: 'Outfit', sans-serif;
