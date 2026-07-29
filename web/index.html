@@ -269,17 +269,7 @@
   </div>
 </section>
 
-<!-- ── Mapa de Mascotas Registradas ── -->
-<section class="section" style="background:#f8f9fa;">
-  <div class="container">
-    <div class="section-header center">
-      <div class="section-eyebrow">Mapa Ciudadano</div>
-      <h2 class="section-title">Distribución de Mascotas</h2>
-      <p class="section-desc">Conoce la distribución geográfica de las mascotas registradas en El Grullo.</p>
-    </div>
-    <div id="map" style="height: 500px; width: 100%; border-radius: var(--radius-lg); border: 2px solid var(--gray-4); z-index: 1;"></div>
-  </div>
-</section>
+
 
 <!-- ── Artículos ── -->
 <section class="section" id="articulos">
@@ -562,8 +552,10 @@ function applyAppearanceConfig() {
   } catch(e) { /* silently ignore */ }
 }
 
-/* ── Render Map ── */
+/* ── Render Map (si el elemento existe) ── */
 function initMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
   const EL_GRULLO = [19.8056, -104.2139];
   const colonias = {
     'El Grullo centro':      [19.8056, -104.2139],

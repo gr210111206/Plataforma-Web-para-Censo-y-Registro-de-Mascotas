@@ -2,6 +2,18 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-07-29] — Eliminación de Sección de Mapa en Index y Corrección en Guardado de Imágenes de Apariencia
+
+### 🚀 Novedades y Ajustes Principales
+1. **Eliminación del Mapa Ciudadano en `index.html`:**
+   - Se removió la sección *"Mapa Ciudadano / Distribución de Mascotas"* y su contenedor `#map` de la página de inicio `index.html`.
+   - Se añadió protección en la función `initMap()` en `index.html` para evitar errores cuando no exista el elemento contenedor `#map`.
+
+2. **Corrección y Mejora en la Selección/Guardado de Imágenes de Apariencia (`admin.html`):**
+   - Se corrigió el manejador de archivos `handleIconFile()` y `handleIconDrop()` para gestionar correctamente imágenes subidas (formato DataURL `base64`) e imágenes locales (`web/Imagenes/`).
+   - Se añadió el hook `buildIconSelectors()` dentro del cambio de pestaña `switchConfig('apariencia')` en `admin.html` para sincronizar en tiempo real el estado y vistas previas.
+   - Se ajustó el escalado responsivo de imágenes dentro de contenedores (`.hero-mascot-icon`, `.step-icon`, `.footer-logo-icon`, etc.) en `styles.css` con `object-fit: contain` y restricciones de altura/anchura máxima.
+
 ---
 
 ## 📅 [2026-07-29] — Eliminación de CURP y Obligatoriedad del Teléfono

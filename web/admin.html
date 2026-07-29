@@ -2474,8 +2474,9 @@ function switchConfig(tab, navItem) {
   document.getElementById('cfg-' + tab).classList.add('active');
 
   // Run tab-specific init
-  if (tab === 'seo')   { updateSeoPreview(); renderSeoChecklist(); }
-  if (tab === 'tema')  { renderThemePreview(); }
+  if (tab === 'seo')        { updateSeoPreview(); renderSeoChecklist(); }
+  if (tab === 'tema')       { renderThemePreview(); }
+  if (tab === 'apariencia') { buildIconSelectors(); }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -3281,9 +3282,10 @@ function selectPresetImage(id, url) {
 
 // ── Handle file upload ────────────────────────────
 function handleIconFile(input, id) {
-  const file = input.files[0];
+  const files = input.files || (input.target && input.target.files);
+  const file = files ? files[0] : null;
   if (!file) return;
-  if (file.size > 1 * 1024 * 1024) { showToast('❌ Imagen máximo 1 MB', 'error'); return; }
+  if (file.size > 2 * 1024 * 1024) { showToast('❌ Imagen máximo 2 MB', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     const src = e.target.result;
@@ -3294,7 +3296,7 @@ function handleIconFile(input, id) {
       `<div>✅ ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar</div>`;
   };
   reader.readAsDataURL(file);
-  input.value = '';
+  if (input.value !== undefined) input.value = '';
 }
 
 // ── Handle drag & drop file ───────────────────────
@@ -3303,7 +3305,6 @@ function handleIconDrop(event, id) {
   document.getElementById(`drop-${id}`).classList.remove('drag-over');
   const file = event.dataTransfer.files[0];
   if (!file) return;
-  // Simulate input
   const fakeInput = { files: [file] };
   handleIconFile(fakeInput, id);
 }
@@ -3315,7 +3316,7 @@ function saveAppearance() {
     return;
   }
   localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
-  showToast('✅ Apariencia guardada — recarga el portal para ver los cambios', 'success');
+  showToast('✅ Apariencia e íconos guardados y publicados con éxito', 'success');
 }
 
 // ── Reset all to defaults ─────────────────────────
@@ -3335,7 +3336,7 @@ function loadAppearance() {
     appearanceState = saved;
     Object.entries(saved).forEach(([id, val]) => {
       const prev = document.getElementById(`prev-${id}`);
-      if (!prev) return;
+      if (!prev || !val) return;
 
       setIconSelType(id, val.type);
 
@@ -3351,6 +3352,10 @@ function loadAppearance() {
         if (val.type === 'gif') {
           const input = document.getElementById(`gif-url-${id}`);
           if (input) input.value = val.value;
+        } else if (val.type === 'image') {
+          const drop = document.getElementById(`drop-${id}`);
+          const name = val.value.startsWith('data:') ? 'Imagen personal subida' : val.value.split('/').pop();
+          if (drop) drop.innerHTML = `<div>✅ ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar</div>`;
         }
       }
     });
