@@ -168,23 +168,15 @@
 
         <!-- Cuentas de prueba -->
         <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gray-1); margin-bottom:20px;">
-          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba rápida (clic para rellenar):</strong>
+          <strong style="color:var(--orange-dark);">🧪 Cuenta de prueba (clic para rellenar):</strong>
           <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
             <button type="button"
-              onclick="fillCitizenLogin('ciudadano@demo.com', 'Demo1234');"
+              onclick="fillCitizenLogin('maria@demo.com', 'Demo12345');"
               style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
               onmouseover="this.style.background='var(--orange)'; this.style.color='white';"
               onmouseout="this.style.background='white'; this.style.color='';">
               👤 Ciudadano<br/>
-              <span style="font-weight:400; font-size:.7rem;">ciudadano@demo.com</span>
-            </button>
-            <button type="button"
-              onclick="switchTab('admin'); fillAdmin('admin@demo.com','Admin1234');"
-              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
-              onmouseover="this.style.background='var(--dark)'; this.style.color='white';"
-              onmouseout="this.style.background='white'; this.style.color='';">
-              🔧 Administrador<br/>
-              <span style="font-weight:400; font-size:.7rem;">admin@demo.com</span>
+              <span style="font-weight:400; font-size:.7rem;">maria@demo.com</span>
             </button>
           </div>
         </div>
@@ -233,7 +225,7 @@
           <label for="reg-user-password">Contraseña *</label>
           <div class="input-group">
             <span class="input-icon">🔒</span>
-            <input type="password" id="reg-user-password" class="form-control" placeholder="Mínimo 4 caracteres" required minlength="4" />
+            <input type="password" id="reg-user-password" class="form-control" placeholder="Mínimo 8 caracteres" required minlength="8" />
           </div>
         </div>
 
@@ -241,7 +233,7 @@
           <label for="reg-user-password-confirm">Confirmar contraseña *</label>
           <div class="input-group">
             <span class="input-icon">🔒</span>
-            <input type="password" id="reg-user-password-confirm" class="form-control" placeholder="Repite tu contraseña" required minlength="4" />
+            <input type="password" id="reg-user-password-confirm" class="form-control" placeholder="Repite tu contraseña" required minlength="8" />
           </div>
         </div>
 
@@ -288,7 +280,7 @@
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="js/mock-data.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 /* ── Tab switching ── */
 function switchTab(tab) {
@@ -316,77 +308,45 @@ function fillAdmin(email, password) {
   document.getElementById('admin-password').value = password;
 }
 
-/* ── Login handler ── */
-function handleLogin(e) {
+/* ── Login handler (ciudadano) ── */
+async function handleLogin(e) {
   e.preventDefault();
   const inputEmail = document.getElementById('login-email').value.trim();
   const inputPass  = document.getElementById('login-password').value.trim();
   if (!inputEmail || !inputPass) { showToast('❌ Completa correo y contraseña', 'error'); return; }
 
-  // Check locally registered users
-  const registered = JSON.parse(localStorage.getItem('padron_registered_users') || '[]');
-  const userMatch = registered.find(u => u.email && u.email.toLowerCase() === inputEmail.toLowerCase());
-
-  if (userMatch) {
-    if (userMatch.password && userMatch.password !== inputPass) {
-      showToast('❌ Contraseña incorrecta', 'error');
-      return;
-    }
-    localStorage.setItem('padron_session', JSON.stringify({
-      email: userMatch.email,
-      nombre: userMatch.nombre,
-      telefono: userMatch.telefono || '',
-      rol: 'ciudadano'
-    }));
-    showToast(`✅ ¡Bienvenido de nuevo, ${userMatch.nombre}!`, 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1200);
-    return;
-  }
-
-  // Demo user fallback
-  if (inputEmail.toLowerCase() === 'ciudadano@demo.com' && (inputPass === 'Demo1234' || inputPass.length >= 4)) {
-    localStorage.setItem('padron_session', JSON.stringify({
-      email: 'ciudadano@demo.com',
-      nombre: 'Luis Fernando Vargas Ramírez',
-      telefono: '341-123-4567',
-      rol: 'ciudadano'
-    }));
-    showToast('✅ ¡Bienvenido, Luis Fernando!', 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1200);
-    return;
-  }
-
-  // Standard login acceptance
-  if (inputEmail.length >= 3 && inputPass.length >= 4) {
-    const nombre = inputEmail.includes('@') ? inputEmail.split('@')[0] : inputEmail;
-    localStorage.setItem('padron_session', JSON.stringify({
-      email: inputEmail,
-      nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1),
-      telefono: '341-123-4567',
-      rol: 'ciudadano'
-    }));
-    showToast('✅ ¡Bienvenido a tu portal de mascotas!', 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1200);
-  } else {
-    showToast('❌ Correo o contraseña incorrectos', 'error');
+  try {
+    const data = await apiLoginUser(inputEmail, inputPass);
+    showToast(`✅ ¡Bienvenido de nuevo, ${data.nombre}!`, 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
   }
 }
 
-function handleAdminLogin(e) {
+/* ── Login handler (admin) ── */
+async function handleAdminLogin(e) {
   e.preventDefault();
   const email = document.getElementById('admin-email').value.trim();
   const pass  = document.getElementById('admin-password').value.trim();
-  if (email === 'admin@demo.com' || pass === 'Admin1234') {
-    localStorage.setItem('padron_session', JSON.stringify({ email, nombre: 'Administrador', rol: 'admin' }));
+  if (!email || !pass) { showToast('❌ Completa correo y contraseña', 'error'); return; }
+
+  try {
+    const data = await apiLoginAdmin(email, pass);
+    if (data.rol !== 'admin') {
+      localStorage.removeItem('padron_session');
+      showToast('❌ Esta cuenta no tiene permisos de administrador.', 'error');
+      return;
+    }
     showToast('✅ ¡Bienvenido, Administrador!', 'success');
-    setTimeout(() => window.location.href = 'admin.html', 1200);
-  } else {
-    showToast('❌ Correo o contraseña incorrectos', 'error');
+    setTimeout(() => window.location.href = 'admin.html', 1000);
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
   }
 }
 
 /* ── Register User Account Handler ── */
-function handleRegistroUsuario(e) {
+async function handleRegistroUsuario(e) {
   e.preventDefault();
   const nombre   = document.getElementById('reg-user-nombre').value.trim();
   const email    = document.getElementById('reg-user-email').value.trim().toLowerCase();
@@ -397,22 +357,16 @@ function handleRegistroUsuario(e) {
   if (!nombre)   { showToast('❌ Ingrese su nombre completo', 'error'); return; }
   if (!email)    { showToast('❌ Ingrese su correo electrónico', 'error'); return; }
   if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
-  if (pass.length < 4) { showToast('❌ La contraseña debe tener al menos 4 caracteres', 'error'); return; }
+  if (pass.length < 8) { showToast('❌ La contraseña debe tener al menos 8 caracteres', 'error'); return; }
   if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
 
-  const registered = JSON.parse(localStorage.getItem('padron_registered_users') || '[]');
-  if (registered.some(u => u.email === email)) {
-    showToast('⚠️ Este correo electrónico ya está registrado. Inicia sesión.', 'error');
-    return;
+  try {
+    const data = await apiRegisterUser(nombre, email, telefono, pass);
+    showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido, ${data.nombre}`, 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 1200);
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
   }
-
-  const newUser = { nombre, email, telefono, password: pass, rol: 'ciudadano', created_at: new Date().toISOString() };
-  registered.push(newUser);
-  localStorage.setItem('padron_registered_users', JSON.stringify(registered));
-
-  localStorage.setItem('padron_session', JSON.stringify({ email, nombre, telefono, rol: 'ciudadano' }));
-  showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido, ${nombre}`, 'success');
-  setTimeout(() => window.location.href = 'dashboard.html', 1500);
 }
 
 /* ── Toast ── */
@@ -435,47 +389,44 @@ document.addEventListener('click', e => {
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Set today's date
-  document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
-
-  // Generate ID
-  const folio = generarFolioREMAC();
-  document.getElementById('reg-id-display').textContent = folio;
-  document.getElementById('reg-id').value = folio;
-
-  // Build dropdowns
-  buildList('raza-list', getRazas('perro'));
-  buildList('edad-list', getEdades());
-  buildList('colonia-list', getColonias());
-  
   applyAppearanceConfig();
 });
 
-function applyAppearanceConfig() {
-  const rawSite = localStorage.getItem('padron_site_config');
-  if (rawSite) {
+/* ── Aplica apariencia/textos configurados por el admin.
+   Intenta primero el servidor (así lo ve CUALQUIER visitante); si falla
+   (sin red, API caída), cae a localStorage como respaldo. ── */
+async function applyAppearanceConfig() {
+  let cfgAll = null;
+  try {
+    cfgAll = await apiGetSiteConfig();
+  } catch (e) { /* sin conexión a la API: seguimos con localStorage */ }
+
+  const readCfg = (key) => {
+    if (cfgAll && cfgAll[key]) return cfgAll[key];
     try {
-      const cfg = JSON.parse(rawSite);
-      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
-      set('auth-logo-title',    cfg.nombre || 'REMAC');
-      set('auth-logo-subtitle', cfg.header_sub || 'H. Ayuntamiento de El Grullo · 2024-2027');
-    } catch(e) {}
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  };
+
+  const site = readCfg('padron_site_config');
+  if (site) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    set('auth-logo-title',    site.nombre || 'REMAC');
+    set('auth-logo-subtitle', site.header_sub || 'H. Ayuntamiento de El Grullo · 2024-2027');
   }
 
-  const raw = localStorage.getItem('padron_appearance_config');
-  if (!raw) return;
-  try {
-    const cfg = JSON.parse(raw);
-    Object.entries(cfg).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (!el || !val || !val.value) return;
-      if (val.type === 'emoji') {
-        el.innerHTML = val.value;
-      } else if (val.type === 'image' || val.type === 'gif') {
-        el.innerHTML = `<img src="${val.value}" alt="icon" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;" />`;
-      }
-    });
-  } catch(e) { /* ignore */ }
+  const appearance = readCfg('padron_appearance_config');
+  if (!appearance) return;
+  Object.entries(appearance).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (!el || !val || !val.value) return;
+    if (val.type === 'emoji') {
+      el.innerHTML = val.value;
+    } else if (val.type === 'image' || val.type === 'gif') {
+      el.innerHTML = `<img src="${val.value}" alt="icon" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;" />`;
+    }
+  });
 }
 
 /* ── Check for #registro hash ── */

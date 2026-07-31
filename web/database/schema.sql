@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS duenos (
   rol           ENUM('ciudadano','admin') NOT NULL DEFAULT 'ciudadano',
   activo        TINYINT(1)   NOT NULL DEFAULT 1,
   token_sesion  VARCHAR(64)   DEFAULT NULL,
+  token_creado_en TIMESTAMP  NULL DEFAULT NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
@@ -88,3 +89,13 @@ CREATE TABLE IF NOT EXISTS folio_counter (
 ) ENGINE=InnoDB;
 
 INSERT INTO folio_counter (ultimo) VALUES (0);
+
+-- ── Configuración del sitio (apariencia, portada, municipio, contactos) ──
+-- Guardada por el panel admin y leída por las páginas públicas, para que
+-- los cambios se vean para TODOS los visitantes (no solo en el navegador
+-- del administrador, como pasaba antes con localStorage).
+CREATE TABLE IF NOT EXISTS site_config (
+  config_key   VARCHAR(60)  NOT NULL PRIMARY KEY,
+  config_value LONGTEXT     NOT NULL,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

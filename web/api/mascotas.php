@@ -20,9 +20,12 @@ $id     = $_GET['id'] ?? null;
    GET — Ver una mascota por ID (PÚBLICO, para QR)
    ════════════════════════════════════════════════ */
 if ($method === 'GET' && $id) {
+    // Vista pública (QR, sin sesión): solo lo necesario para reunir a la mascota
+    // con su dueño. NO se expone dirección/colonia (dato sensible, y los folios
+    // son consecutivos y por lo tanto enumerables).
     $db   = getDB();
     $stmt = $db->prepare('
-        SELECT m.*, d.nombre AS persona, d.telefono, d.direccion AS dir_dueno, d.colonia AS colonia_dueno
+        SELECT m.*, d.nombre AS persona, d.telefono
         FROM mascotas m
         JOIN duenos d ON m.dueno_id = d.id
         WHERE m.id = ?
@@ -122,7 +125,7 @@ if ($method === 'POST') {
         $body['estatus']      ?? 'Alta',
         $user['id'],
         $fecha,
-        "mascota.php?id=$folio",
+        "mascota.html?id=$folio",
         "$folio.pdf",
     ]);
 

@@ -394,20 +394,23 @@ input, select, textarea { font-family: inherit; }
   text-align: center;
   margin-bottom: 16px;
   filter: drop-shadow(0 0 20px rgba(242,122,0,.5));
-  width: 120px;
-  height: 120px;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   margin-left: auto;
   margin-right: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 .hero-mascot-icon img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: var(--radius);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
 }
 .hero-mascot-title {
   color: var(--white);
@@ -987,7 +990,10 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
+  overflow: hidden;
+  flex-shrink: 0;
 }
+.sidebar-logo-icon img { width: 100%; height: 100%; object-fit: contain; }
 .sidebar-logo-title {
   font-family: 'Outfit', sans-serif;
   font-weight: 700;

@@ -32,8 +32,8 @@ if ($method === 'POST' && $action === 'register') {
     if (empty($telefono)) {
         jsonError('El teléfono de contacto es obligatorio.', 400);
     }
-    if (empty($password) || strlen($password) < 4) {
-        jsonError('La contraseña debe tener al menos 4 caracteres.', 400);
+    if (empty($password) || strlen($password) < 8) {
+        jsonError('La contraseña debe tener al menos 8 caracteres.', 400);
     }
 
     $db = getDB();
@@ -49,8 +49,8 @@ if ($method === 'POST' && $action === 'register') {
     $token = bin2hex(random_bytes(32));
 
     $ins = $db->prepare('
-        INSERT INTO duenos (nombre, email, password_hash, telefono, rol, token_sesion)
-        VALUES (?, ?, ?, ?, "ciudadano", ?)
+        INSERT INTO duenos (nombre, email, password_hash, telefono, rol, token_sesion, token_creado_en)
+        VALUES (?, ?, ?, ?, "ciudadano", ?, NOW())
     ');
     $ins->execute([$nombre, $email, $hash, $telefono, $token]);
     $userId = $db->lastInsertId();
@@ -85,7 +85,7 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         }
 
         $token = bin2hex(random_bytes(32));
-        $db->prepare('UPDATE duenos SET token_sesion = ? WHERE id = ?')->execute([$token, $user['id']]);
+        $db->prepare('UPDATE duenos SET token_sesion = ?, token_creado_en = NOW() WHERE id = ?')->execute([$token, $user['id']]);
 
         jsonOk([
             'token'    => $token,
@@ -114,6 +114,33 @@ if ($method === 'POST' && $action === 'logout') {
 if ($method === 'GET' && $action === 'me') {
     $user = requireAuth();
     jsonOk($user);
+}
+
+/* ── POST /api/auth.php?action=update-profile ───────────── */
+if ($method === 'POST' && $action === 'update-profile') {
+    $user = requireAuth();
+    $body = getBody();
+
+    $campos  = [];
+    $params  = [];
+    $allowed = ['nombre', 'telefono', 'direccion', 'colonia'];
+
+    foreach ($allowed as $campo) {
+        if (array_key_exists($campo, $body)) {
+            $campos[] = "$campo = ?";
+            $params[] = clean($body[$campo]);
+        }
+    }
+
+    if (!$campos) jsonError('No se recibieron campos para actualizar.');
+
+    $params[] = $user['id'];
+    $db = getDB();
+    $db->prepare('UPDATE duenos SET ' . implode(', ', $campos) . ' WHERE id = ?')->execute($params);
+
+    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, rol FROM duenos WHERE id = ?');
+    $updated->execute([$user['id']]);
+    jsonOk($updated->fetch());
 }
 
 jsonError('Acción no reconocida.', 404);

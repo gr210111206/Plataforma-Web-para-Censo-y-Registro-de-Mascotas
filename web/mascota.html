@@ -223,7 +223,7 @@
   </div>
 </div>
 
-<script src="js/mock-data.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 // ── Read ID from URL params ──
 const params = new URLSearchParams(window.location.search);
@@ -352,20 +352,25 @@ function renderNotFound(id) {
   `;
 }
 
-// ── Find pet ──
-function findPet(id) {
+// ── Find pet (endpoint público, sin sesión) ──
+async function findPet(id) {
   if (!id) return null;
-  const todasMock = getTodasMascotas();
-  return todasMock.find(p => p.id === id) || null;
+  try {
+    return await apiGetMascota(id);
+  } catch (e) {
+    return null;
+  }
 }
 
-const pet = findPet(petId);
-if (pet) {
-  renderPet(pet);
-  document.title = `${pet.nombre} — REMAC · El Grullo`;
-} else {
-  renderNotFound(petId);
-}
+(async () => {
+  const pet = await findPet(petId);
+  if (pet) {
+    renderPet(pet);
+    document.title = `${pet.nombre} — REMAC · El Grullo`;
+  } else {
+    renderNotFound(petId);
+  }
+})();
 </script>
 
 </body>

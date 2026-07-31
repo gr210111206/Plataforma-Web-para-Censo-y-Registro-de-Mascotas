@@ -803,7 +803,9 @@
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento de El Grullo" class="navbar-brand-img" style="height:38px;" />
+      <div class="sidebar-logo-icon" id="admin-sidebar-logo">
+        <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento de El Grullo" />
+      </div>
       <div>
         <div class="sidebar-logo-title">Panel Admin</div>
         <div class="sidebar-logo-sub">Padrón Mascotas · El Grullo</div>
@@ -836,7 +838,7 @@
       <a class="sidebar-link" style="margin-top:8px;" href="index.html">
         <span class="icon">🏠</span> Ver portal público
       </a>
-      <a class="sidebar-link" href="login.html">
+      <a class="sidebar-link" href="login.html" onclick="event.preventDefault(); apiLogout().finally(() => window.location.href='login.html');">
         <span class="icon">🚪</span> Cerrar sesión
       </a>
     </div>
@@ -936,8 +938,8 @@
         </select>
         <select class="form-control" id="segFilterEstatus" onchange="filterSeguimiento()" style="width:150px;">
           <option value="">Estatus...</option>
-          <option value="activo">Activo</option>
-          <option value="fallecido">Fallecido</option>
+          <option value="Alta">Alta</option>
+          <option value="Baja">Baja</option>
         </select>
       </div>
 
@@ -1524,9 +1526,19 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
                 <label>👍 Facebook</label>
                 <input type="url" class="form-control" id="cfg-facebook" value="https://www.facebook.com/laciudaddelagente" oninput="previewFooter()" />
               </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom:12px;">
                 <label>🌐 Sitio web oficial</label>
                 <input type="url" class="form-control" id="cfg-web" value="https://elgrullo.gob.mx" oninput="previewFooter()" />
+              </div>
+
+              <div style="border-top:1px dashed var(--gray-4); margin:16px 0 12px; padding-top:14px;">
+                <label style="font-size:.8rem; font-weight:700; color:var(--gray-2);">➕ Otra red social (opcional)</label>
+                <div style="font-size:.72rem; color:var(--gray-3); margin-bottom:10px;">Úsalo para WhatsApp, TikTok, YouTube, X u otra red que tenga el Ayuntamiento. Déjalo vacío si no aplica.</div>
+                <div style="display:grid; grid-template-columns:70px 1fr; gap:8px; margin-bottom:8px;">
+                  <input type="text" class="form-control" id="cfg-extra-icono" placeholder="🔗" maxlength="4" oninput="previewFooter()" style="text-align:center;" title="Emoji del ícono" />
+                  <input type="text" class="form-control" id="cfg-extra-nombre" placeholder="Nombre (ej. WhatsApp)" oninput="previewFooter()" />
+                </div>
+                <input type="url" class="form-control" id="cfg-extra-url" placeholder="https://wa.me/523411234567" oninput="previewFooter()" />
               </div>
             </div>
 
@@ -2048,16 +2060,16 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="js/mock-data.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 /* ══════════════════════════════════════════════════ */
-/*  DATA                                              */
+/*  DATA — cargada de la API real en initAdmin()      */
 /* ══════════════════════════════════════════════════ */
-const allPets = getTodasMascotas();
-const stats   = getStats();
+let allPets = [];
+let stats   = {};
 
-let faqData = [...getFaq()];
-let avisoData = [...getCampanas()];
+let faqData = [];
+let avisoData = [];
 let editingFaqId = null;
 
 // El Grullo coordinates: ~19.8056, -104.2139
@@ -2141,9 +2153,9 @@ function initMap() {
           </div>
           <div style="font-size:.78rem; color:#666;">
             ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'}<br/>
-            Dueño: ${pet.dueno || '—'}<br/>
-            <b>Folio:</b> ${pet.folio}<br/>
-            <b>Estatus:</b> <span style="color:#4CAF50;">${capitalize(pet.estatus)}</span>
+            Dueño: ${pet.persona || '—'}<br/>
+            <b>Folio:</b> ${pet.id}<br/>
+            <b>Estatus:</b> <span style="color:#4CAF50;">${pet.estatus}</span>
           </div>
         </div>
       `);
@@ -2227,8 +2239,8 @@ function filterMiniTable() {
   const q = document.getElementById('miniSearch').value.toLowerCase();
   const data = allPets.filter(m =>
     m.nombre.toLowerCase().includes(q) ||
-    (m.dueno && m.dueno.toLowerCase().includes(q)) ||
-    m.folio.toLowerCase().includes(q)
+    (m.persona && m.persona.toLowerCase().includes(q)) ||
+    m.id.toLowerCase().includes(q)
   );
   renderMiniTable(data.slice(0, 10));
 }
@@ -2258,7 +2270,8 @@ function renderSeguimiento(data) {
   }
   grid.innerHTML = data.map((pet, i) => {
     const icon = pet.especie === 'gato' ? '🐈' : '🐕';
-    const statusColor = { activo: 'var(--green)', fallecido: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
+    const statusColor = { Alta: 'var(--green)', Baja: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
+    const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : '?');
     return `
     <div class="pet-detail-card">
       <div style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-2); margin-bottom:12px;">Datos de la mascota</div>
@@ -2267,7 +2280,7 @@ function renderSeguimiento(data) {
         <div>
           <div style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.1rem;">${pet.nombre}</div>
           <div style="font-size:.8rem; color:var(--gray-2); margin-top:2px;">${capitalize(pet.especie)} · ${capitalize(pet.sexo || '')} · ${pet.raza || 'Sin raza'}</div>
-          <div style="font-size:.8rem; color:var(--gray-2); margin-top:2px;">Edad: ${pet.edad_anios || '?'} años</div>
+          <div style="font-size:.8rem; color:var(--gray-2); margin-top:2px;">Edad: ${edad}</div>
           <div style="margin-top:6px;">
             ${pet.vacunado ? '<span class="badge badge-green">💉 Vacunado</span>' : '<span class="badge badge-red">💉 Sin vacuna</span>'}
             ${pet.esterilizado ? '<span class="badge badge-blue" style="margin-left:4px;">✂️ Esterilizado</span>' : ''}
@@ -2277,7 +2290,7 @@ function renderSeguimiento(data) {
 
       <div class="detail-field">
         <div class="detail-label">Datos de dueño</div>
-        <div class="detail-value">${pet.dueno || '—'}</div>
+        <div class="detail-value">${pet.persona || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Domicilio</div>
@@ -2285,16 +2298,16 @@ function renderSeguimiento(data) {
       </div>
       <div class="detail-field">
         <div class="detail-label">Folio</div>
-        <div class="detail-value" style="font-family:monospace; font-size:.85rem;">${pet.folio}</div>
+        <div class="detail-value" style="font-family:monospace; font-size:.85rem;">${pet.id}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Estatus:</div>
-        <div class="detail-value" style="color:${statusColor};">● ${capitalize(pet.estatus)}</div>
+        <div class="detail-value" style="color:${statusColor};">● ${pet.estatus}</div>
       </div>
 
       <div style="display:flex; gap:8px; margin-top:14px;">
-        <button class="btn btn-ghost btn-sm" onclick="changeEstatus(${i})" style="flex:1;">🔄 Cambiar estatus</button>
-        <button class="btn btn-primary btn-sm" onclick="showToast('📄 Acta ${pet.folio} generada','success')" style="flex:1;">📄 Ver acta</button>
+        <button class="btn btn-ghost btn-sm" onclick="changeEstatus('${pet.id}')" style="flex:1;">🔄 Cambiar estatus</button>
+        <button class="btn btn-primary btn-sm" onclick="showToast('📄 Acta ${pet.id} generada','success')" style="flex:1;">📄 Ver acta</button>
       </div>
 
       <button class="fab-btn" onclick="showToast('✏️ Editando a ${pet.nombre}...','info')" title="Editar mascota">+</button>
@@ -2307,19 +2320,24 @@ function filterSeguimiento() {
   const especie = document.getElementById('segFilterEspecie').value;
   const estatus = document.getElementById('segFilterEstatus').value;
   let data = [...allPets];
-  if (q) data = data.filter(m => m.nombre.toLowerCase().includes(q) || m.dueno?.toLowerCase().includes(q) || m.folio.includes(q));
+  if (q) data = data.filter(m => m.nombre.toLowerCase().includes(q) || m.persona?.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
   if (especie) data = data.filter(m => m.especie === especie);
   if (estatus) data = data.filter(m => m.estatus === estatus);
   renderSeguimiento(data);
 }
 
-function changeEstatus(i) {
-  const opts = ['activo', 'fallecido'];
-  const cur = allPets[i].estatus;
-  const next = opts[(opts.indexOf(cur) + 1) % opts.length];
-  allPets[i].estatus = next;
-  filterSeguimiento();
-  showToast(`🔄 Estatus cambiado a: ${capitalize(next)}`, 'success');
+async function changeEstatus(id) {
+  const pet  = allPets.find(m => m.id === id);
+  if (!pet) return;
+  const next = pet.estatus === 'Alta' ? 'Baja' : 'Alta';
+  try {
+    const updated = await apiActualizarMascota(id, { estatus: next });
+    Object.assign(pet, updated);
+    filterSeguimiento();
+    showToast(`🔄 Estatus cambiado a: ${next}`, 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -2452,7 +2470,7 @@ function resetArticulo() {
 }
 function renderAdminArtList() {
   const container = document.getElementById('adminArtList');
-  container.innerHTML = getArticulos().map(a => `
+  container.innerHTML = adminArticulos.map(a => `
     <div class="article-card">
       <span class="article-icon">${a.imagen_icono}</span>
       <div class="article-title">${a.titulo}</div>
@@ -2495,6 +2513,7 @@ function saveMunicipio() {
     escudo_url: document.getElementById('escudo-url').value.trim(),
   };
   localStorage.setItem('padron_municipio_config', JSON.stringify(data));
+  pushConfigToServer('padron_municipio_config', data);
   // Update nav badge
   document.querySelector('#cnav-municipio .config-nav-badge')?.remove();
   const badge = document.createElement('div');
@@ -2872,12 +2891,11 @@ function previewBanner(input, prevId) {
 /*  EXPORT CSV                                        */
 /* ══════════════════════════════════════════════════ */
 function exportCSV() {
-  const data = getTodasMascotas();
   const header = ['Folio','Nombre','Especie','Raza','Edad','Sexo','Vacunado','Esterilizado','Estatus','Dueño','Colonia','Registro'];
-  const rows = data.map(m => [
-    m.folio, m.nombre, m.especie, m.raza||'', m.edad_anios||'',
+  const rows = allPets.map(m => [
+    m.id, m.nombre, m.especie, m.raza||'', m.edad_label||m.edad||'',
     m.sexo||'', m.vacunado?'Sí':'No', m.esterilizado?'Sí':'No',
-    m.estatus, m.dueno||'', m.colonia||'', m.created_at,
+    m.estatus, m.persona||'', m.colonia||'', m.fecha_registro||m.created_at||'',
   ]);
   const csv = [header,...rows].map(r => r.join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
@@ -2903,18 +2921,44 @@ function showToast(msg, type = 'info') {
 function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
 /* ══════════════════════════════════════════════════ */
-/*  INIT                                              */
+/*  INIT — protege la página (solo admin) y carga datos reales */
 /* ══════════════════════════════════════════════════ */
-renderMiniTable(allPets.slice(0, 10));
-renderMiniBar();
-renderSeguimiento(allPets);
-renderAdminArtList();
-renderAvisos();
-renderEventos();
-renderFaqTable();
+let adminArticulos = [];
 
-// Init map after DOM is ready
-setTimeout(() => { initMap(); }, 300);
+async function initAdmin() {
+  await apiRequireSession('admin'); // redirige a login.html si no hay sesión de admin válida
+  await primeConfigFromServer();
+  applyAdminOwnAppearance();
+
+  try {
+    allPets = await apiGetTodasMascotas();
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar las mascotas: ${err.message}`, 'error');
+    allPets = [];
+  }
+  try {
+    stats = await apiGetStats();
+  } catch (err) { stats = {}; }
+  try {
+    avisoData = [...(await apiGetCampanas())];
+  } catch (err) { avisoData = []; }
+  try {
+    adminArticulos = await apiGetArticulos();
+  } catch (err) { adminArticulos = []; }
+
+  renderMiniTable(allPets.slice(0, 10));
+  renderMiniBar();
+  renderSeguimiento(allPets);
+  renderAdminArtList();
+  renderAvisos();
+  renderEventos();
+  renderFaqTable();
+
+  // Init map after DOM is ready
+  setTimeout(() => { initMap(); }, 300);
+}
+
+initAdmin();
 
 // Init WYSIWYG
 buildEmojiGrid();
@@ -2938,6 +2982,9 @@ function getSiteConfigValues() {
     instagram:   g('cfg-instagram'),
     facebook:    g('cfg-facebook'),
     web_oficial: g('cfg-web'),
+    extra_icono:  g('cfg-extra-icono'),
+    extra_nombre: g('cfg-extra-nombre'),
+    extra_url:    g('cfg-extra-url'),
     contactos: {
       direccion:          g('cfg-direccion'),
       telefono:           g('cfg-telefono'),
@@ -2970,6 +3017,7 @@ function previewFooter() {
           <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">📷</span>
           <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">👍</span>
           <span style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">🌐</span>
+          ${cfg.extra_url ? `<span title="${cfg.extra_nombre || 'Otra red'}" style="width:22px;height:22px;background:rgba(255,255,255,.1);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;">${cfg.extra_icono || '🔗'}</span>` : ''}
         </div>
       </div>
       <div>
@@ -2993,6 +3041,7 @@ function previewFooter() {
 function saveSiteConfig() {
   const cfg = getSiteConfigValues();
   localStorage.setItem('padron_site_config', JSON.stringify(cfg));
+  pushConfigToServer('padron_site_config', cfg);
   showToast('✅ Configuración guardada — el encabezado y footer del portal han sido actualizados', 'success');
 
   // Flash the preview border
@@ -3023,6 +3072,9 @@ function resetSiteConfig() {
     'cfg-web':        'https://elgrullo.gob.mx',
     'cfg-copyright':  '© 2026 H. Ayuntamiento de El Grullo, Jalisco · Todos los derechos reservados.',
     'cfg-creditos':   'Desarrollado como proyecto de Residencias Profesionales — ITJMM Campus El Grullo',
+    'cfg-extra-icono':  '',
+    'cfg-extra-nombre': '',
+    'cfg-extra-url':    '',
   };
   Object.entries(defaults).forEach(([id, val]) => {
     const el = document.getElementById(id);
@@ -3049,6 +3101,9 @@ function loadSiteConfig() {
     set('cfg-instagram',  cfg.instagram);
     set('cfg-facebook',   cfg.facebook);
     set('cfg-web',        cfg.web_oficial);
+    set('cfg-extra-icono',  cfg.extra_icono);
+    set('cfg-extra-nombre', cfg.extra_nombre);
+    set('cfg-extra-url',    cfg.extra_url);
     if (cfg.contactos) {
       set('cfg-telefono',   cfg.contactos.telefono);
       set('cfg-direccion',  cfg.contactos.direccion);
@@ -3108,6 +3163,7 @@ function getSiteContentValues() {
 function saveSiteContentConfig() {
   const content = getSiteContentValues();
   localStorage.setItem('padron_site_content', JSON.stringify(content));
+  pushConfigToServer('padron_site_content', content);
   showToast('✅ Contenidos de la portada guardados y publicados con éxito', 'success');
 }
 
@@ -3129,10 +3185,8 @@ function resetSiteContentConfig() {
   setTimeout(() => location.reload(), 800);
 }
 
-// Run on init
-loadSiteConfig();
-loadSiteContentConfig();
-previewFooter();
+// (loadSiteConfig/loadSiteContentConfig/previewFooter se llaman desde initAdmin(),
+// después de traer la configuración real del servidor — ver primeConfigFromServer())
 
 /* ══════════════════════════════════════════════════ */
 /*  APARIENCIA — ICON SELECTOR                        */
@@ -3147,6 +3201,7 @@ const ICON_ELEMENTS = [
   { id: 'step-2-icon',      label: 'Paso 2 — Registrar mascota',default: '🐕' },
   { id: 'step-3-icon',      label: 'Paso 3 — Descargar acta',   default: '📄' },
   { id: 'footer-logo-icon', label: 'Logo del footer',           default: '🐾' },
+  { id: 'admin-sidebar-logo', label: 'Logo del Panel Admin (sidebar)', default: '🏛️' },
 ];
 
 // Quick emoji palette for the selector (pet/municipal themed)
@@ -3350,9 +3405,28 @@ function saveAppearance() {
     showToast('⚠️ No hay cambios que guardar', 'error');
     return;
   }
+
+  // Descarta tarjetas incompletas: pasa cuando se hace clic en una pestaña
+  // (Emoji/Imagen/GIF) pero nunca se llega a elegir un emoji, subir un
+  // archivo o pegar una URL — sin esto se guardaba un ícono "vacío" que
+  // rompía esa imagen en TODO el sitio público.
+  const incompletos = Object.entries(appearanceState).filter(([, v]) => !v || !v.value);
+  incompletos.forEach(([id]) => delete appearanceState[id]);
+
+  if (Object.keys(appearanceState).length === 0 && incompletos.length) {
+    showToast('⚠️ No se guardó nada: elige un emoji, imagen o GIF antes de guardar', 'error');
+    return;
+  }
+
   try {
     localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
-    showToast('✅ Apariencia e íconos guardados y publicados con éxito', 'success');
+    pushConfigToServer('padron_appearance_config', appearanceState);
+    if (incompletos.length) {
+      const nombres = incompletos.map(([id]) => ICON_ELEMENTS.find(e => e.id === id)?.label || id).join(', ');
+      showToast(`⚠️ Guardado, pero "${nombres}" no tenía nada seleccionado y se omitió`, 'error');
+    } else {
+      showToast('✅ Apariencia e íconos guardados y publicados con éxito', 'success');
+    }
     if (typeof applyAppearanceConfig === 'function') applyAppearanceConfig();
   } catch(err) {
     showToast('❌ Error de almacenamiento: El archivo es demasiado grande', 'error');
@@ -3402,9 +3476,66 @@ function loadAppearance() {
   } catch(e) { /* ignore */ }
 }
 
-// Init appearance selector
-buildIconSelectors();
+// (buildIconSelectors() se llama desde initAdmin(), ver primeConfigFromServer())
 
+/* ══════════════════════════════════════════════════ */
+/*  CONFIG DEL SITIO ↔ SERVIDOR (settings.php)         */
+/* ══════════════════════════════════════════════════ */
+
+// Claves que hoy vivían solo en localStorage y ahora también se
+// guardan/leen del servidor, para que TODOS los visitantes vean
+// los mismos cambios hechos desde este panel.
+const SERVER_CONFIG_KEYS = [
+  'padron_site_config',
+  'padron_appearance_config',
+  'padron_site_content',
+  'padron_municipio_config',
+];
+
+// Envía una clave al servidor (además de guardarse en localStorage
+// desde la función de guardado correspondiente). No bloqueante: si
+// falla (sin red), la configuración sigue disponible localmente.
+async function pushConfigToServer(key, value) {
+  try {
+    await apiSaveSiteConfig(key, value);
+  } catch (err) {
+    showToast(`⚠️ Se guardó localmente, pero no se pudo sincronizar con el servidor: ${err.message}`, 'error');
+  }
+}
+
+// Trae la configuración real del servidor y la vuelca a localStorage
+// ANTES de que corran los loaders existentes (loadSiteConfig, etc.),
+// así cualquier navegador que abra el panel ve siempre lo último
+// guardado, no solo lo que quedó cacheado en ese equipo.
+async function primeConfigFromServer() {
+  try {
+    const all = await apiGetSiteConfig();
+    SERVER_CONFIG_KEYS.forEach(key => {
+      if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
+    });
+  } catch (err) { /* sin conexión: seguimos con lo que haya en localStorage */ }
+
+  loadSiteConfig();
+  loadSiteContentConfig();
+  previewFooter();
+  buildIconSelectors();
+}
+
+// Aplica el logo del panel admin a su PROPIO sidebar (a diferencia de los
+// demás elementos de ICON_ELEMENTS, este no vive en el portal público).
+function applyAdminOwnAppearance() {
+  try {
+    const raw = localStorage.getItem('padron_appearance_config');
+    if (!raw) return;
+    const cfg = JSON.parse(raw);
+    const val = cfg['admin-sidebar-logo'];
+    const el  = document.getElementById('admin-sidebar-logo');
+    if (!val || !val.value || !el) return;
+    el.innerHTML = val.type === 'emoji'
+      ? val.value
+      : `<img src="${val.value}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`;
+  } catch (e) { /* ignore */ }
+}
 </script>
 
 </body>

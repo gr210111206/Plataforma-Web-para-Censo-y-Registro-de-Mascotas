@@ -7,8 +7,8 @@ USE remac_db;
 
 -- ── Dueños / Usuarios ────────────────────────────
 INSERT INTO duenos (nombre, telefono, email, direccion, colonia, password_hash, rol) VALUES
-('Administrador REMAC',   '341-000-0000', 'admin@remac.elgrullo.mx', NULL,          NULL,                '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
-('María García López',   '341-123-4567', 'maria@demo.com',        'Morelos 45',   'El Grullo centro', NULL, 'ciudadano'),
+('Administrador REMAC',   '341-000-0000', 'admin@remac.elgrullo.mx', NULL,          NULL,                '$2y$10$8ksdbsV2S2s5xMoNpX5Zg.n6rAh/XK/e8kwHmaw45wk2wQYixXDtW', 'admin'),
+('María García López',   '341-123-4567', 'maria@demo.com',        'Morelos 45',   'El Grullo centro', '$2y$10$AC5BxT5yAPTK5J28QygboeO0bKRxv7XioIgJP9YG3SAtKzkkXerH6', 'ciudadano'),
 ('Carlos Ramírez Flores','341-234-5678', 'carlos@demo.com',       'Hidalgo 12',   '10 de mayo',       NULL, 'ciudadano'),
 ('Ana Pérez Morales',    '341-345-6789', 'ana@demo.com',          'Juárez 78',    'Del sur',          NULL, 'ciudadano'),
 ('Nacho Tello',          '321-387-4444', 'nacho@demo.com',        'Obregón 53',   'El Grullo centro', NULL, 'ciudadano'),
@@ -51,5 +51,6 @@ INSERT INTO articulos (titulo, contenido, imagen_icono, publicado) VALUES
  'La esterilización reduce la sobrepoblación animal, previene enfermedades como el cáncer de mama en hembras y hace a tu mascota más tranquila y saludable.',
  '❤️',1);
 
--- ── Contraseña del admin es "Admin1234" (bcrypt) ─
--- La hash ya está incluida arriba: $2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- ── Contraseñas de prueba (bcrypt) ───────────────
+-- admin@remac.elgrullo.mx → "Admin1234"  (¡cambiar apenas se suba a producción!)
+-- maria@demo.com          → "Demo12345"

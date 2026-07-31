@@ -339,6 +339,7 @@
           <a id="ft-instagram" href="https://www.instagram.com/laciudaddelagente" target="_blank" class="footer-social" title="Instagram">📷</a>
           <a id="ft-facebook"  href="https://www.facebook.com/laciudaddelagente" target="_blank" class="footer-social" title="Facebook">👍</a>
           <a id="ft-web"       href="https://elgrullo.gob.mx" target="_blank" class="footer-social" title="Sitio oficial">🌐</a>
+          <a id="ft-extra" href="#" target="_blank" class="footer-social" title="" style="display:none;">🔗</a>
         </div>
       </div>
 
@@ -382,11 +383,10 @@
 </footer>
 
 
-<script src="js/mock-data.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 /* ── Render Campaigns ── */
-function renderCampaigns() {
-  const campaigns = getCampanas();
+function renderCampaigns(campaigns) {
   const container = document.getElementById('campaignsContainer');
   container.innerHTML = campaigns.map(c => `
     <div class="campaign-card">
@@ -409,8 +409,7 @@ function renderCampaigns() {
 }
 
 /* ── Render Articles ── */
-function renderArticles() {
-  const articles = getArticulos();
+function renderArticles(articles) {
   const container = document.getElementById('articlesContainer');
   container.innerHTML = articles.map(a => `
     <div class="article-card">
@@ -422,9 +421,16 @@ function renderArticles() {
   `).join('');
 }
 
-/* ── Render FAQ ── */
+/* ── Render FAQ (contenido institucional fijo, sin tabla en BD) ── */
+const FAQS = [
+  { pregunta: '¿Por qué debo registrar a mi mascota?', respuesta: 'El registro es gratuito y te permite obtener la ficha oficial REMAC de tu mascota, acceder a campañas de vacunación y esterilización, y contar con un respaldo digital oficial del Ayuntamiento.' },
+  { pregunta: '¿Qué documentos necesito para registrar a mi mascota?', respuesta: 'Solo necesitas tu correo electrónico, teléfono de contacto y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.' },
+  { pregunta: '¿El registro tiene algún costo?', respuesta: 'No. El registro en el padrón REMAC del municipio de El Grullo es completamente gratuito para todos los ciudadanos.' },
+  { pregunta: '¿Puedo registrar más de una mascota?', respuesta: 'Sí. Con una sola cuenta puedes registrar todos los perros y gatos que tengas. Cada mascota recibirá su propio folio REMAC-GRU único.' },
+  { pregunta: '¿Qué es el estatus Alta y Baja?', respuesta: 'Alta significa que la mascota está activa en el padrón. Baja se aplica cuando la mascota ha fallecido o fue dada de baja del registro.' },
+];
 function renderFAQ() {
-  const faqs = getFaq();
+  const faqs = FAQS;
   const container = document.getElementById('faqContainer');
   container.innerHTML = faqs.map((f, i) => `
     <div class="faq-item" id="faq-${i}">
@@ -516,6 +522,17 @@ function applyFooterConfig() {
     href('ft-facebook',  cfg.facebook);
     href('ft-web',       cfg.web_oficial);
 
+    // Red social extra (opcional, configurada libremente desde el admin)
+    if (cfg.extra_url) {
+      const extraEl = document.getElementById('ft-extra');
+      if (extraEl) {
+        extraEl.href = cfg.extra_url;
+        extraEl.title = cfg.extra_nombre || 'Otra red social';
+        extraEl.textContent = cfg.extra_icono || '🔗';
+        extraEl.style.display = '';
+      }
+    }
+
     // Contactos column
     if (cfg.contactos) {
       const el = document.getElementById('ft-contactos');
@@ -549,8 +566,12 @@ function applyAppearanceConfig() {
   } catch(e) { /* silently ignore */ }
 }
 
-/* ── Render Map (si el elemento existe) ── */
-function initMap() {
+/* ── Render Map (si el elemento existe) ──
+   Usa conteos agregados por colonia (endpoint público /api/stats),
+   NO mascotas individuales: listar mascotas una por una requiere
+   sesión (trae teléfono del dueño) y no aporta nada útil a un
+   visitante anónimo ver la ubicación aproximada de cada mascota. */
+async function initMap() {
   const mapEl = document.getElementById('map');
   if (!mapEl) return;
   const EL_GRULLO = [19.8056, -104.2139];
@@ -573,58 +594,105 @@ function initMap() {
     'San José':              [19.8050, -104.2165],
   };
 
+  let porColonia = [];
+  try {
+    const stats = await apiGetStats();
+    porColonia = stats.por_colonia || [];
+  } catch (e) { return; } // sin datos, no dibujamos el mapa
+
   const leafletMap = L.map('map', { zoomControl: true, scrollWheelZoom: false }).setView(EL_GRULLO, 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 18,
   }).addTo(leafletMap);
 
-  const orangeIcon = L.divIcon({
+  const orangeIcon = (size) => L.divIcon({
     className: '',
     html: `<div style="
       background:var(--orange);
-      width:24px; height:24px;
+      width:${size}px; height:${size}px;
       border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);
       border:2px solid white;
       box-shadow:0 2px 5px rgba(0,0,0,.3);
+      display:flex; align-items:center; justify-content:center;
     "></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 24],
-    popupAnchor: [0, -26],
+    iconSize: [size, size],
+    iconAnchor: [size/2, size],
+    popupAnchor: [0, -size+2],
   });
 
-  const allPets = getTodasMascotas().filter(p => p.estatus !== 'fallecido');
+  const maxTotal = Math.max(1, ...porColonia.map(c => c.total));
 
-  allPets.forEach(pet => {
-    const colKey = Object.keys(colonias).find(k => k.toLowerCase() === (pet.colonia || '').toLowerCase());
+  porColonia.forEach(({ colonia, total }) => {
+    const colKey = Object.keys(colonias).find(k => k.toLowerCase() === (colonia || '').toLowerCase());
     const base   = colKey ? colonias[colKey] : EL_GRULLO;
-    const lat    = base[0] + (Math.random() - 0.5) * 0.012;
-    const lng    = base[1] + (Math.random() - 0.5) * 0.016;
-    L.marker([lat, lng], { icon: orangeIcon })
+    const size   = 20 + Math.round((total / maxTotal) * 20);
+    L.marker(base, { icon: orangeIcon(size) })
       .addTo(leafletMap)
       .bindPopup(`
         <div style="font-family:'Inter',sans-serif; min-width:120px;">
-          <div style="font-weight:700; font-size:.85rem; margin-bottom:2px;">
-            ${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}
-          </div>
-          <div style="font-size:.75rem; color:#666;">
-            ${pet.especie.charAt(0).toUpperCase() + pet.especie.slice(1)} · ${pet.raza || 'Sin raza'}<br/>
-            <b>Colonia:</b> ${pet.colonia || 'No especificada'}
-          </div>
+          <div style="font-weight:700; font-size:.85rem; margin-bottom:2px;">📍 ${colonia || 'No especificada'}</div>
+          <div style="font-size:.75rem; color:#666;">${total} mascota${total === 1 ? '' : 's'} registrada${total === 1 ? '' : 's'}</div>
         </div>
       `);
   });
 }
 
+/* ── Configuración del sitio (apariencia/contenidos/footer) desde el servidor ──
+   Trae la config real y la vuelca a localStorage ANTES de que corran
+   applyFooterConfig/applySiteContentConfig/applyAppearanceConfig, así
+   cualquier visitante ve siempre lo último publicado por el admin, no
+   solo lo que haya quedado cacheado en su propio navegador. ── */
+async function primeConfigFromServer() {
+  try {
+    const all = await apiGetSiteConfig();
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content'].forEach(key => {
+      if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
+    });
+  } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
+}
+
+/* ── Contenidos de portada (hero, pasos, banner...) editados desde el admin ── */
+function applySiteContentConfig() {
+  const raw = localStorage.getItem('padron_site_content');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    Object.entries(cfg).forEach(([key, val]) => {
+      if (val === undefined || val === null || val === '') return;
+      const id = key.replace(/_/g, '-');
+      const el = document.getElementById(id);
+      if (el) { el.textContent = val; return; }
+
+      // Contadores del hero: stat_1_num → hero-stat-1-num (además set data-target)
+      const statMatch = key.match(/^stat_(\d)_num$/);
+      if (statMatch) {
+        const counterEl = document.getElementById(`hero-stat-${statMatch[1]}-num`);
+        if (counterEl) { counterEl.dataset.target = val; counterEl.textContent = val; }
+      }
+    });
+  } catch (e) { /* ignore */ }
+}
+
 /* ── Init ── */
-renderCampaigns();
-renderArticles();
-renderFAQ();
-applyFooterConfig();
-applySiteContentConfig();
-applyAppearanceConfig();
-initMap();
+async function initIndex() {
+  await primeConfigFromServer();
+
+  try {
+    renderCampaigns(await apiGetCampanas());
+  } catch (e) { /* sección queda vacía si falla */ }
+  try {
+    renderArticles(await apiGetArticulos());
+  } catch (e) { /* sección queda vacía si falla */ }
+
+  renderFAQ();
+  applyFooterConfig();
+  applySiteContentConfig();
+  applyAppearanceConfig();
+  initMap();
+}
+initIndex();
 </script>
 
 </body>

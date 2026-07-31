@@ -40,7 +40,17 @@ function getBody(): array {
 
 /* ── Autenticación por token ────────────────────── */
 function getAuthToken(): ?string {
-    $h = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    // Distintas configuraciones de Apache/PHP (mod_php, PHP-FPM, tras
+    // RewriteRule) exponen el header Authorization en variables distintas.
+    $h = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? '';
+
+    if (!$h && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        $h = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    }
+
     if (str_starts_with($h, 'Bearer ')) {
         return substr($h, 7);
     }
@@ -52,11 +62,18 @@ function requireAuth(): array {
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
     $db   = getDB();
-    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol FROM duenos WHERE token_sesion = ? AND activo = 1');
+    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
 
     if (!$user) jsonError('Token inválido o expirado.', 401);
+
+    if ($user['token_creado_en'] && (time() - strtotime($user['token_creado_en'])) > TOKEN_EXPIRY) {
+        $db->prepare('UPDATE duenos SET token_sesion = NULL, token_creado_en = NULL WHERE id = ?')->execute([$user['id']]);
+        jsonError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
+    }
+
+    unset($user['token_creado_en']);
     return $user;
 }
 

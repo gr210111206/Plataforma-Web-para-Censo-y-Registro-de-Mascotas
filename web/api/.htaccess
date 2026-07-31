@@ -4,6 +4,14 @@
 Options -Indexes
 RewriteEngine On
 
+# Apache/PHP (mod_php o PHP-FPM en muchos hostings, incluido HostGator) no
+# reenvía el header Authorization a PHP por defecto. Sin esto, todos los
+# endpoints protegidos con "Bearer <token>" fallan silenciosamente con
+# "No autorizado. Falta el token." aunque el header sí se haya enviado.
+CGIPassAuth On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
 # Seguridad: bloquear acceso a config/
 RewriteRule ^config/ - [F,L]
 
@@ -23,6 +31,9 @@ RewriteRule ^stats$ stats.php [QSA,L]
 # GET /api/campanas, /api/articulos → contenido.php
 RewriteRule ^campanas$  contenido.php?resource=campanas  [QSA,L]
 RewriteRule ^articulos$ contenido.php?resource=articulos [QSA,L]
+
+# GET/POST /api/settings → settings.php (configuración del sitio)
+RewriteRule ^settings$ settings.php [QSA,L]
 
 # Headers de seguridad
 Header always set X-Content-Type-Options nosniff

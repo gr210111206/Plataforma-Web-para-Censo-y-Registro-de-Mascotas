@@ -16,8 +16,10 @@
    CONFIGURACIÓN
    ══════════════════════════════════════════════ */
 
-// Cambia esto a tu dominio real cuando tengas el hosting:
-const API_BASE_URL = 'https://tudominio.com/api';
+// Desarrollo local (XAMPP, junction htdocs/remac → web/):
+const API_BASE_URL = 'http://localhost/remac/api';
+// ⚠️ ANTES DE SUBIR A HOSTGATOR: cambia esto a tu dominio real, ej:
+// const API_BASE_URL = 'https://tudominio.com/api';
 
 // En desarrollo local, usa mock-data en vez de la API:
 const USE_MOCK = false;  // → Cambia a true si aún no tienes hosting
@@ -112,6 +114,46 @@ async function apiLogout() {
   localStorage.removeItem('padron_session');
 }
 
+/**
+ * Valida el token guardado contra el servidor y devuelve los datos
+ * del usuario autenticado. Lanza si no hay sesión válida.
+ * Úsala al cargar dashboard.html / admin.html para proteger la página
+ * (no basta con confiar en lo que haya en localStorage).
+ */
+async function apiGetMe() {
+  return _fetch(`${API_BASE_URL}/auth?action=me`);
+}
+
+/**
+ * Protege una página: exige sesión válida (y opcionalmente un rol).
+ * Si no hay sesión válida, limpia localStorage y redirige a login.html.
+ * @param {string|null} rolRequerido  'admin' | 'ciudadano' | null (cualquiera)
+ * @returns {Promise<Object>} datos del usuario autenticado
+ */
+/**
+ * Actualiza datos del perfil del usuario en sesión (nombre, teléfono, dirección, colonia).
+ */
+async function apiUpdateProfile(data) {
+  return _fetch(`${API_BASE_URL}/auth?action=update-profile`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+async function apiRequireSession(rolRequerido = null) {
+  try {
+    const user = await apiGetMe();
+    if (rolRequerido && user.rol !== rolRequerido) {
+      throw new Error('No tienes permiso para ver esta página.');
+    }
+    return user;
+  } catch (err) {
+    localStorage.removeItem('padron_session');
+    window.location.href = 'login.html';
+    throw err;
+  }
+}
+
 /* ══════════════════════════════════════════════
    MASCOTAS
    ══════════════════════════════════════════════ */
@@ -196,6 +238,33 @@ async function apiGetCampanas() {
 
 async function apiGetArticulos() {
   return _fetch(`${API_BASE_URL}/articulos`);
+}
+
+/* ══════════════════════════════════════════════
+   CONFIGURACIÓN DEL SITIO (apariencia, portada, municipio, contactos)
+   Guardada en el servidor para que TODOS los visitantes vean los
+   mismos cambios hechos desde el panel admin (no solo el propio
+   navegador del administrador).
+   ══════════════════════════════════════════════ */
+
+/**
+ * Obtiene toda la configuración pública del sitio.
+ * @returns {Promise<Object>} { padron_site_config: {...}, padron_appearance_config: {...}, ... }
+ */
+async function apiGetSiteConfig() {
+  return _fetch(`${API_BASE_URL}/settings`);
+}
+
+/**
+ * Guarda (upsert) una clave de configuración. Requiere sesión de admin.
+ * @param {string} key    Ej: 'padron_appearance_config'
+ * @param {Object} value  Objeto serializable a JSON
+ */
+async function apiSaveSiteConfig(key, value) {
+  return _fetch(`${API_BASE_URL}/settings`, {
+    method: 'POST',
+    body: JSON.stringify({ key, value }),
+  });
 }
 
 /* ══════════════════════════════════════════════

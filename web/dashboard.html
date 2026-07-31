@@ -231,7 +231,7 @@
           <div class="sidebar-user-role" id="sidebarRole">Ciudadano</div>
         </div>
       </div>
-      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="localStorage.removeItem('padron_session')">
+      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="event.preventDefault(); apiLogout().finally(() => window.location.href='login.html');">
         <span class="icon">🚪</span> Cerrar sesión
       </a>
     </div>
@@ -534,43 +534,66 @@
 
 <!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="js/mock-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/api-client.js"></script>
 <script>
 /* ══════════════════════════════════════════════════ */
-/*  SESSION — read from localStorage (set by login)  */
+/*  SESSION — validada contra el servidor, no solo localStorage */
 /* ══════════════════════════════════════════════════ */
-const session = (() => {
-  try {
-    return JSON.parse(localStorage.getItem('padron_session')) || {};
-  } catch { return {}; }
-})();
+let session = {};
+let myPets = [];
+let currentPetIndex = null;
 
-const sessionNombre = session.nombre   || 'Ciudadano';
-const sessionEmail  = session.email    || 'ciudadano@demo.com';
-const sessionPhone  = session.telefono || '341-123-4567';
-const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+function applySessionToUI() {
+  const sessionNombre = session.nombre   || 'Ciudadano';
+  const sessionEmail  = session.email    || '';
+  const sessionPhone  = session.telefono || '';
+  const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
-// Apply to sidebar
-document.getElementById('sidebarAvatar').textContent = initials;
-document.getElementById('sidebarName').textContent   = sessionNombre.split(' ').slice(0, 2).join(' ');
-document.getElementById('sidebarRole').textContent   = session.rol === 'admin' ? 'Administrador' : 'Ciudadano';
-if (session.rol === 'admin') {
-  document.getElementById('sidebarRole').style.color = 'var(--orange-light)';
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarName').textContent   = sessionNombre.split(' ').slice(0, 2).join(' ');
+  document.getElementById('sidebarRole').textContent   = session.rol === 'admin' ? 'Administrador' : 'Ciudadano';
+  if (session.rol === 'admin') {
+    document.getElementById('sidebarRole').style.color = 'var(--orange-light)';
+  }
+
+  document.getElementById('profileAvatar').textContent    = initials;
+  document.getElementById('profileName').textContent      = sessionNombre;
+  document.getElementById('profilePhone').textContent     = '📞 ' + sessionPhone;
+  document.getElementById('perfil-nombre').value          = sessionNombre;
+  document.getElementById('perfil-telefono').value        = sessionPhone;
+  document.getElementById('perfil-email-field').value     = sessionEmail;
+  if (document.getElementById('perfil-domicilio')) document.getElementById('perfil-domicilio').value = session.direccion || '';
+  if (document.getElementById('perfil-colonia'))   document.getElementById('perfil-colonia').value   = session.colonia   || '';
 }
 
-// Apply to profile section
-document.getElementById('profileAvatar').textContent    = initials;
-document.getElementById('profileName').textContent      = sessionNombre;
-document.getElementById('profilePhone').textContent     = '📞 ' + sessionPhone;
-document.getElementById('perfil-nombre').value          = sessionNombre;
-document.getElementById('perfil-telefono').value        = sessionPhone;
-document.getElementById('perfil-email-field').value     = sessionEmail;
+/* ══════════════════════════════════════════════════ */
+/*  INIT — protege la página y carga datos reales      */
+/* ══════════════════════════════════════════════════ */
+async function initDashboard() {
+  session = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  applySessionToUI();
 
-/* ══════════════════════════════════════════════════ */
-/*  DATA                                              */
-/* ══════════════════════════════════════════════════ */
-let myPets = [...getMisMascotas()];
-let currentPetIndex = null;
+  try {
+    myPets = await apiGetMisMascotas();
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar tus mascotas: ${err.message}`, 'error');
+    myPets = [];
+  }
+  renderPets();
+
+  try {
+    const campanas = await apiGetCampanas();
+    renderDashCampaigns(campanas);
+  } catch (err) { /* sección de campañas queda vacía si falla */ }
+
+  try {
+    const articulos = await apiGetArticulos();
+    renderDashArticles(articulos);
+  } catch (err) { /* sección de artículos queda vacía si falla */ }
+
+  await applyAppearance();
+}
 
 /* ══════════════════════════════════════════════════ */
 /*  NAVIGATION                                        */
@@ -677,9 +700,9 @@ function renderPets() {
 /* ══════════════════════════════════════════════════ */
 /*  RENDER CAMPAIGNS & ARTICLES                       */
 /* ══════════════════════════════════════════════════ */
-function renderDashCampaigns() {
+function renderDashCampaigns(campanas) {
   const container = document.getElementById('dashCampaignsContainer');
-  container.innerHTML = getCampanas().map(c => `
+  container.innerHTML = campanas.map(c => `
     <div class="campaign-card">
       <div class="campaign-banner" style="background:${c.banner_color};">
         <div class="campaign-icon">${c.icono}</div>
@@ -697,8 +720,8 @@ function renderDashCampaigns() {
     </div>`).join('');
 }
 
-function renderDashArticles() {
-  document.getElementById('dashArticlesContainer').innerHTML = getArticulos().map(a => `
+function renderDashArticles(articulos) {
+  document.getElementById('dashArticlesContainer').innerHTML = articulos.map(a => `
     <div class="article-card">
       <span class="article-icon">${a.imagen_icono}</span>
       <div class="article-title">${a.titulo}</div>
@@ -834,7 +857,7 @@ function field(label, value) {
 /* ══════════════════════════════════════════════════ */
 /*  NEW PET                                           */
 /* ══════════════════════════════════════════════════ */
-function handleNewPet(e) {
+async function handleNewPet(e) {
   if (e) e.preventDefault();
   const nombre  = document.getElementById('pet-nombre').value.trim();
   const especie = document.getElementById('pet-especie').value;
@@ -844,56 +867,126 @@ function handleNewPet(e) {
     showToast('⚠️ Completa los campos obligatorios', 'error'); return;
   }
 
-  const folio  = 'EG-2026-' + String(myPets.length + 101).padStart(5, '0');
-  const newPet = {
-    id: Date.now(), nombre, especie, sexo, folio,
-    raza:        document.getElementById('pet-raza').value,
-    edad_anios:  parseInt(document.getElementById('pet-edad').value) || null,
-    color:       document.getElementById('pet-color').value,
-    vacunado:    document.getElementById('pet-vacunado').checked,
-    esterilizado:document.getElementById('pet-esterilizado').checked,
-    estatus:     'activo',
-    foto:        window._pendingFoto || null,
-    created_at:  new Date().toISOString().split('T')[0],
+  const edadAnios = parseInt(document.getElementById('pet-edad').value) || null;
+  const payload = {
+    nombre, especie, sexo,
+    raza:         document.getElementById('pet-raza').value || null,
+    edad:         edadAnios !== null ? String(edadAnios) : null,
+    edad_label:   edadAnios !== null ? `${edadAnios} ${edadAnios === 1 ? 'año' : 'años'}` : null,
+    color:        document.getElementById('pet-color').value || null,
+    vacunado:     document.getElementById('pet-vacunado').checked,
+    esterilizado: document.getElementById('pet-esterilizado').checked,
+    foto_url:     window._pendingFoto || null,
   };
 
-  myPets.push(newPet);
-  window._pendingFoto = null;
-  renderPets();
-  closeModal('modal-nueva-mascota');
-  document.getElementById('form-mascota').reset();
-  document.getElementById('photoPreviewIcon').textContent = '📷';
-  showToast(`✅ ${nombre} registrado/a · Folio: ${folio}`, 'success');
+  try {
+    const created = await apiRegistrarMascota(payload);
+    window._pendingFoto = null;
+    myPets.push(created);
+    renderPets();
+    closeModal('modal-nueva-mascota');
+    document.getElementById('form-mascota').reset();
+    document.getElementById('photoPreviewIcon').textContent = '📷';
+    showToast(`✅ ${nombre} registrado/a · Folio: ${created.id}`, 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 
 
 /* ══════════════════════════════════════════════════ */
-/*  DOWNLOAD ACTA                                     */
+/*  DOWNLOAD ACTA (PDF real con jsPDF)                */
 /* ══════════════════════════════════════════════════ */
 function downloadActa(folio) {
-  const f = folio || (myPets[0]?.folio) || 'EG-2026-00000';
-  showToast(`📄 Generando acta ${f}...`, 'info');
-  setTimeout(() => showToast('✅ Acta descargada correctamente (simulado)', 'success'), 1500);
+  const pet = myPets.find(p => (p.id || p.folio) === folio);
+  if (!pet) { showToast('❌ No se encontró la mascota para generar el acta.', 'error'); return; }
+
+  showToast(`📄 Generando acta ${folio}...`, 'info');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(242, 122, 0);
+  doc.rect(0, 0, pageW, 24, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('H. Ayuntamiento Constitucional de El Grullo, Jalisco', pageW / 2, 10, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('Acta Oficial de Registro — Padrón Municipal de Mascotas (REMAC)', pageW / 2, 18, { align: 'center' });
+
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(`Folio: ${folio}`, 14, 36);
+
+  const edad = pet.edad_label || (pet.edad_anios ? `${pet.edad_anios} años` : 'N/D');
+  const rows = [
+    ['Nombre de la mascota', pet.nombre || ''],
+    ['Especie', capitalize(pet.especie || '')],
+    ['Raza', pet.raza || 'No especificada'],
+    ['Edad', edad],
+    ['Sexo', capitalize(pet.sexo || '')],
+    ['Color', pet.color || '—'],
+    ['Vacunado', pet.vacunado ? 'Sí' : 'No'],
+    ['Esterilizado', pet.esterilizado ? 'Sí' : 'No'],
+    ['Estatus', pet.estatus || 'Alta'],
+    ['Fecha de registro', pet.fecha_registro || pet.created_at || 'N/D'],
+    ['Propietario', session.nombre || pet.persona || '—'],
+    ['Teléfono de contacto', session.telefono || pet.telefono || '—'],
+  ];
+
+  let y = 46;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  rows.forEach(([label, value]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${label}:`, 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(value), 80, y);
+    y += 8;
+  });
+
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('dashboard.html','')}mascota.html?id=${folio}`, 14, y + 6);
+  doc.text('Documento generado por el sistema REMAC. Válido como comprobante de registro municipal.', 14, y + 12);
+
+  doc.save(`${folio}.pdf`);
+  showToast('✅ Acta descargada correctamente', 'success');
 }
 
 /* ══════════════════════════════════════════════════ */
 /*  PROFILE                                           */
 /* ══════════════════════════════════════════════════ */
-function saveProfile() {
-  const nombre = document.getElementById('perfil-nombre').value.trim();
-  if (nombre) {
-    document.getElementById('sidebarName').textContent = nombre.split(' ').slice(0,2).join(' ');
+async function saveProfile() {
+  const nombre    = document.getElementById('perfil-nombre').value.trim();
+  const telefono  = document.getElementById('perfil-telefono').value.trim();
+  const direccion = document.getElementById('perfil-domicilio')?.value.trim() || '';
+  const colonia   = document.getElementById('perfil-colonia')?.value || '';
+
+  if (!nombre)   { showToast('❌ El nombre no puede quedar vacío', 'error'); return; }
+  if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
+
+  try {
+    const updated = await apiUpdateProfile({ nombre, telefono, direccion, colonia });
+    session = { ...session, ...updated };
+
+    document.getElementById('sidebarName').textContent = nombre.split(' ').slice(0, 2).join(' ');
     document.getElementById('profileName').textContent = nombre;
-    const ini = nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('profilePhone').textContent = '📞 ' + telefono;
+    const ini = nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
     document.getElementById('sidebarAvatar').textContent = ini;
     const av = document.getElementById('profileAvatar');
     if (!av.querySelector('img')) av.textContent = ini;
-    // Update session
-    session.nombre = nombre;
-    localStorage.setItem('padron_session', JSON.stringify(session));
+
+    localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
+    showToast('✅ Perfil actualizado correctamente', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
   }
-  showToast('✅ Perfil actualizado correctamente', 'success');
 }
 
 function changeAvatar(input) {
@@ -953,19 +1046,28 @@ function showToast(msg, type = 'info') {
 /* ══════════════════════════════════════════════════ */
 /*  APPEARANCE CONFIG (from admin)                    */
 /* ══════════════════════════════════════════════════ */
-function applyAppearance() {
-  const raw = localStorage.getItem('padron_appearance_config');
-  if (!raw) return;
+async function applyAppearance() {
+  let cfg = null;
   try {
-    const cfg = JSON.parse(raw);
-    const logoVal = cfg['nav-logo-icon'];
-    if (logoVal) {
-      const el = document.getElementById('dash-logo-icon');
-      if (el) el.innerHTML = logoVal.type === 'emoji'
-        ? logoVal.value
-        : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
-    }
-  } catch(e) {}
+    const all = await apiGetSiteConfig();
+    cfg = all['padron_appearance_config'] || null;
+  } catch (e) { /* sin conexión: seguimos con localStorage */ }
+
+  if (!cfg) {
+    try {
+      const raw = localStorage.getItem('padron_appearance_config');
+      cfg = raw ? JSON.parse(raw) : null;
+    } catch (e) { return; }
+  }
+  if (!cfg) return;
+
+  const logoVal = cfg['nav-logo-icon'];
+  if (logoVal) {
+    const el = document.getElementById('dash-logo-icon');
+    if (el) el.innerHTML = logoVal.type === 'emoji'
+      ? logoVal.value
+      : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
+  }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -976,10 +1078,7 @@ function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 /* ══════════════════════════════════════════════════ */
 /*  INIT                                              */
 /* ══════════════════════════════════════════════════ */
-renderPets();
-renderDashCampaigns();
-renderDashArticles();
-applyAppearance();
+initDashboard();
 </script>
 
 </body>
