@@ -1062,11 +1062,14 @@ async function applyAppearance() {
   if (!cfg) return;
 
   const logoVal = cfg['nav-logo-icon'];
-  if (logoVal) {
+  if (logoVal && logoVal.value) {
     const el = document.getElementById('dash-logo-icon');
-    if (el) el.innerHTML = logoVal.type === 'emoji'
-      ? logoVal.value
-      : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
+    if (el) {
+      if (logoVal.type === 'none') el.style.display = 'none';
+      else el.innerHTML = logoVal.type === 'emoji'
+        ? logoVal.value
+        : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
+    }
   }
 }
 

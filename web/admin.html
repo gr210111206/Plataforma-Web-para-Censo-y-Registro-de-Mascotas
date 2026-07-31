@@ -3201,6 +3201,8 @@ const ICON_ELEMENTS = [
   { id: 'step-2-icon',      label: 'Paso 2 — Registrar mascota',default: '🐕' },
   { id: 'step-3-icon',      label: 'Paso 3 — Descargar acta',   default: '📄' },
   { id: 'footer-logo-icon', label: 'Logo del footer',           default: '🐾' },
+  { id: 'footer-brand-1',   label: 'Footer — logo del municipio', default: '🏛️' },
+  { id: 'footer-brand-2',   label: 'Footer — logo Ciudad Mágica', default: '✨' },
   { id: 'admin-sidebar-logo', label: 'Logo del Panel Admin (sidebar)', default: '🏛️' },
 ];
 
@@ -3232,6 +3234,7 @@ function buildIconSelectors() {
         <button class="icon-sel-type-btn active" id="type-emoji-${el.id}" onclick="setIconSelType('${el.id}','emoji')">😀 Emoji</button>
         <button class="icon-sel-type-btn"        id="type-image-${el.id}" onclick="setIconSelType('${el.id}','image')">🖼️ Imagen</button>
         <button class="icon-sel-type-btn"        id="type-gif-${el.id}"   onclick="setIconSelType('${el.id}','gif')">✨ GIF/URL</button>
+        <button class="icon-sel-type-btn"        id="type-none-${el.id}"  onclick="setIconSelType('${el.id}','none')">🚫 Ocultar</button>
       </div>
 
       <!-- Emoji panel -->
@@ -3280,6 +3283,13 @@ function buildIconSelectors() {
         </div>
       </div>
 
+      <!-- Ocultar panel (hidden) -->
+      <div class="icon-sel-input" id="inp-none-${el.id}" style="display:none;">
+        <div style="font-size:.75rem; color:var(--gray-3); text-align:center; padding:8px 0;">
+          🚫 Este elemento no se mostrará en el sitio público. Guarda para aplicar.
+        </div>
+      </div>
+
     </div>
   `).join('');
 
@@ -3289,12 +3299,22 @@ function buildIconSelectors() {
 
 // ── Switch input type ─────────────────────────────
 function setIconSelType(id, type) {
-  ['emoji','image','gif'].forEach(t => {
+  ['emoji','image','gif','none'].forEach(t => {
     document.getElementById(`inp-${t}-${id}`).style.display  = t === type ? '' : 'none';
     document.getElementById(`type-${t}-${id}`).classList.toggle('active', t === type);
   });
-  appearanceState[id] = appearanceState[id] || {};
-  appearanceState[id].type = type;
+  if (type === 'none') {
+    // "Ocultar" no necesita más datos: se marca completo de inmediato.
+    appearanceState[id] = { type: 'none', value: 'hidden' };
+    const prev = document.getElementById(`prev-${id}`);
+    if (prev) prev.innerHTML = '🚫';
+  } else {
+    // Si venía de "Ocultar", empieza limpio (no arrastrar value:'hidden'
+    // como si fuera un emoji/URL real).
+    const was = appearanceState[id];
+    appearanceState[id] = (was && was.type === 'none') ? { type } : (was || {});
+    appearanceState[id].type = type;
+  }
 }
 
 // ── Select a preset emoji ─────────────────────────
@@ -3453,6 +3473,7 @@ function loadAppearance() {
       if (!prev || !val) return;
 
       setIconSelType(id, val.type);
+      if (val.type === 'none') return; // setIconSelType ya puso el 🚫 en el preview
 
       if (val.type === 'emoji') {
         const input = document.getElementById(`emoji-text-${id}`);
