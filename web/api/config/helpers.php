@@ -5,6 +5,25 @@
 
 require_once __DIR__ . '/database.php';
 
+/* ── Manejo global de errores: SIEMPRE responder JSON, nunca HTML ──
+   Sin esto, cualquier error o advertencia de PHP (ej. un dato que no
+   cabe en una columna de la BD) se imprime como HTML antes del JSON y
+   rompe res.json() en el navegador con "Unexpected token '<'". */
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool {
+    if (!(error_reporting() & $errno)) return false;
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+set_exception_handler(function (Throwable $e): void {
+    error_log($e->getMessage());
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => 'Error interno del servidor. Inténtalo de nuevo.'], JSON_UNESCAPED_UNICODE);
+    exit;
+});
+
 /* ── CORS ──────────────────────────────────────── */
 function setCorsHeaders(): void {
     header('Access-Control-Allow-Origin: *');

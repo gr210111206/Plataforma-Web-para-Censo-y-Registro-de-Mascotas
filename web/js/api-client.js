@@ -240,6 +240,39 @@ async function apiGetArticulos() {
   return _fetch(`${API_BASE_URL}/articulos`);
 }
 
+/** Crea un artículo nuevo. Requiere sesión de admin. */
+async function apiCrearArticulo(data) {
+  return _fetch(`${API_BASE_URL}/articulos`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** Actualiza un artículo existente. Requiere sesión de admin. */
+async function apiActualizarArticulo(id, data) {
+  return _fetch(`${API_BASE_URL}/articulos?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+/** Elimina un artículo. Requiere sesión de admin. */
+async function apiEliminarArticulo(id) {
+  return _fetch(`${API_BASE_URL}/articulos?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+/* ══════════════════════════════════════════════
+   USUARIOS (gestión de cuentas ciudadanas, solo admin)
+   ══════════════════════════════════════════════ */
+
+/** Lista las cuentas de ciudadanos registrados. Requiere sesión de admin. */
+async function apiGetUsuarios(filtros = {}) {
+  const params = new URLSearchParams(filtros);
+  return _fetch(`${API_BASE_URL}/usuarios?${params}`);
+}
+
+/** Activa o desactiva la cuenta de un ciudadano. Requiere sesión de admin. */
+async function apiSetUsuarioActivo(id, activo) {
+  return _fetch(`${API_BASE_URL}/usuarios?id=${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ activo }),
+  });
+}
+
 /* ══════════════════════════════════════════════
    CONFIGURACIÓN DEL SITIO (apariencia, portada, municipio, contactos)
    Guardada en el servidor para que TODOS los visitantes vean los

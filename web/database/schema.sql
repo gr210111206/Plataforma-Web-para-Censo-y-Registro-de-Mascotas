@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS mascotas (
   sexo             ENUM('macho','hembra') DEFAULT NULL,
   color            VARCHAR(100) DEFAULT NULL,
   senias_particulares TEXT       DEFAULT NULL,
-  foto_url         TEXT         DEFAULT NULL,
+  foto_url         LONGTEXT     DEFAULT NULL,
   vacunado         TINYINT(1)   NOT NULL DEFAULT 0,
   esterilizado     TINYINT(1)   NOT NULL DEFAULT 0,
   estatus          ENUM('Alta','Baja') NOT NULL DEFAULT 'Alta',

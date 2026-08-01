@@ -818,7 +818,10 @@
     </a>
     <a class="sidebar-link" id="nav-seguimiento" onclick="showAdmin('seguimiento')">
       <span class="icon">🔍</span> Seguimiento
-      <span class="sidebar-badge">342</span>
+      <span class="sidebar-badge" id="seguimiento-badge">0</span>
+    </a>
+    <a class="sidebar-link" id="nav-usuarios" onclick="showAdmin('usuarios')">
+      <span class="icon">👤</span> Usuarios
     </a>
     <a class="sidebar-link" id="nav-articulo" onclick="showAdmin('articulo')">
       <span class="icon">📝</span> Nuevo artículo
@@ -949,6 +952,35 @@
     </div>
 
     <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: CUENTAS CIUDADANAS                -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-usuarios" style="display:none;">
+      <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
+        <div class="search-box" style="flex:1; min-width:200px;">
+          <span class="search-icon">🔍</span>
+          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="filterUsuarios()" style="width:100%; padding-left:36px;" />
+        </div>
+      </div>
+
+      <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); overflow:hidden;">
+        <table class="table" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--surface); text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--gray-2);">
+              <th style="padding:12px 14px;">Ciudadano</th>
+              <th style="padding:12px 14px;">Contacto</th>
+              <th style="padding:12px 14px;">Colonia</th>
+              <th style="padding:12px 14px;">Mascotas</th>
+              <th style="padding:12px 14px;">Registrado</th>
+              <th style="padding:12px 14px;">Estatus</th>
+              <th style="padding:12px 14px;"></th>
+            </tr>
+          </thead>
+          <tbody id="usuariosTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
     <!-- SECCIÓN: NUEVO ARTÍCULO                    -->
     <!-- ══════════════════════════════════════════ -->
     <div class="dashboard-content" id="sec-articulo" style="display:none;">
@@ -1048,7 +1080,7 @@
           <!-- Botones -->
           <div class="flex gap-8" style="justify-content:flex-end;">
             <button class="btn btn-ghost" onclick="resetArticulo()">Limpiar</button>
-            <button class="btn btn-primary" onclick="saveArticulo()">💾 Guardar artículo</button>
+            <button class="btn btn-primary" id="art-save-btn" onclick="saveArticulo()">💾 Guardar artículo</button>
           </div>
 
         </div>
@@ -1366,7 +1398,7 @@ Artículo 3. Queda prohibido el abandono de animales domésticos en la vía púb
 
 Artículo 4. Los dueños de mascotas son responsables de los daños que éstas puedan ocasionar a terceros.</textarea>
           </div>
-          <button class="btn btn-primary" onclick="showToast('✅ Reglamento actualizado', 'success')">💾 Guardar cambios</button>
+          <button class="btn btn-primary" onclick="saveReglamento()">💾 Guardar cambios</button>
         </div>
       </div>
 
@@ -2088,6 +2120,7 @@ const colonias = {
 const sections = {
   datos:       { title: 'Datos del Padrón',       sub: 'Mapa de mascotas · Gráficas · Seguimiento en tiempo real' },
   seguimiento: { title: 'Seguimiento de Mascotas', sub: 'Busca y gestiona el registro individual de cada mascota' },
+  usuarios:    { title: 'Cuentas Ciudadanas',      sub: 'Consulta y gestiona las cuentas registradas de los ciudadanos' },
   articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
   config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
 };
@@ -2341,6 +2374,59 @@ async function changeEstatus(id) {
 }
 
 /* ══════════════════════════════════════════════════ */
+/*  CUENTAS CIUDADANAS                                */
+/* ══════════════════════════════════════════════════ */
+let allUsuarios = [];
+
+function renderUsuariosTable(data) {
+  const tbody = document.getElementById('usuariosTableBody');
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:30px; text-align:center; color:var(--gray-2);">No se encontraron cuentas.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr style="border-top:1px solid var(--gray-4);">
+      <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
+      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+      <td style="padding:12px 14px; font-size:.82rem;">${u.colonia || '—'}</td>
+      <td style="padding:12px 14px; text-align:center;">${u.total_mascotas}</td>
+      <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
+      <td style="padding:12px 14px;">
+        ${u.activo == 1
+          ? '<span class="badge badge-green">✓ Activa</span>'
+          : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
+      </td>
+      <td style="padding:12px 14px; text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="toggleUsuarioActivo(${u.id}, ${u.activo == 1})">
+          ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterUsuarios() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  const data = !q ? allUsuarios : allUsuarios.filter(u =>
+    u.nombre.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q) ||
+    (u.telefono || '').includes(q)
+  );
+  renderUsuariosTable(data);
+}
+
+async function toggleUsuarioActivo(id, estaActivo) {
+  try {
+    await apiSetUsuarioActivo(id, !estaActivo);
+    const u = allUsuarios.find(x => x.id === id);
+    if (u) u.activo = estaActivo ? 0 : 1;
+    filterUsuarios();
+    showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
 /*  WYSIWYG EDITOR                                    */
 /* ══════════════════════════════════════════════════ */
 
@@ -2446,7 +2532,9 @@ document.addEventListener('click', e => {
 });
 
 // ── Save / Reset article ──────────────────────────
-function saveArticulo() {
+let editingArticuloId = null;
+
+async function saveArticulo() {
   const titulo   = document.getElementById('art-titulo').value.trim();
   const icono    = document.getElementById('art-icono').value.trim() || '📝';
   const editor   = document.getElementById('wysiwygEditor');
@@ -2455,10 +2543,24 @@ function saveArticulo() {
   if (!titulo)    { showToast('⚠️ El título es obligatorio', 'error'); return; }
   if (!contenido) { showToast('⚠️ El contenido no puede estar vacío', 'error'); return; }
 
-  // Simulate save — in production: POST to /api/articulos
-  showToast(`✅ Artículo "${titulo}" publicado correctamente`, 'success');
-  resetArticulo();
-  renderAdminArtList();
+  const payload = { titulo, contenido, imagen_icono: icono };
+
+  try {
+    if (editingArticuloId !== null) {
+      const updated = await apiActualizarArticulo(editingArticuloId, payload);
+      const idx = adminArticulos.findIndex(a => a.id === editingArticuloId);
+      if (idx !== -1) adminArticulos[idx] = updated;
+      showToast(`✅ Artículo "${titulo}" actualizado`, 'success');
+    } else {
+      const created = await apiCrearArticulo(payload);
+      adminArticulos.unshift(created);
+      showToast(`✅ Artículo "${titulo}" publicado correctamente`, 'success');
+    }
+    resetArticulo();
+    renderAdminArtList();
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 function resetArticulo() {
@@ -2467,7 +2569,33 @@ function resetArticulo() {
   document.getElementById('wysiwygEditor').innerHTML = '';
   document.getElementById('wordCount').textContent   = '0';
   updateToolbarState();
+  editingArticuloId = null;
+  document.getElementById('art-save-btn').textContent = '💾 Guardar artículo';
 }
+
+function editarArticulo(id) {
+  const a = adminArticulos.find(x => x.id === id);
+  if (!a) return;
+  editingArticuloId = id;
+  document.getElementById('art-titulo').value = a.titulo;
+  document.getElementById('art-icono').value  = a.imagen_icono || '';
+  document.getElementById('wysiwygEditor').innerHTML = a.contenido;
+  updateWordCount();
+  document.getElementById('art-save-btn').textContent = '💾 Guardar cambios';
+  showAdmin('articulo');
+}
+
+async function eliminarArticulo(id) {
+  try {
+    await apiEliminarArticulo(id);
+    adminArticulos = adminArticulos.filter(a => a.id !== id);
+    renderAdminArtList();
+    showToast('🗑️ Artículo eliminado', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
 function renderAdminArtList() {
   const container = document.getElementById('adminArtList');
   container.innerHTML = adminArticulos.map(a => `
@@ -2476,8 +2604,8 @@ function renderAdminArtList() {
       <div class="article-title">${a.titulo}</div>
       <div class="article-excerpt">${a.contenido.substring(0, 80)}...</div>
       <div style="display:flex; gap:6px; margin-top:10px;">
-        <button class="btn btn-ghost btn-sm" onclick="showToast('✏️ Editando artículo...','info')">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="showToast('🗑️ Artículo eliminado','success')">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarArticulo(${a.id})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarArticulo(${a.id})">🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -2525,6 +2653,33 @@ function saveMunicipio() {
 function resetMunicipio() {
   localStorage.removeItem('padron_municipio_config');
   showToast('♻️ Datos del municipio restablecidos', 'info');
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  REGLAMENTO — persistido en el servidor            */
+/* ══════════════════════════════════════════════════ */
+function saveReglamento() {
+  const data = {
+    titulo:    document.getElementById('reg-titulo').value.trim(),
+    contenido: document.getElementById('reg-contenido').value.trim(),
+  };
+  if (!data.titulo || !data.contenido) {
+    showToast('⚠️ El título y el contenido no pueden estar vacíos', 'error');
+    return;
+  }
+  localStorage.setItem('padron_reglamento', JSON.stringify(data));
+  pushConfigToServer('padron_reglamento', data);
+  showToast('✅ Reglamento actualizado y publicado en el portal', 'success');
+}
+
+function loadReglamento() {
+  const raw = localStorage.getItem('padron_reglamento');
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    if (data.titulo)    document.getElementById('reg-titulo').value = data.titulo;
+    if (data.contenido) document.getElementById('reg-contenido').value = data.contenido;
+  } catch (e) { /* ignore */ }
 }
 
 function previewMunImg(input, targetId) {
@@ -2820,6 +2975,22 @@ function renderFaqTable() {
       </td>
     </tr>`).join('');
 }
+// Guarda faqData completo en localStorage y lo sincroniza con el servidor,
+// para que el FAQ público (index.html) refleje siempre lo último editado.
+function persistFaq() {
+  localStorage.setItem('padron_faq', JSON.stringify(faqData));
+  pushConfigToServer('padron_faq', faqData);
+}
+
+function loadFaqFromServer() {
+  const raw = localStorage.getItem('padron_faq');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved)) { faqData = saved; renderFaqTable(); }
+  } catch (e) { /* ignore */ }
+}
+
 function saveFaq() {
   const pregunta  = document.getElementById('faq-pregunta').value.trim();
   const respuesta = document.getElementById('faq-respuesta').value.trim();
@@ -2830,14 +3001,15 @@ function saveFaq() {
     document.getElementById('faqSaveBtn').textContent = '+ Agregar';
     document.getElementById('faqFormTitle').textContent = '❓ Preguntas';
     document.getElementById('faqCancelBtn').style.display = 'none';
-    showToast('✅ Pregunta actualizada', 'success');
+    showToast('✅ Pregunta actualizada y publicada', 'success');
   } else {
     faqData.push({ id: Date.now(), pregunta, respuesta });
-    showToast('✅ Pregunta agregada', 'success');
+    showToast('✅ Pregunta agregada y publicada', 'success');
   }
   document.getElementById('faq-pregunta').value = '';
   document.getElementById('faq-respuesta').value = '';
   renderFaqTable();
+  persistFaq();
 }
 function editFaq(i) {
   editingFaqId = i;
@@ -2858,6 +3030,7 @@ function cancelEditFaq() {
 function deleteFaq(i) {
   faqData.splice(i, 1);
   renderFaqTable();
+  persistFaq();
   showToast('🗑️ Pregunta eliminada', 'success');
 }
 
@@ -2945,6 +3118,12 @@ async function initAdmin() {
   try {
     adminArticulos = await apiGetArticulos();
   } catch (err) { adminArticulos = []; }
+  try {
+    allUsuarios = await apiGetUsuarios();
+  } catch (err) { allUsuarios = []; }
+
+  const badge = document.getElementById('seguimiento-badge');
+  if (badge) badge.textContent = allPets.length;
 
   renderMiniTable(allPets.slice(0, 10));
   renderMiniBar();
@@ -2953,6 +3132,7 @@ async function initAdmin() {
   renderAvisos();
   renderEventos();
   renderFaqTable();
+  renderUsuariosTable(allUsuarios);
 
   // Init map after DOM is ready
   setTimeout(() => { initMap(); }, 300);
@@ -3511,6 +3691,8 @@ const SERVER_CONFIG_KEYS = [
   'padron_appearance_config',
   'padron_site_content',
   'padron_municipio_config',
+  'padron_reglamento',
+  'padron_faq',
 ];
 
 // Envía una clave al servidor (además de guardarse en localStorage
@@ -3538,6 +3720,8 @@ async function primeConfigFromServer() {
 
   loadSiteConfig();
   loadSiteContentConfig();
+  loadReglamento();
+  loadFaqFromServer();
   previewFooter();
   buildIconSelectors();
 }

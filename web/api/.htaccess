@@ -28,12 +28,16 @@ RewriteRule ^mascotas$ mascotas.php [QSA,L]
 # GET /api/stats → stats.php
 RewriteRule ^stats$ stats.php [QSA,L]
 
-# GET /api/campanas, /api/articulos → contenido.php
+# GET /api/campanas → contenido.php (público)
+# GET/POST/PUT/DELETE /api/articulos → contenido.php (lectura pública, escritura solo admin)
 RewriteRule ^campanas$  contenido.php?resource=campanas  [QSA,L]
 RewriteRule ^articulos$ contenido.php?resource=articulos [QSA,L]
 
 # GET/POST /api/settings → settings.php (configuración del sitio)
 RewriteRule ^settings$ settings.php [QSA,L]
+
+# GET/PUT /api/usuarios → usuarios.php (gestión de cuentas ciudadanas, solo admin)
+RewriteRule ^usuarios$ usuarios.php [QSA,L]
 
 # Headers de seguridad
 Header always set X-Content-Type-Options nosniff

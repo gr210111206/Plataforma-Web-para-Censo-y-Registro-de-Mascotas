@@ -2,6 +2,40 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-01] — Corrección de Bug Crítico al Registrar Mascotas, Estadísticas Reales, Edición de Mascotas con Foto, y Módulos del Admin Pendientes (Reglamento, FAQ, Artículos, Usuarios)
+
+### 🐛 Bug crítico corregido: error "Unexpected token '<'" al registrar una mascota
+1. **Causa raíz:** la columna `foto_url` de la tabla `mascotas` era `TEXT` (límite real de ~64 KB en MySQL/MariaDB). Una foto subida sin optimizar (hasta 2 MB en base64) superaba ese límite, MySQL rechazaba el `INSERT`, PDO lanzaba una excepción no controlada, y PHP devolvía una página de error en **HTML** donde el navegador esperaba JSON — de ahí el error `Unexpected token '<', "<br /> <b>"... is not valid JSON`.
+2. **Corrección en 3 capas:**
+   - `database/schema.sql`: `foto_url` cambia de `TEXT` a `LONGTEXT` (aplicado también a la BD local).
+   - `dashboard.html`: `previewPhoto()` ahora optimiza la foto con Canvas HTML5 (máx. 600px, calidad 0.85) antes de guardarla, igual que ya se hacía con los íconos del admin — evita fotos pesadas sin necesidad.
+   - `api/config/helpers.php`: se agregó un manejador global de errores/excepciones (`set_error_handler` + `set_exception_handler`) para que **cualquier** error de PHP en la API responda siempre JSON limpio, nunca HTML — protege contra este tipo de fallo aunque venga de otra causa en el futuro, incluido en HostGator donde no controlamos la configuración de PHP.
+
+### 📊 Estadísticas y contadores reales (ya no números de ejemplo)
+1. **Contadores del hero en `index.html`** (antes fijos: 342 / 289 / 187) ahora se llenan con datos reales de `/api/stats` (`total_mascotas`, `total_duenos`, `vacunados`) al cargar la página; el número manual configurado desde el admin (si existe) sigue teniendo prioridad.
+2. **Badge de "Seguimiento" en `admin.html`** (antes fijo: 342) ahora muestra la cantidad real de mascotas registradas.
+
+### ✏️ Edición de mascotas (antes no existía)
+1. **Nuevo flujo de edición completo en `dashboard.html`:** botón "✏️ Editar" en cada tarjeta de mascota y en el detalle, que reabre el mismo formulario de registro pre-llenado (incluida la foto) y guarda los cambios contra el servidor (`PUT /api/mascotas`), en vez de solo poder registrar mascotas nuevas.
+2. Si no se sube una foto nueva al editar, se conserva la que ya tenía la mascota (no se borra por accidente).
+
+### 📋 Reglamento, ❓ FAQ, 📝 Artículos y 👤 Usuarios — módulos del admin que antes eran simulados, ahora reales
+1. **Reglamento municipal:** el botón "Guardar cambios" en el admin solo mostraba un aviso falso; ahora persiste en el servidor (`padron_reglamento` vía `settings.php`) y **se muestra públicamente** en una nueva sección `#reglamento` de `index.html` (antes no existía ninguna página pública con el reglamento).
+2. **Preguntas frecuentes (FAQ):** el editor del admin no guardaba nada (se perdía al recargar); ahora persiste en el servidor (`padron_faq`) y el FAQ público en `index.html` lee ese contenido real, con el listado institucional fijo como respaldo si aún no se ha editado nada.
+3. **Artículos / Tips de cuidado:** "Publicar" no guardaba el artículo en ningún lado. Se agregaron endpoints reales `POST/PUT/DELETE /api/articulos` (protegidos, solo admin) en `contenido.php`, y el editor WYSIWYG del admin ahora crea, edita y elimina artículos de verdad contra la base de datos.
+4. **Gestión de cuentas ciudadanas (nuevo):** nueva pestaña "👤 Usuarios" en el admin con tabla de todos los ciudadanos registrados (nombre, contacto, colonia, cantidad de mascotas, fecha de registro) y botón para activar/desactivar una cuenta. Nuevo endpoint `GET/PUT /api/usuarios` (solo admin) en `web/api/usuarios.php`.
+
+### 📂 Archivos modificados/creados
+- **PHP:** `api/config/helpers.php` (manejador global de errores), `api/contenido.php` (CRUD de artículos), `api/usuarios.php` (nuevo), `api/.htaccess` (ruta `/usuarios`).
+- **SQL:** `database/schema.sql` (`foto_url` → `LONGTEXT`).
+- **JS:** `js/api-client.js` (`apiCrearArticulo`, `apiActualizarArticulo`, `apiEliminarArticulo`, `apiGetUsuarios`, `apiSetUsuarioActivo`).
+- **HTML:** `dashboard.html` (edición de mascotas con foto, optimización Canvas), `admin.html` (reglamento/FAQ persistentes, artículos reales, pestaña de usuarios, badge real), `index.html` (contadores reales, sección de reglamento público, FAQ dinámica).
+
+### ⚠️ Pendiente / fuera de este alcance
+- Avisos y Eventos del admin siguen siendo solo locales (sin tabla ni endpoint de escritura) — no se tocaron en esta sesión.
+- Casos de uso (UML), diagrama entidad-relación, video tutorial e informe final de residencias siguen pendientes — son entregables académicos/documentales, no tareas de código.
+- Antes de subir a HostGator: repetir las pruebas end-to-end ya hechas en local, pero contra el servidor real.
+
 ## 📅 [2026-07-31] — Íconos Reales de Redes Sociales, Logos del Footer Editables y Opción de Ocultar Cualquier Ícono
 
 ### 🚀 Novedades

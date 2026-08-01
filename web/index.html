@@ -31,6 +31,7 @@
         <a href="#como-funciona" class="active">¿Cómo funciona?</a>
         <a href="#campanas">Campañas</a>
         <a href="#articulos">Consejos</a>
+        <a href="#reglamento">Reglamento</a>
         <a href="#faq">FAQ</a>
       </nav>
 
@@ -286,6 +287,24 @@
 </section>
 
 <!-- ── FAQ ── -->
+<section class="section" id="reglamento">
+  <div class="container container-sm">
+    <div class="section-header center">
+      <div class="section-eyebrow">Marco normativo</div>
+      <h2 class="section-title" id="reglamento-titulo">Reglamento de Tenencia Responsable</h2>
+    </div>
+    <div id="reglamento-contenido" style="background:var(--surface); border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:32px; font-size:.95rem; line-height:1.9; color:var(--gray-1); white-space:pre-line;">
+      Artículo 1. Todo propietario de animales de compañía deberá registrar a sus mascotas en el Padrón Municipal dentro de los 30 días posteriores a su adquisición.
+
+Artículo 2. Las mascotas deberán contar con vacuna antirrábica vigente. El Ayuntamiento realizará campañas anuales de vacunación gratuita.
+
+Artículo 3. Queda prohibido el abandono de animales domésticos en la vía pública. El incumplimiento se sancionará conforme al Código Municipal.
+
+Artículo 4. Los dueños de mascotas son responsables de los daños que éstas puedan ocasionar a terceros.
+    </div>
+  </div>
+</section>
+
 <section class="section section-alt" id="faq">
   <div class="container">
     <div class="section-header center">
@@ -362,6 +381,7 @@
         <div class="footer-links">
           <a href="#campanas">Campañas activas</a>
           <a href="#articulos">Tips de salud</a>
+          <a href="#reglamento">Reglamento municipal</a>
           <a href="#faq">Preguntas frecuentes</a>
           <a href="https://elgrullo.gob.mx" target="_blank">Sitio del Ayuntamiento</a>
         </div>
@@ -425,8 +445,9 @@ function renderArticles(articles) {
   `).join('');
 }
 
-/* ── Render FAQ (contenido institucional fijo, sin tabla en BD) ── */
-const FAQS = [
+/* ── Render FAQ: usa lo editado desde el admin si existe; si no, este
+   contenido institucional fijo sirve de respaldo. ── */
+const FAQS_DEFAULT = [
   { pregunta: '¿Por qué debo registrar a mi mascota?', respuesta: 'El registro es gratuito y te permite obtener la ficha oficial REMAC de tu mascota, acceder a campañas de vacunación y esterilización, y contar con un respaldo digital oficial del Ayuntamiento.' },
   { pregunta: '¿Qué documentos necesito para registrar a mi mascota?', respuesta: 'Solo necesitas tu correo electrónico, teléfono de contacto y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.' },
   { pregunta: '¿El registro tiene algún costo?', respuesta: 'No. El registro en el padrón REMAC del municipio de El Grullo es completamente gratuito para todos los ciudadanos.' },
@@ -434,7 +455,13 @@ const FAQS = [
   { pregunta: '¿Qué es el estatus Alta y Baja?', respuesta: 'Alta significa que la mascota está activa en el padrón. Baja se aplica cuando la mascota ha fallecido o fue dada de baja del registro.' },
 ];
 function renderFAQ() {
-  const faqs = FAQS;
+  let faqs = FAQS_DEFAULT;
+  try {
+    const raw = localStorage.getItem('padron_faq');
+    const saved = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(saved) && saved.length) faqs = saved;
+  } catch (e) { /* usa el respaldo fijo */ }
+
   const container = document.getElementById('faqContainer');
   container.innerHTML = faqs.map((f, i) => `
     <div class="faq-item" id="faq-${i}">
@@ -445,6 +472,17 @@ function renderFAQ() {
       <div class="faq-answer">${f.respuesta}</div>
     </div>
   `).join('');
+}
+
+/* ── Reglamento público: usa lo editado desde el admin si existe ── */
+function applyReglamento() {
+  const raw = localStorage.getItem('padron_reglamento');
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    if (data.titulo)    document.getElementById('reglamento-titulo').textContent = data.titulo;
+    if (data.contenido) document.getElementById('reglamento-contenido').textContent = data.contenido;
+  } catch (e) { /* usa el respaldo fijo del HTML */ }
 }
 
 function toggleFaq(i) {
@@ -653,7 +691,7 @@ async function initMap() {
 async function primeConfigFromServer() {
   try {
     const all = await apiGetSiteConfig();
-    ['padron_site_config', 'padron_appearance_config', 'padron_site_content'].forEach(key => {
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq'].forEach(key => {
       if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
     });
   } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
@@ -681,6 +719,20 @@ function applySiteContentConfig() {
   } catch (e) { /* ignore */ }
 }
 
+/* ── Contadores del hero con datos reales del servidor ── */
+async function applyRealStats() {
+  try {
+    const stats = await apiGetStats();
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) { el.dataset.target = val; el.textContent = val; }
+    };
+    set('hero-stat-1-num', stats.total_mascotas ?? 0);
+    set('hero-stat-2-num', stats.total_duenos ?? 0);
+    set('hero-stat-3-num', stats.vacunados ?? 0);
+  } catch (e) { /* si falla, quedan los valores por defecto del HTML */ }
+}
+
 /* ── Init ── */
 async function initIndex() {
   await primeConfigFromServer();
@@ -693,8 +745,10 @@ async function initIndex() {
   } catch (e) { /* sección queda vacía si falla */ }
 
   renderFAQ();
+  applyReglamento();
   applyFooterConfig();
-  applySiteContentConfig();
+  await applyRealStats();      // primero los datos reales...
+  applySiteContentConfig();    // ...luego, si el admin puso un número manual, ese manda
   applyAppearanceConfig();
   initMap();
 }

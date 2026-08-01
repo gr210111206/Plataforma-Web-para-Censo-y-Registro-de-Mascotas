@@ -248,7 +248,7 @@
       </div>
       <div class="flex gap-8 items-center">
         <span class="badge badge-orange" id="headerBadge">👤 Ciudadano</span>
-        <button class="btn btn-primary btn-sm" id="headerActionBtn" onclick="openModal('modal-nueva-mascota')">
+        <button class="btn btn-primary btn-sm" id="headerActionBtn" onclick="abrirNuevaMascota()">
           + Nueva mascota
         </button>
       </div>
@@ -295,7 +295,7 @@
 
       <!-- Acciones rápidas -->
       <div class="quick-actions">
-        <button class="quick-action-btn" onclick="openModal('modal-nueva-mascota')">
+        <button class="quick-action-btn" onclick="abrirNuevaMascota()">
           <span class="quick-action-icon">🐾</span>
           Registrar mascota
         </button>
@@ -312,7 +312,7 @@
       <!-- Pets grid -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
         <h3 style="font-size:1rem; color:var(--dark); font-family:'Outfit',sans-serif; font-weight:700;">Mis animales de compañía</h3>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-nueva-mascota')">+ Agregar</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirNuevaMascota()">+ Agregar</button>
       </div>
       <div class="pets-grid" id="petsContainer">
         <!-- Rendered by JS -->
@@ -426,7 +426,7 @@
 <div class="modal-overlay" id="modal-nueva-mascota">
   <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title">🐾 Registrar nueva mascota</h2>
+      <h2 class="modal-title" id="modal-mascota-titulo">🐾 Registrar nueva mascota</h2>
       <button class="modal-close" onclick="closeModal('modal-nueva-mascota')">✕</button>
     </div>
     <div class="modal-body">
@@ -436,7 +436,7 @@
             <div class="photo-upload-icon" id="photoPreviewIcon">📷</div>
             <div class="photo-upload-text">
               <strong>Subir foto</strong> (opcional)<br/>
-              <span>JPG o PNG, máximo 2 MB</span>
+              <span>JPG o PNG, máximo 5 MB</span>
             </div>
             <input type="file" id="foto-input" accept="image/jpeg,image/png" style="display:none;" onchange="previewPhoto(this)" />
           </div>
@@ -503,7 +503,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-nueva-mascota')">Cancelar</button>
-      <button class="btn btn-primary" onclick="handleNewPet()">🐾 Registrar mascota →</button>
+      <button class="btn btn-primary" id="modal-mascota-btn" onclick="handleNewPet()">🐾 Registrar mascota →</button>
     </div>
   </div>
 </div>
@@ -524,6 +524,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
+      <button class="btn btn-outline" id="detalle-editar-btn">✏️ Editar</button>
       <button class="btn btn-primary" id="detalle-acta-btn">📄 Descargar Acta PDF</button>
     </div>
   </div>
@@ -599,7 +600,7 @@ async function initDashboard() {
 /*  NAVIGATION                                        */
 /* ══════════════════════════════════════════════════ */
 const SECTIONS = {
-  'mis-mascotas': { title: 'Mis mascotas',      sub: 'Administra el registro de tus animales de compañía', btn: '+ Nueva mascota', btnAction: "openModal('modal-nueva-mascota')" },
+  'mis-mascotas': { title: 'Mis mascotas',      sub: 'Administra el registro de tus animales de compañía', btn: '+ Nueva mascota', btnAction: "abrirNuevaMascota()" },
   'campanas':     { title: 'Campañas activas',   sub: 'Avisos y eventos de salud animal del Ayuntamiento',   btn: null },
   'articulos':    { title: 'Artículos y Tips',   sub: 'Consejos de cuidado animal de nuestros veterinarios', btn: null },
   'mi-perfil':    { title: 'Mi perfil',          sub: 'Actualiza tus datos de contacto y preferencias',      btn: null },
@@ -646,7 +647,7 @@ function renderPets() {
         <div class="empty-state-icon">🐾</div>
         <div class="empty-state-title">Aún no tienes mascotas registradas</div>
         <div class="empty-state-sub">¡Registra a tu primer amigo peludo de forma gratuita!</div>
-        <button class="btn btn-primary" onclick="openModal('modal-nueva-mascota')">+ Registrar mi primera mascota</button>
+        <button class="btn btn-primary" onclick="abrirNuevaMascota()">+ Registrar mi primera mascota</button>
       </div>`;
     return;
   }
@@ -689,6 +690,7 @@ function renderPets() {
           <div class="pet-card-folio">${folio}</div>
           <div class="pet-card-actions">
             <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">👁️ Ver</button>
+            <button class="btn btn-ghost btn-sm" onclick="editarMascota(${i})" style="flex:1;">✏️ Editar</button>
             <button class="btn btn-ghost btn-sm" onclick="verQR(${i})"    style="flex:1;">🔲 QR</button>
             <button class="btn btn-primary btn-sm" onclick="downloadActa('${folio}')" style="flex:1;">📄 Acta</button>
           </div>
@@ -742,6 +744,7 @@ function verDetalle(i) {
 
   document.getElementById('detalle-titulo').textContent = `${icon} ${pet.nombre}`;
   document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(folio);
+  document.getElementById('detalle-editar-btn').onclick = () => { closeModal('modal-detalle'); editarMascota(i); };
 
   document.getElementById('detalle-body').innerHTML = `
     ${(pet.foto_url && pet.foto_url.length > 10) ? `<img src="${pet.foto_url}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
@@ -855,8 +858,53 @@ function field(label, value) {
 }
 
 /* ══════════════════════════════════════════════════ */
-/*  NEW PET                                           */
+/*  NUEVA MASCOTA / EDITAR MASCOTA (mismo modal)      */
 /* ══════════════════════════════════════════════════ */
+let editingPetId = null;
+let editingPetOriginalFoto = null;
+
+function resetFormMascota() {
+  document.getElementById('form-mascota').reset();
+  document.getElementById('photoPreviewIcon').textContent = '📷';
+  window._pendingFoto = null;
+  editingPetId = null;
+  editingPetOriginalFoto = null;
+}
+
+function abrirNuevaMascota() {
+  resetFormMascota();
+  document.getElementById('modal-mascota-titulo').textContent = '🐾 Registrar nueva mascota';
+  document.getElementById('modal-mascota-btn').textContent    = '🐾 Registrar mascota →';
+  openModal('modal-nueva-mascota');
+}
+
+function editarMascota(i) {
+  const pet = myPets[i];
+  if (!pet) return;
+  resetFormMascota();
+
+  editingPetId = pet.id || pet.folio;
+  editingPetOriginalFoto = pet.foto_url || null;
+
+  document.getElementById('pet-nombre').value = pet.nombre || '';
+  document.getElementById('pet-especie').value = pet.especie || '';
+  document.getElementById('pet-raza').value = pet.raza || '';
+  document.getElementById('pet-edad').value = pet.edad || '';
+  document.getElementById('pet-sexo').value = pet.sexo || '';
+  document.getElementById('pet-color').value = pet.color || '';
+  document.getElementById('pet-vacunado').checked = !!pet.vacunado;
+  document.getElementById('pet-esterilizado').checked = !!pet.esterilizado;
+
+  const photoEl = document.getElementById('photoPreviewIcon');
+  photoEl.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
+    ? `<img src="${pet.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
+    : '📷';
+
+  document.getElementById('modal-mascota-titulo').textContent = `✏️ Editar a ${pet.nombre}`;
+  document.getElementById('modal-mascota-btn').textContent    = '💾 Guardar cambios';
+  openModal('modal-nueva-mascota');
+}
+
 async function handleNewPet(e) {
   if (e) e.preventDefault();
   const nombre  = document.getElementById('pet-nombre').value.trim();
@@ -876,18 +924,27 @@ async function handleNewPet(e) {
     color:        document.getElementById('pet-color').value || null,
     vacunado:     document.getElementById('pet-vacunado').checked,
     esterilizado: document.getElementById('pet-esterilizado').checked,
-    foto_url:     window._pendingFoto || null,
+    // Si no se subió una foto nueva, conserva la que ya tenía (modo edición).
+    foto_url:     window._pendingFoto !== null ? window._pendingFoto : editingPetOriginalFoto,
   };
 
   try {
-    const created = await apiRegistrarMascota(payload);
-    window._pendingFoto = null;
-    myPets.push(created);
-    renderPets();
-    closeModal('modal-nueva-mascota');
-    document.getElementById('form-mascota').reset();
-    document.getElementById('photoPreviewIcon').textContent = '📷';
-    showToast(`✅ ${nombre} registrado/a · Folio: ${created.id}`, 'success');
+    if (editingPetId) {
+      const updated = await apiActualizarMascota(editingPetId, payload);
+      const idx = myPets.findIndex(p => (p.id || p.folio) === editingPetId);
+      if (idx !== -1) myPets[idx] = updated;
+      renderPets();
+      closeModal('modal-nueva-mascota');
+      resetFormMascota();
+      showToast(`✅ ${nombre} actualizado/a correctamente`, 'success');
+    } else {
+      const created = await apiRegistrarMascota(payload);
+      myPets.push(created);
+      renderPets();
+      closeModal('modal-nueva-mascota');
+      resetFormMascota();
+      showToast(`✅ ${nombre} registrado/a · Folio: ${created.id}`, 'success');
+    }
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
@@ -1006,12 +1063,31 @@ function changeAvatar(input) {
 /* ══════════════════════════════════════════════════ */
 function previewPhoto(input) {
   const file = input.files[0]; if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('❌ La foto no debe superar 2 MB', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ La foto no debe superar 5 MB', 'error'); return; }
+
   const reader = new FileReader();
   reader.onload = e => {
-    window._pendingFoto = e.target.result;
-    document.getElementById('photoPreviewIcon').innerHTML =
-      `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
+    // Redimensiona en el navegador antes de guardar: evita fotos gigantes
+    // sin optimizar que tardan en cargar y pueden fallar al guardarse.
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.85);
+
+      window._pendingFoto = optimized;
+      document.getElementById('photoPreviewIcon').innerHTML =
+        `<img src="${optimized}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
