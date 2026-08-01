@@ -496,13 +496,18 @@ function toggleFaq(i) {
 /* ── Counters Animation ── */
 function animateCounters() {
   document.querySelectorAll('.counter').forEach(el => {
+    // Si ya hay una animación corriendo sobre este elemento (ej. se disparó
+    // dos veces seguidas), se cancela — si no, la vieja terminaba pisando
+    // el valor real con el número de ejemplo con el que había arrancado.
+    if (el._counterTimer) clearInterval(el._counterTimer);
+
     const target = parseInt(el.dataset.target);
     let current = 0;
     const step = target / 60;
-    const timer = setInterval(() => {
+    el._counterTimer = setInterval(() => {
       current = Math.min(current + step, target);
       el.textContent = Math.floor(current);
-      if (current >= target) clearInterval(timer);
+      if (current >= target) { clearInterval(el._counterTimer); el._counterTimer = null; }
     }, 20);
   });
 }
@@ -524,12 +529,17 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-/* ── Intersection Observer for counters ── */
+/* ── Intersection Observer for counters ──
+   OJO: no se activa aquí mismo — si empezara a observar antes de que
+   lleguen los datos reales (apiGetStats), como el hero siempre está a
+   la vista al cargar, animaría de inmediato con el 342/289/187 de
+   ejemplo del HTML. Se activa explícitamente en initIndex() después de
+   applyRealStats(), para que la primera animación ya use los datos
+   correctos. ── */
 const heroObs = new IntersectionObserver((entries) => {
   entries.forEach(e => { if (e.isIntersecting) animateCounters(); });
 }, { threshold: 0.3 });
 const heroStats = document.querySelector('.hero-stats');
-if (heroStats) heroObs.observe(heroStats);
 
 /* ── Utility ── */
 function formatDate(d) {
@@ -775,6 +785,10 @@ async function initIndex() {
   applySiteContentConfig();    // ...luego, si el admin puso un número manual, ese manda
   applyAppearanceConfig();
   initMap();
+
+  // Recién ahora se empiezan a animar los contadores: ya tienen el
+  // dato correcto puesto (real o el override manual del admin).
+  if (heroStats) heroObs.observe(heroStats);
 }
 initIndex();
 </script>

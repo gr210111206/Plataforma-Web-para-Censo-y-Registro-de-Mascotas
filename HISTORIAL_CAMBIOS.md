@@ -2,6 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-01] — Corrección: Contadores del Hero Mostraban Número de Ejemplo al Cargar (Race Condition)
+
+### 🐛 Bug corregido
+Al cargar `index.html` por primera vez, los contadores del hero mostraban brevemente el número de ejemplo (342/289/187) en vez del dato real, y solo se corregían si el usuario bajaba y volvía a subir la página.
+
+**Causa:** la animación de los contadores (`animateCounters()`) se disparaba de inmediato al cargar, vía `IntersectionObserver`, usando el `data-target` que trae el HTML por defecto (342/289/187) — porque el fetch real a `/api/stats` (`applyRealStats()`) es asíncrono y todavía no había respondido. La animación (con `setInterval`, dura ~1.2s) seguía corriendo en segundo plano y, aunque los datos reales llegaban y actualizaban el número un instante después, el `setInterval` viejo lo volvía a sobrescribir hasta terminar en el valor falso original. Al bajar y subir la página, el observer se disparaba de nuevo — esta vez con el dato ya correcto — y por eso "se arreglaba solo".
+
+**Corrección:**
+1. El `IntersectionObserver` de los contadores ya no se activa al cargar el script; se activa explícitamente en `initIndex()` **después** de que `applyRealStats()` obtiene los datos reales — así la primera (y única) animación ya arranca con el número correcto.
+2. `animateCounters()` ahora cancela cualquier animación previa sobre el mismo elemento antes de iniciar una nueva (protección adicional para evitar que esto se repita si la función se llama más de una vez).
+
+### 📂 Archivos modificados
+- `web/index.html` (`animateCounters()`, `heroObs`, `initIndex()`).
+
 ## 📅 [2026-08-01] — Eliminación de Todos los Datos de Ejemplo (Fake Data) Restantes en Portada y Panel Admin
 
 ### 🚀 Contexto
