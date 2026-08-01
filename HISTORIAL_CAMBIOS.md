@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-01] — Eliminación de Todos los Datos de Ejemplo (Fake Data) Restantes en Portada y Panel Admin
+
+### 🚀 Contexto
+Tras conectar el backend real, quedaban **varias secciones que seguían mostrando números de ejemplo fijos** (342, 289, 187, etc.) en vez de los datos reales del padrón, detectadas al revisar la portada a fondo. Se auditó todo el sitio en busca de estos casos y se corrigieron todos.
+
+### 🔧 Corregido
+1. **Sección "El Grullo cuida a sus mascotas" (`index.html`):** los 4 contadores (mascotas en el padrón, perros, gatos, % vacunadas) y las 2 gráficas de barras ("Por especie", "Por estatus") eran completamente estáticos (342/218/124/54%, 218/124, 338/4). Ahora se calculan en tiempo real desde `/api/stats`, con manejo de división entre cero cuando el padrón está vacío.
+2. **Contador del mapa en el admin (`mapCount`):** mostraba "342" fijo; ahora muestra la cantidad real de mascotas cargadas.
+3. **Gráfica "Enfermedades reportadas" (admin):** esta gráfica de pastel mostraba porcentajes de enfermedades **totalmente inventadas** (no existe ningún campo de enfermedades en la base de datos). Se reemplazó por una gráfica real de **cobertura de vacunación** (vacunados vs. sin vacunar), calculada a partir de las mascotas reales.
+4. **"Distribución por raza" (admin):** la barra horizontal mostraba 6 razas con cantidades inventadas (Criolla 80, Otras 127, Labrador 45...) que sumaban exactamente 342 — el origen de casi todos los "342" repetidos por el sitio. Ahora se calcula agrupando las razas reales de `allPets`.
+5. **Editor "Tarjetas de Estadísticas" del admin:** los campos numéricos para forzar manualmente los contadores del hero traían precargado 342/289/187 como si fueran el valor real; si el admin guardaba sin darse cuenta, volvía a introducir datos falsos. Ahora quedan vacíos con la indicación "Automático" — solo se usa un valor manual si el admin realmente escribe uno.
+
+### 📂 Archivos modificados
+- `web/index.html` (sección de estadísticas del censo con IDs + `applyRealStats()` extendido).
+- `web/admin.html` (`mapCount`, gráfica de vacunación nueva, `renderMiniBar()` con datos reales, placeholders de contadores manuales).
+
 ## 📅 [2026-08-01] — Corrección de Bug Crítico al Registrar Mascotas, Estadísticas Reales, Edición de Mascotas con Foto, y Módulos del Admin Pendientes (Reglamento, FAQ, Artículos, Usuarios)
 
 ### 🐛 Bug crítico corregido: error "Unexpected token '<'" al registrar una mascota

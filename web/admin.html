@@ -880,17 +880,15 @@
 
         <!-- Columna 2: Gráficas -->
         <div class="charts-col">
-          <!-- Pie: Enfermedades -->
+          <!-- Pie: Cobertura de vacunación (datos reales de /api/stats) -->
           <div class="chart-box">
-            <div class="chart-box-title">Enfermedades reportadas</div>
-            <div class="pie-chart">
-              <div class="pie-center">342</div>
+            <div class="chart-box-title">Cobertura de vacunación</div>
+            <div class="pie-chart" id="pie-vacunacion" style="background:conic-gradient(var(--orange) 0deg 0deg, #9E9E9E 0deg 360deg);">
+              <div class="pie-center" id="pie-vacunacion-center">0</div>
             </div>
             <div class="pie-legend">
-              <div class="pie-item"><div class="pie-dot" style="background:var(--orange);"></div>Ninguna (44%)</div>
-              <div class="pie-item"><div class="pie-dot" style="background:#FF9800;"></div>Parasitosis (19%)</div>
-              <div class="pie-item"><div class="pie-dot" style="background:#9E9E9E;"></div>Dermatitis (17%)</div>
-              <div class="pie-item"><div class="pie-dot" style="background:#4CAF50;"></div>Otras (20%)</div>
+              <div class="pie-item"><div class="pie-dot" style="background:var(--orange);"></div><span id="pie-leg-vacunados">Vacunados (0%)</span></div>
+              <div class="pie-item"><div class="pie-dot" style="background:#9E9E9E;"></div><span id="pie-leg-sinvacunar">Sin vacunar (0%)</span></div>
             </div>
           </div>
 
@@ -1199,22 +1197,25 @@
             <h4 style="font-size:1rem; margin-bottom:16px; font-family:'Outfit',sans-serif;">
               📊 Tarjetas de Estadísticas (Hero)
             </h4>
+            <p style="font-size:.78rem; color:var(--gray-2); margin-bottom:12px;">
+              Estos contadores muestran automáticamente los datos reales del padrón (mascotas, familias y vacunadas). Solo llena un número aquí si quieres <b>forzar manualmente</b> un valor distinto al real.
+            </p>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
               <div>
-                <label style="font-weight:600; font-size:.82rem;">Contador 1 (Número)</label>
-                <input type="number" id="edit-stat-1-num" class="form-control" value="342" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 1 (Número — opcional)</label>
+                <input type="number" id="edit-stat-1-num" class="form-control" placeholder="Automático" style="margin-bottom:8px;" />
                 <label style="font-weight:600; font-size:.82rem;">Contador 1 (Nombre)</label>
                 <input type="text" id="edit-stat-1-label" class="form-control" value="Mascotas registradas" />
               </div>
               <div>
-                <label style="font-weight:600; font-size:.82rem;">Contador 2 (Número)</label>
-                <input type="number" id="edit-stat-2-num" class="form-control" value="289" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 2 (Número — opcional)</label>
+                <input type="number" id="edit-stat-2-num" class="form-control" placeholder="Automático" style="margin-bottom:8px;" />
                 <label style="font-weight:600; font-size:.82rem;">Contador 2 (Nombre)</label>
                 <input type="text" id="edit-stat-2-label" class="form-control" value="Familias registradas" />
               </div>
               <div>
-                <label style="font-weight:600; font-size:.82rem;">Contador 3 (Número)</label>
-                <input type="number" id="edit-stat-3-num" class="form-control" value="187" style="margin-bottom:8px;" />
+                <label style="font-weight:600; font-size:.82rem;">Contador 3 (Número — opcional)</label>
+                <input type="number" id="edit-stat-3-num" class="form-control" placeholder="Automático" style="margin-bottom:8px;" />
                 <label style="font-weight:600; font-size:.82rem;">Contador 3 (Nombre)</label>
                 <input type="text" id="edit-stat-3-label" class="form-control" value="Vacunadas al día" />
               </div>
@@ -2213,17 +2214,41 @@ function initMap() {
 /* ══════════════════════════════════════════════════ */
 /*  MINI BAR CHART                                    */
 /* ══════════════════════════════════════════════════ */
+function renderVacunacionPie() {
+  const total = allPets.length;
+  const vacunados = allPets.filter(p => p.vacunado).length;
+  const pct = total > 0 ? Math.round((vacunados / total) * 100) : 0;
+  const deg = Math.round((pct / 100) * 360);
+
+  const chart = document.getElementById('pie-vacunacion');
+  if (chart) chart.style.background = `conic-gradient(var(--orange) 0deg ${deg}deg, #9E9E9E ${deg}deg 360deg)`;
+
+  const center = document.getElementById('pie-vacunacion-center');
+  if (center) center.textContent = `${pct}%`;
+
+  const legVac = document.getElementById('pie-leg-vacunados');
+  if (legVac) legVac.textContent = `Vacunados (${pct}%)`;
+
+  const legSin = document.getElementById('pie-leg-sinvacunar');
+  if (legSin) legSin.textContent = `Sin vacunar (${100 - pct}%)`;
+}
+
 function renderMiniBar() {
-  const bars = [
-    { label: 'Criolla',   val: 80,  color: '#FF9A2E' },
-    { label: 'Otras',     val: 127, color: '#BDBDBD' },
-    { label: 'Labrador',  val: 45,  color: '#F27A00' },
-    { label: 'Chihuahua', val: 38,  color: '#C96200' },
-    { label: 'Siamés',    val: 30,  color: '#FF9800' },
-    { label: 'Persa',     val: 22,  color: '#FFB74D' },
-  ];
-  const max = Math.max(...bars.map(b => b.val));
+  // Distribución real por raza, calculada a partir de allPets (ya cargado del servidor).
+  const PALETTE = ['#F27A00', '#FF9A2E', '#C96200', '#FF9800', '#FFB74D', '#BDBDBD'];
+  const counts = {};
+  allPets.forEach(p => {
+    const raza = (p.raza || '').trim() || 'Sin especificar';
+    counts[raza] = (counts[raza] || 0) + 1;
+  });
+  const bars = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([label, val], i) => ({ label, val, color: PALETTE[i % PALETTE.length] }));
+
   const container = document.getElementById('miniBarChart');
+  if (bars.length === 0) { container.innerHTML = '<div style="padding:12px; color:var(--gray-2); font-size:.82rem;">Aún no hay mascotas registradas.</div>'; return; }
+  const max = Math.max(...bars.map(b => b.val));
   container.innerHTML = bars.map(b => `
     <div class="hbar-row">
       <div class="hbar-label" title="${b.label}">${b.label}</div>
@@ -3124,6 +3149,11 @@ async function initAdmin() {
 
   const badge = document.getElementById('seguimiento-badge');
   if (badge) badge.textContent = allPets.length;
+
+  const mapCountEl = document.getElementById('mapCount');
+  if (mapCountEl) mapCountEl.textContent = allPets.length;
+
+  renderVacunacionPie();
 
   renderMiniTable(allPets.slice(0, 10));
   renderMiniBar();

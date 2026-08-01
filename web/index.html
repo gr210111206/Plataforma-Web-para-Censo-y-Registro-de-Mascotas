@@ -210,19 +210,19 @@
 
     <div class="grid grid-4 gap-24" style="margin-bottom:40px;">
       <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
-        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="342">0</div>
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="0" id="census-total">0</div>
         <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Mascotas en el padrón</div>
       </div>
       <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
-        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="218">0</div>
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="0" id="census-perros">0</div>
         <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Perros registrados</div>
       </div>
       <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
-        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="124">0</div>
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="0" id="census-gatos">0</div>
         <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">Gatos registrados</div>
       </div>
       <div style="text-align:center; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius-lg); padding:28px;">
-        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="54">0</div>
+        <div style="font-size:2.8rem; font-family:'Outfit',sans-serif; font-weight:800; color:var(--orange-light);" class="counter" data-target="0" id="census-vacunadas-pct">0</div>
         <div style="font-size:.82rem; color:rgba(255,255,255,.6); margin-top:6px;">% Vacunadas al día</div>
       </div>
     </div>
@@ -234,16 +234,16 @@
           <div class="chart-bar-item">
             <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Perros</div>
             <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:64%; background:var(--orange);"></div>
+              <div class="chart-bar-fill" id="bar-perros" style="width:0%; background:var(--orange);"></div>
             </div>
-            <div class="chart-bar-val" style="color:white;">218</div>
+            <div class="chart-bar-val" style="color:white;" id="val-perros">0</div>
           </div>
           <div class="chart-bar-item">
             <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Gatos</div>
             <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:36%; background:var(--orange-light);"></div>
+              <div class="chart-bar-fill" id="bar-gatos" style="width:0%; background:var(--orange-light);"></div>
             </div>
-            <div class="chart-bar-val" style="color:white;">124</div>
+            <div class="chart-bar-val" style="color:white;" id="val-gatos">0</div>
           </div>
         </div>
       </div>
@@ -253,16 +253,16 @@
           <div class="chart-bar-item">
             <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Alta</div>
             <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:96%; background:#4CAF50;"></div>
+              <div class="chart-bar-fill" id="bar-alta" style="width:0%; background:#4CAF50;"></div>
             </div>
-            <div class="chart-bar-val" style="color:white;">338</div>
+            <div class="chart-bar-val" style="color:white;" id="val-alta">0</div>
           </div>
           <div class="chart-bar-item">
             <div class="chart-bar-label" style="color:rgba(255,255,255,.7);">Baja</div>
             <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:1%; background:#9E9E9E;"></div>
+              <div class="chart-bar-fill" id="bar-baja" style="width:0%; background:#9E9E9E;"></div>
             </div>
-            <div class="chart-bar-val" style="color:white;">4</div>
+            <div class="chart-bar-val" style="color:white;" id="val-baja">0</div>
           </div>
         </div>
       </div>
@@ -730,7 +730,31 @@ async function applyRealStats() {
     set('hero-stat-1-num', stats.total_mascotas ?? 0);
     set('hero-stat-2-num', stats.total_duenos ?? 0);
     set('hero-stat-3-num', stats.vacunados ?? 0);
-  } catch (e) { /* si falla, quedan los valores por defecto del HTML */ }
+
+    // Sección "El Grullo cuida a sus mascotas"
+    const total   = stats.total_mascotas ?? 0;
+    const perros  = stats.por_especie?.perro ?? 0;
+    const gatos   = stats.por_especie?.gato ?? 0;
+    const alta    = stats.por_estatus?.alta ?? 0;
+    const baja    = stats.por_estatus?.baja ?? 0;
+    const vacunadasPct = total > 0 ? Math.round((stats.vacunados ?? 0) / total * 100) : 0;
+
+    set('census-total', total);
+    set('census-perros', perros);
+    set('census-gatos', gatos);
+    set('census-vacunadas-pct', vacunadasPct);
+
+    const setBar = (barId, valId, val, pct) => {
+      const bar = document.getElementById(barId);
+      const valEl = document.getElementById(valId);
+      if (bar) bar.style.width = `${pct}%`;
+      if (valEl) valEl.textContent = val;
+    };
+    setBar('bar-perros', 'val-perros', perros, total > 0 ? Math.round(perros / total * 100) : 0);
+    setBar('bar-gatos',  'val-gatos',  gatos,  total > 0 ? Math.round(gatos  / total * 100) : 0);
+    setBar('bar-alta',   'val-alta',   alta,   total > 0 ? Math.round(alta   / total * 100) : 0);
+    setBar('bar-baja',   'val-baja',   baja,   total > 0 ? Math.round(baja   / total * 100) : 0);
+  } catch (e) { /* si falla, quedan los valores por defecto del HTML (0) */ }
 }
 
 /* ── Init ── */
