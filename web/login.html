@@ -134,7 +134,6 @@
       <div class="auth-tabs" role="tablist">
         <div class="auth-tab active" id="tab-login"    onclick="switchTab('login')"    role="tab" style="font-size:.9rem;">Iniciar sesión</div>
         <div class="auth-tab"        id="tab-registro" onclick="switchTab('registro')" role="tab" style="font-size:.9rem;">Crear cuenta</div>
-        <div class="auth-tab"        id="tab-admin"    onclick="switchTab('admin')"    role="tab" style="font-size:.9rem;">Acceso Admin</div>
       </div>
 
       <!-- ══ Login Form ══ -->
@@ -168,17 +167,26 @@
 
         <!-- Cuentas de prueba -->
         <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gray-1); margin-bottom:20px;">
-          <strong style="color:var(--orange-dark);">🧪 Cuenta de prueba (clic para rellenar):</strong>
+          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba (clic para rellenar):</strong>
           <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
             <button type="button"
-              onclick="fillCitizenLogin('maria@demo.com', 'Demo12345');"
+              onclick="fillLogin('maria@demo.com', 'Demo12345');"
               style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
               onmouseover="this.style.background='var(--orange)'; this.style.color='white';"
               onmouseout="this.style.background='white'; this.style.color='';">
               👤 Ciudadano<br/>
               <span style="font-weight:400; font-size:.7rem;">maria@demo.com</span>
             </button>
+            <button type="button"
+              onclick="fillLogin('admin@remac.elgrullo.mx', 'Admin1234');"
+              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
+              onmouseover="this.style.background='var(--dark)'; this.style.color='white';"
+              onmouseout="this.style.background='white'; this.style.color='';">
+              🔧 Administrador<br/>
+              <span style="font-weight:400; font-size:.7rem;">admin@remac.elgrullo.mx</span>
+            </button>
           </div>
+          <div style="font-size:.68rem; color:var(--gray-2); margin-top:6px;">Al iniciar sesión te llevamos automáticamente a tu portal o al panel admin, según tu cuenta.</div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">Acceder a mi portal →</button>
@@ -251,28 +259,6 @@
         </div>
       </form>
 
-      <!-- ══ Admin Form ══ -->
-      <form class="auth-form" id="form-admin" onsubmit="handleAdminLogin(event)">
-        <div>
-          <div class="auth-title">Acceso Administrativo</div>
-          <div class="auth-subtitle">Panel exclusivo para personal del Ayuntamiento.</div>
-        </div>
-        <div class="form-group">
-          <label for="admin-email">Correo electrónico</label>
-          <div class="input-group">
-            <span class="input-icon">✉️</span>
-            <input type="email" id="admin-email" class="form-control" placeholder="admin@elgrullo.gob.mx" required />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="admin-password">Contraseña</label>
-          <div class="input-group">
-            <span class="input-icon">🔒</span>
-            <input type="password" id="admin-password" class="form-control" required />
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block" style="background:var(--dark); border-color:var(--dark);">Iniciar sesión como Administrador →</button>
-      </form>
     </div>
   </main>
 </div>
@@ -292,7 +278,7 @@ function switchTab(tab) {
 }
 
 /* ── Quick fill credentials ── */
-function fillCitizenLogin(email, password) {
+function fillLogin(email, password) {
   document.getElementById('login-email').value    = email;
   document.getElementById('login-password').value = password;
   document.getElementById('login-email').style.borderColor = 'var(--orange)';
@@ -303,12 +289,10 @@ function fillCitizenLogin(email, password) {
   }, 1500);
 }
 
-function fillAdmin(email, password) {
-  document.getElementById('admin-email').value    = email;
-  document.getElementById('admin-password').value = password;
-}
-
-/* ── Login handler (ciudadano) ── */
+/* ── Login handler único: detecta el rol real (viene del servidor) y
+   manda a cada quien a su portal — el ciudadano a dashboard.html, el
+   administrador a admin.html. No hay una pestaña de login separada
+   para admin: cualquier cuenta entra por el mismo formulario. ── */
 async function handleLogin(e) {
   e.preventDefault();
   const inputEmail = document.getElementById('login-email').value.trim();
@@ -317,29 +301,9 @@ async function handleLogin(e) {
 
   try {
     const data = await apiLoginUser(inputEmail, inputPass);
-    showToast(`✅ ¡Bienvenido de nuevo, ${data.nombre}!`, 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1000);
-  } catch (err) {
-    showToast(`❌ ${err.message}`, 'error');
-  }
-}
-
-/* ── Login handler (admin) ── */
-async function handleAdminLogin(e) {
-  e.preventDefault();
-  const email = document.getElementById('admin-email').value.trim();
-  const pass  = document.getElementById('admin-password').value.trim();
-  if (!email || !pass) { showToast('❌ Completa correo y contraseña', 'error'); return; }
-
-  try {
-    const data = await apiLoginAdmin(email, pass);
-    if (data.rol !== 'admin') {
-      localStorage.removeItem('padron_session');
-      showToast('❌ Esta cuenta no tiene permisos de administrador.', 'error');
-      return;
-    }
-    showToast('✅ ¡Bienvenido, Administrador!', 'success');
-    setTimeout(() => window.location.href = 'admin.html', 1000);
+    const destino = data.rol === 'admin' ? 'admin.html' : 'dashboard.html';
+    showToast(`✅ ¡Bienvenido${data.rol === 'admin' ? '' : ' de nuevo'}, ${data.nombre}!`, 'success');
+    setTimeout(() => window.location.href = destino, 1000);
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

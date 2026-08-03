@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-03] — Login Unificado: Ya No Hace Falta una Pestaña Separada de "Acceso Admin"
+
+### 🐛 Problema reportado
+Si un administrador escribía sus credenciales en la pestaña normal de "Iniciar sesión" (en vez de la pestaña separada "Acceso Admin"), el sistema lo dejaba entrar pero como si fuera un ciudadano cualquiera — lo mandaba a `dashboard.html` y no tenía acceso a nada de personalización ni al panel. Forzosamente tenía que saber que existía una pestaña distinta ("Acceso Admin") para poder entrar de verdad como administrador.
+
+### 🔧 Corrección
+1. Se eliminó la pestaña y el formulario separado de "Acceso Admin" en `login.html`. Ahora solo hay dos pestañas: **Iniciar sesión** y **Crear cuenta**.
+2. El único formulario de login ahora revisa el `rol` que devuelve el servidor al autenticar y redirige automáticamente: `admin.html` si la cuenta es de administrador, `dashboard.html` si es ciudadano — sin que el usuario tenga que elegir de antemano qué tipo de cuenta es.
+3. El cuadro de "Cuenta de prueba" ahora incluye también un botón de relleno rápido para la cuenta de administrador, dentro del mismo formulario unificado.
+4. Se eliminó `apiLoginAdmin()` de `js/api-client.js` (ya no se usaba, `apiLoginUser()` cubre ambos casos).
+
+### 📂 Archivos modificados
+- `web/login.html` (tabs, formulario admin eliminado, `handleLogin()` unificado).
+- `web/js/api-client.js` (`apiLoginAdmin` eliminada).
+
 ## 📅 [2026-08-01] — Corrección: Contadores del Hero Mostraban Número de Ejemplo al Cargar (Race Condition)
 
 ### 🐛 Bug corregido

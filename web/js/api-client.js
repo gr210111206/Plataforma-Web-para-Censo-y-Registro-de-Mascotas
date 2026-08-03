@@ -91,22 +91,6 @@ async function apiLoginUser(email, password) {
 }
 
 /**
- * Login de administrador con email + password
- */
-async function apiLoginAdmin(email, password) {
-  const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-  localStorage.setItem('padron_session', JSON.stringify({
-    token:  data.token,
-    nombre: data.nombre,
-    rol:    data.rol,
-  }));
-  return data;
-}
-
-/**
  * Cerrar sesión
  */
 async function apiLogout() {
