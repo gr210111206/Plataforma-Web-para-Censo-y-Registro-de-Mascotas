@@ -71,6 +71,7 @@
       box-shadow: 0 4px 16px rgba(0,0,0,.15);
     }
     .card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .card-avatar .icon-line { width: 48px; height: 48px; color: white; }
     .card-pet-name {
       font-family: 'Outfit', sans-serif;
       font-size: 2rem;
@@ -107,6 +108,7 @@
       flex-shrink: 0;
     }
     .info-content {}
+    .icon-line { width: 1.1rem; height: 1.1rem; stroke: currentColor; display: inline-block; vertical-align: -0.15em; }
     .info-label {
       font-size: .68rem;
       font-weight: 700;
@@ -217,7 +219,7 @@
 <div class="card" id="pet-card">
   <!-- JS will render content here -->
   <div class="not-found">
-    <div class="not-found-icon">🔍</div>
+    <div class="not-found-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:2.2rem;height:2.2rem;"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg></div>
     <h2>Cargando...</h2>
     <p>Buscando información de la mascota.</p>
   </div>
@@ -229,8 +231,20 @@
 const params = new URLSearchParams(window.location.search);
 const petId  = params.get('id') || params.get('folio');
 
+const ICON_DOG = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.25 16.25h1.5L12 17z" /><path d="M16 14v.5" /><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309" /><path d="M8 14v.5" /><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5" /></svg>';
+const ICON_CAT = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z" /><path d="M8 14v.5" /><path d="M16 14v.5" /><path d="M11.25 16.25h1.5L12 17l-.75-.75Z" /></svg>';
+const ICON_ID = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10h2" /><path d="M16 14h2" /><path d="M6.17 15a3 3 0 0 1 5.66 0" /><circle cx="9" cy="11" r="2" /><rect x="2" y="5" width="20" height="14" rx="2" /></svg>';
+const ICON_VENUS = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v7" /><path d="M9 19h6" /><circle cx="12" cy="9" r="6" /></svg>';
+const ICON_MARS = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5" /><path d="m21 3-6.75 6.75" /><circle cx="10" cy="14" r="6" /></svg>';
+const ICON_PALETTE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /></svg>';
+const ICON_SEARCH = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg>';
+const ICON_USER = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>';
+const ICON_PHONE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg>';
+const ICON_PIN = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>';
+const ICON_MSG = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></svg>';
+
 function renderPet(pet) {
-  const estaEspecie = pet.especie === 'gato' ? '🐈' : '🐕';
+  const estaEspecie = pet.especie === 'gato' ? ICON_CAT : ICON_DOG;
   const estatusPill = pet.estatus === 'Alta'
     ? '<span class="estatus-pill pill-alta">● Alta</span>'
     : '<span class="estatus-pill pill-baja">● Baja</span>';
@@ -256,7 +270,7 @@ function renderPet(pet) {
     <div class="card-body">
 
       <div class="info-row">
-        <div class="info-icon">🆔</div>
+        <div class="info-icon">${ICON_ID}</div>
         <div class="info-content">
           <div class="info-label">Folio REMAC</div>
           <div class="info-value mono">${pet.id}</div>
@@ -265,7 +279,7 @@ function renderPet(pet) {
 
       ${pet.sexo ? `
       <div class="info-row">
-        <div class="info-icon">${pet.sexo === 'hembra' ? '♀️' : '♂️'}</div>
+        <div class="info-icon">${pet.sexo === 'hembra' ? ICON_VENUS : ICON_MARS}</div>
         <div class="info-content">
           <div class="info-label">Sexo · Edad</div>
           <div class="info-value">${pet.sexo.charAt(0).toUpperCase() + pet.sexo.slice(1)}${pet.edad_label ? ' · ' + pet.edad_label : ''}</div>
@@ -274,7 +288,7 @@ function renderPet(pet) {
 
       ${pet.color ? `
       <div class="info-row">
-        <div class="info-icon">🎨</div>
+        <div class="info-icon">${ICON_PALETTE}</div>
         <div class="info-content">
           <div class="info-label">Color</div>
           <div class="info-value">${pet.color}</div>
@@ -283,7 +297,7 @@ function renderPet(pet) {
 
       ${pet.senias_particulares ? `
       <div class="info-row">
-        <div class="info-icon">🔍</div>
+        <div class="info-icon">${ICON_SEARCH}</div>
         <div class="info-content">
           <div class="info-label">Señas particulares</div>
           <div class="info-value">${pet.senias_particulares}</div>
@@ -291,7 +305,7 @@ function renderPet(pet) {
       </div>` : ''}
 
       <div class="info-row">
-        <div class="info-icon">👤</div>
+        <div class="info-icon">${ICON_USER}</div>
         <div class="info-content">
           <div class="info-label">Dueño / Responsable</div>
           <div class="info-value">${pet.persona || '—'}</div>
@@ -300,7 +314,7 @@ function renderPet(pet) {
 
       ${telefono ? `
       <div class="info-row">
-        <div class="info-icon">📞</div>
+        <div class="info-icon">${ICON_PHONE}</div>
         <div class="info-content">
           <div class="info-label">Número de contacto</div>
           <div class="info-value">${telefono}</div>
@@ -309,7 +323,7 @@ function renderPet(pet) {
 
       ${pet.colonia ? `
       <div class="info-row">
-        <div class="info-icon">📍</div>
+        <div class="info-icon">${ICON_PIN}</div>
         <div class="info-content">
           <div class="info-label">Colonia</div>
           <div class="info-value">${pet.colonia}${pet.direccion ? ' · ' + pet.direccion : ''}</div>
@@ -318,10 +332,10 @@ function renderPet(pet) {
 
       ${telefono ? `
         <a class="call-btn" href="tel:${telefonoLimpio}">
-          📞 Llamar al dueño
+          ${ICON_PHONE} Llamar al dueño
         </a>
         <a class="sms-btn" href="sms:${telefonoLimpio}">
-          💬 Enviar mensaje
+          ${ICON_MSG} Enviar mensaje
         </a>
       ` : ''}
     </div>
@@ -338,7 +352,7 @@ function renderPet(pet) {
 function renderNotFound(id) {
   document.getElementById('pet-card').innerHTML = `
     <div class="not-found">
-      <div class="not-found-icon">❓</div>
+      <div class="not-found-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:2.2rem;height:2.2rem;"><path d="m13.5 8.5-5 5" /><path d="m8.5 8.5 5 5" /><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
       <h2>Mascota no encontrada</h2>
       <p>No se encontró ninguna mascota con el folio <strong>${id || '—'}</strong> en el padrón REMAC.</p>
       <p style="margin-top:12px; font-size:.8rem;">Si crees que es un error, contacta al Ayuntamiento.</p>

@@ -115,6 +115,18 @@ input, select, textarea { font-family: inherit; }
 .badge-blue    { background: var(--blue-light);   color: var(--blue); }
 .badge-gray    { background: var(--gray-4);       color: var(--gray-1); }
 
+/* ── Íconos de línea (reemplazan emojis en navegación, botones y
+   campos principales — heredan el color del texto vía currentColor) ── */
+.icon-line {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+.icon-line.icon-fill { fill: currentColor; stroke: none; }
+
 /* ── Buttons ── */
 .btn {
   display: inline-flex;
@@ -1141,7 +1153,8 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius-sm);
   margin-bottom: 14px;
 }
-.pet-card-actions { display: flex; gap: 8px; }
+.pet-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pet-card-actions .btn { min-width: 80px; }
 
 /* ── Table ── */
 .table-wrap {

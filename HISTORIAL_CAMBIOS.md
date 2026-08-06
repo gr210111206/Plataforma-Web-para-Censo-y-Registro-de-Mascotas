@@ -2,6 +2,30 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-06] — Reemplazo de Emojis por Íconos de Línea Profesionales (Lucide, MIT)
+
+### 🚀 Contexto
+Para dar una imagen más institucional al portal, se reemplazaron los emojis (🐾💉📧, etc.) usados como íconos de interfaz por un set de íconos de línea consistente, tomado de **Lucide** (fork de Feather Icons, licencia MIT/ISC — libre, sin necesidad de atribución). Se descargó el SVG de cada ícono directamente del repositorio oficial y se incrustó en el código (sin depender de ningún servicio externo ni CDN), siguiendo el mismo enfoque "sin build" del resto del proyecto.
+
+Alcance de esta pasada (acordado con el usuario): navegación, logos, íconos de pasos/tarjetas, botones principales y campos de formulario en las 5 páginas del sitio. Se dejaron sin tocar los emojis en mensajes de aviso/toast (✅❌⚠️) y en el cuadro de "cuentas de prueba" del login, por ser elementos de estado/temporales donde el emoji es apropiado incluso en apps profesionales.
+
+### 🔧 Cambios
+1. **Nueva clase CSS `.icon-line`** (`styles.css`, y una versión local en `mascota.html` que no comparte esa hoja de estilos): íconos de 1em, heredan el color del texto vía `currentColor`.
+2. **`index.html`:** insignia del hero, ícono del hero, banner de aviso, los 3 pasos de "¿Cómo funciona?", botones de registro, logos del footer, contactos del footer (estáticos y dinámicos), fecha de campañas.
+3. **`login.html`:** las 4 características del panel lateral, e íconos de correo/contraseña/nombre/teléfono en ambos formularios.
+4. **`dashboard.html`:** ícono por especie (perro/gato/conejo/ave) centralizado en una sola constante reutilizada en 3 lugares, navegación lateral completa, tarjetas de estadísticas, acciones rápidas, botones de cada mascota (Ver/Editar/QR/Acta), subida de foto, historial de actividad, badge de rol y teléfono del perfil.
+5. **`admin.html`:** navegación lateral principal (Datos/Seguimiento/Usuarios/Nuevo artículo/Configuración/Ver portal/Cerrar sesión) e ícono de especie en la tabla de seguimiento rápido.
+6. **`mascota.html`:** avatar por especie, folio, sexo, color, señas particulares, dueño, teléfono, colonia, y los botones de llamar/enviar mensaje.
+7. **Corrección adicional:** se encontraron y corrigieron 2 desbordamientos de botones (tarjeta de mascota en el dashboard) causados por el texto extra de los íconos — ahora los botones de acción de cada mascota se ajustan en 2 filas si no caben en una.
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (`.icon-line`, ajuste de `.pet-card-actions`).
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/admin.html`, `web/mascota.html`.
+
+### ⚠️ Pendiente / fuera de este alcance
+- Las 9 sub-pestañas de "Configuración sitio" en el admin (Reglamento, Avisos, Eventos, Contactos, FAQ, Apariencia, Municipio, Tema, SEO) siguen con sus emojis originales — son panel interno de personal, no público, y se dejaron para una pasada futura si se desea.
+- Mensajes de aviso (toast) y textos dinámicos de estado conservan sus emojis intencionalmente.
+
 ## 📅 [2026-08-03] — Login Unificado: Ya No Hace Falta una Pestaña Separada de "Acceso Admin"
 
 ### 🐛 Problema reportado

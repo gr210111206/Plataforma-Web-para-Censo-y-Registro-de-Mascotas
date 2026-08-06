@@ -206,21 +206,21 @@
 
     <div class="sidebar-section">Principal</div>
     <a class="sidebar-link active" id="nav-mis-mascotas" onclick="showSection('mis-mascotas', this)">
-      <span class="icon">🐾</span> Mis mascotas
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></span> Mis mascotas
     </a>
     <a class="sidebar-link" id="nav-campanas" onclick="showSection('campanas', this)">
-      <span class="icon">📢</span> Campañas
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /><path d="M8 6v8" /></svg></span> Campañas
     </a>
     <a class="sidebar-link" id="nav-articulos" onclick="showSection('articulos', this)">
-      <span class="icon">📰</span> Artículos / Tips
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5" /><path d="M18 14h-8" /><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg></span> Artículos / Tips
     </a>
 
     <div class="sidebar-section" style="margin-top:8px;">Mi cuenta</div>
     <a class="sidebar-link" id="nav-mi-perfil" onclick="showSection('mi-perfil', this)">
-      <span class="icon">👤</span> Mi perfil
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span> Mi perfil
     </a>
     <a class="sidebar-link" href="index.html">
-      <span class="icon">🏠</span> Ir al inicio
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg></span> Ir al inicio
     </a>
 
     <div class="sidebar-bottom">
@@ -232,7 +232,7 @@
         </div>
       </div>
       <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="event.preventDefault(); apiLogout().finally(() => window.location.href='login.html');">
-        <span class="icon">🚪</span> Cerrar sesión
+        <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></svg></span> Cerrar sesión
       </a>
     </div>
   </aside>
@@ -247,7 +247,7 @@
         <div class="dashboard-subtitle" id="headerSubtitle">Administra el registro de tus animales de compañía</div>
       </div>
       <div class="flex gap-8 items-center">
-        <span class="badge badge-orange" id="headerBadge">👤 Ciudadano</span>
+        <span class="badge badge-orange" id="headerBadge"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> Ciudadano</span>
         <button class="btn btn-primary btn-sm" id="headerActionBtn" onclick="abrirNuevaMascota()">
           + Nueva mascota
         </button>
@@ -261,7 +261,7 @@
       <div class="stats-grid" style="margin-bottom:28px;">
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon" style="background:var(--orange-pale);">🐾</div>
+            <div class="stat-card-icon" style="background:var(--orange-pale);"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></div>
             <span class="badge badge-orange">Total</span>
           </div>
           <div class="stat-card-num" id="statTotal">0</div>
@@ -269,7 +269,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon" style="background:var(--green-light);">💉</div>
+            <div class="stat-card-icon" style="background:var(--green-light);"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4" /><path d="m17 7 3-3" /><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5" /><path d="m9 11 4 4" /><path d="m5 19-3 3" /><path d="m14 4 6 6" /></svg></div>
             <span class="badge badge-green">Al día</span>
           </div>
           <div class="stat-card-num" id="statVacunadas">0</div>
@@ -277,7 +277,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon" style="background:var(--blue-light);">📄</div>
+            <div class="stat-card-icon" style="background:var(--blue-light);"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg></div>
             <span class="badge badge-blue">Actas</span>
           </div>
           <div class="stat-card-num" id="statActas">0</div>
@@ -285,7 +285,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-card-header">
-            <div class="stat-card-icon" style="background:var(--amber-light);">⭐</div>
+            <div class="stat-card-icon" style="background:var(--amber-light);"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg></div>
             <span class="badge badge-amber">Estado</span>
           </div>
           <div class="stat-card-num" id="statEstado">✓</div>
@@ -296,15 +296,15 @@
       <!-- Acciones rápidas -->
       <div class="quick-actions">
         <button class="quick-action-btn" onclick="abrirNuevaMascota()">
-          <span class="quick-action-icon">🐾</span>
+          <span class="quick-action-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></span>
           Registrar mascota
         </button>
         <button class="quick-action-btn" onclick="showSection('campanas', document.getElementById('nav-campanas'))">
-          <span class="quick-action-icon">💉</span>
+          <span class="quick-action-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4" /><path d="m17 7 3-3" /><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5" /><path d="m9 11 4 4" /><path d="m5 19-3 3" /><path d="m14 4 6 6" /></svg></span>
           Ver campañas
         </button>
         <button class="quick-action-btn" onclick="downloadActa()">
-          <span class="quick-action-icon">📄</span>
+          <span class="quick-action-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg></span>
           Descargar acta
         </button>
       </div>
@@ -384,31 +384,31 @@
 
         <!-- Historial -->
         <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
-          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">📋 Historial de actividad</div>
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg> Historial de actividad</div>
           <div class="timeline">
             <div class="timeline-item">
-              <div class="timeline-dot">🐾</div>
+              <div class="timeline-dot"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></div>
               <div class="timeline-content">
                 <div class="timeline-label">Mascota registrada en el padrón</div>
                 <div class="timeline-date">Hoy · Sistema automático</div>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-dot">💉</div>
+              <div class="timeline-dot"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4" /><path d="m17 7 3-3" /><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5" /><path d="m9 11 4 4" /><path d="m5 19-3 3" /><path d="m14 4 6 6" /></svg></div>
               <div class="timeline-content">
                 <div class="timeline-label">Vacunación antirrábica registrada</div>
                 <div class="timeline-date">15 may 2026 · Campaña municipal</div>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-dot">📄</div>
+              <div class="timeline-dot"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg></div>
               <div class="timeline-content">
                 <div class="timeline-label">Acta de registro generada</div>
                 <div class="timeline-date">10 ene 2026 · Folio EG-2026-00001</div>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-dot">👤</div>
+              <div class="timeline-dot"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></div>
               <div class="timeline-content">
                 <div class="timeline-label">Cuenta creada exitosamente</div>
                 <div class="timeline-date">5 ene 2026 · Portal ciudadano</div>
@@ -426,14 +426,14 @@
 <div class="modal-overlay" id="modal-nueva-mascota">
   <div class="modal">
     <div class="modal-header">
-      <h2 class="modal-title" id="modal-mascota-titulo">🐾 Registrar nueva mascota</h2>
+      <h2 class="modal-title" id="modal-mascota-titulo">Registrar nueva mascota</h2>
       <button class="modal-close" onclick="closeModal('modal-nueva-mascota')">✕</button>
     </div>
     <div class="modal-body">
       <form id="form-mascota" onsubmit="handleNewPet(event)">
         <div style="display:flex; flex-direction:column; gap:14px;">
           <div class="photo-upload" onclick="document.getElementById('foto-input').click()">
-            <div class="photo-upload-icon" id="photoPreviewIcon">📷</div>
+            <div class="photo-upload-icon" id="photoPreviewIcon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg></div>
             <div class="photo-upload-text">
               <strong>Subir foto</strong> (opcional)<br/>
               <span>JPG o PNG, máximo 5 MB</span>
@@ -503,7 +503,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-nueva-mascota')">Cancelar</button>
-      <button class="btn btn-primary" id="modal-mascota-btn" onclick="handleNewPet()">🐾 Registrar mascota →</button>
+      <button class="btn btn-primary" id="modal-mascota-btn" onclick="handleNewPet()">Registrar mascota →</button>
     </div>
   </div>
 </div>
@@ -524,8 +524,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
-      <button class="btn btn-outline" id="detalle-editar-btn">✏️ Editar</button>
-      <button class="btn btn-primary" id="detalle-acta-btn">📄 Descargar Acta PDF</button>
+      <button class="btn btn-outline" id="detalle-editar-btn"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8" /><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /></svg> Editar</button>
+      <button class="btn btn-primary" id="detalle-acta-btn"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg> Descargar Acta PDF</button>
     </div>
   </div>
 </div>
@@ -545,6 +545,21 @@ let session = {};
 let myPets = [];
 let currentPetIndex = null;
 
+/* Íconos de línea por especie (reemplazan los emojis 🐕🐈🐇🦜🐾) */
+const SPECIES_ICONS = {
+  perro:  '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.25 16.25h1.5L12 17z" /><path d="M16 14v.5" /><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309" /><path d="M8 14v.5" /><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5" /></svg>',
+  gato:   '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z" /><path d="M8 14v.5" /><path d="M16 14v.5" /><path d="M11.25 16.25h1.5L12 17l-.75-.75Z" /></svg>',
+  conejo: '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 16a3 3 0 0 1 2.24 5" /><path d="M18 12h.01" /><path d="M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h.2c3.3 0 6 2.7 6 6v1a2 2 0 0 1-2 2h-1a3 3 0 0 0-3 3" /><path d="M20 8.54V4a2 2 0 1 0-4 0v3" /><path d="M7.612 12.524a3 3 0 1 0-1.6 4.3" /></svg>',
+  ave:    '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h.01" /><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" /><path d="m20 7 2 .5-2 .5" /><path d="M10 18v3" /><path d="M14 17.75V21" /><path d="M7 18a6 6 0 0 0 3.84-10.61" /></svg>',
+};
+const ICON_PAW  = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg>';
+const ICON_EYE  = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>';
+const ICON_PEN  = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8" /><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /></svg>';
+const ICON_QR   = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1" /><rect width="5" height="5" x="16" y="3" rx="1" /><rect width="5" height="5" x="3" y="16" rx="1" /><path d="M21 16h-3a2 2 0 0 0-2 2v3" /><path d="M21 21v.01" /><path d="M12 7v3a2 2 0 0 1-2 2H7" /><path d="M3 12h.01" /><path d="M12 3h.01" /><path d="M12 16v.01" /><path d="M16 12h1" /><path d="M21 12v.01" /><path d="M12 21v-1" /></svg>';
+const ICON_FILE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>';
+const ICON_CAMERA = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg>';
+const ICON_PHONE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg>';
+
 function applySessionToUI() {
   const sessionNombre = session.nombre   || 'Ciudadano';
   const sessionEmail  = session.email    || '';
@@ -560,7 +575,7 @@ function applySessionToUI() {
 
   document.getElementById('profileAvatar').textContent    = initials;
   document.getElementById('profileName').textContent      = sessionNombre;
-  document.getElementById('profilePhone').textContent     = '📞 ' + sessionPhone;
+  document.getElementById('profilePhone').innerHTML       = ICON_PHONE + ' ' + sessionPhone;
   document.getElementById('perfil-nombre').value          = sessionNombre;
   document.getElementById('perfil-telefono').value        = sessionPhone;
   document.getElementById('perfil-email-field').value     = sessionEmail;
@@ -644,7 +659,7 @@ function renderPets() {
   if (total === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🐾</div>
+        <div class="empty-state-icon">${ICON_PAW}</div>
         <div class="empty-state-title">Aún no tienes mascotas registradas</div>
         <div class="empty-state-sub">¡Registra a tu primer amigo peludo de forma gratuita!</div>
         <button class="btn btn-primary" onclick="abrirNuevaMascota()">+ Registrar mi primera mascota</button>
@@ -652,11 +667,10 @@ function renderPets() {
     return;
   }
 
-  const SPECIES_ICONS = { perro:'🐕', gato:'🐈', conejo:'🐇', ave:'🦜' };
   const CARD_COLORS   = ['#FFF3E6','#E8F5E9','#E3F2FD','#FFF8E1','#FCE4EC','#EDE7F6'];
 
   container.innerHTML = myPets.map((pet, i) => {
-    const icon  = SPECIES_ICONS[pet.especie] || '🐾';
+    const icon  = SPECIES_ICONS[pet.especie] || ICON_PAW;
     const color = CARD_COLORS[i % CARD_COLORS.length];
 
     // REMAC: Alta/Baja estatus
@@ -689,10 +703,10 @@ function renderPets() {
           </div>
           <div class="pet-card-folio">${folio}</div>
           <div class="pet-card-actions">
-            <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">👁️ Ver</button>
-            <button class="btn btn-ghost btn-sm" onclick="editarMascota(${i})" style="flex:1;">✏️ Editar</button>
-            <button class="btn btn-ghost btn-sm" onclick="verQR(${i})"    style="flex:1;">🔲 QR</button>
-            <button class="btn btn-primary btn-sm" onclick="downloadActa('${folio}')" style="flex:1;">📄 Acta</button>
+            <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">${ICON_EYE} Ver</button>
+            <button class="btn btn-ghost btn-sm" onclick="editarMascota(${i})" style="flex:1;">${ICON_PEN} Editar</button>
+            <button class="btn btn-ghost btn-sm" onclick="verQR(${i})"    style="flex:1;">${ICON_QR} QR</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadActa('${folio}')" style="flex:1;">${ICON_FILE} Acta</button>
           </div>
         </div>
       </div>`;
@@ -737,8 +751,7 @@ function renderDashArticles(articulos) {
 function verDetalle(i) {
   currentPetIndex = i;
   const pet  = myPets[i];
-  const SPECIES_ICONS = { perro:'🐕', gato:'🐈', conejo:'🐇', ave:'🦜' };
-  const icon = SPECIES_ICONS[pet.especie] || '🐾';
+  const icon = SPECIES_ICONS[pet.especie] || ICON_PAW;
   const folio = pet.id || pet.folio || '—';
   const edad  = pet.edad_label || (pet.edad_anios ? pet.edad_anios + ' años' : 'N/D');
 
@@ -865,7 +878,7 @@ let editingPetOriginalFoto = null;
 
 function resetFormMascota() {
   document.getElementById('form-mascota').reset();
-  document.getElementById('photoPreviewIcon').textContent = '📷';
+  document.getElementById('photoPreviewIcon').innerHTML = ICON_CAMERA;
   window._pendingFoto = null;
   editingPetId = null;
   editingPetOriginalFoto = null;
@@ -873,8 +886,8 @@ function resetFormMascota() {
 
 function abrirNuevaMascota() {
   resetFormMascota();
-  document.getElementById('modal-mascota-titulo').textContent = '🐾 Registrar nueva mascota';
-  document.getElementById('modal-mascota-btn').textContent    = '🐾 Registrar mascota →';
+  document.getElementById('modal-mascota-titulo').textContent = 'Registrar nueva mascota';
+  document.getElementById('modal-mascota-btn').textContent    = 'Registrar mascota →';
   openModal('modal-nueva-mascota');
 }
 
@@ -898,10 +911,10 @@ function editarMascota(i) {
   const photoEl = document.getElementById('photoPreviewIcon');
   photoEl.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
     ? `<img src="${pet.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
-    : '📷';
+    : ICON_CAMERA;
 
-  document.getElementById('modal-mascota-titulo').textContent = `✏️ Editar a ${pet.nombre}`;
-  document.getElementById('modal-mascota-btn').textContent    = '💾 Guardar cambios';
+  document.getElementById('modal-mascota-titulo').textContent = `Editar a ${pet.nombre}`;
+  document.getElementById('modal-mascota-btn').textContent    = 'Guardar cambios';
   openModal('modal-nueva-mascota');
 }
 
@@ -1033,7 +1046,7 @@ async function saveProfile() {
 
     document.getElementById('sidebarName').textContent = nombre.split(' ').slice(0, 2).join(' ');
     document.getElementById('profileName').textContent = nombre;
-    document.getElementById('profilePhone').textContent = '📞 ' + telefono;
+    document.getElementById('profilePhone').innerHTML = ICON_PHONE + ' ' + telefono;
     const ini = nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
     document.getElementById('sidebarAvatar').textContent = ini;
     const av = document.getElementById('profileAvatar');
