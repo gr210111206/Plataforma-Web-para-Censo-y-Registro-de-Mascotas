@@ -592,6 +592,7 @@ function applySessionToUI() {
 /* ══════════════════════════════════════════════════ */
 async function initDashboard() {
   session = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  if (session.rol === 'admin') { window.location.href = 'admin.html'; return; }
   applySessionToUI();
 
   try {

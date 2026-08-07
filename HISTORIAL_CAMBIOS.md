@@ -2,6 +2,19 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-07] — El Administrador Podía Terminar Viendo el Dashboard de Ciudadano (y Viceversa)
+
+### 🐛 Bug: `dashboard.html` aceptaba sesión de cualquier rol
+`dashboard.html` protegía la página con `apiRequireSession()` sin pedir un rol específico, así que cualquier sesión válida —incluida la de administrador— pasaba el chequeo. Si un admin llegaba ahí (por ejemplo desde el enlace "Mi dashboard" del pie de página, que no distingue el rol), el sidebar se veía como el de un ciudadano normal, pero la tarjeta de perfil de abajo mostraba "Administrador" porque sí traía los datos reales de esa sesión. Además, como el backend (`mascotas.php`) no filtra por dueño cuando el rol es admin, la sección "Mis mascotas" terminaba mostrando **las 6 mascotas de todo el padrón**, no las del usuario.
+
+De paso se revisó `admin.html`, que si tenía el chequeo de rol correcto (`apiRequireSession('admin')`), pero con un efecto secundario duro: si un ciudadano llegaba ahí por error, `apiRequireSession()` le borraba la sesión guardada y lo mandaba a `login.html` — lo desconectaba por completo solo por abrir la página equivocada.
+
+**Corrección:** ambas páginas ahora validan que exista una sesión válida (sin importar el rol) y, si el rol no corresponde a esa página, **redirigen a la página correcta sin tocar la sesión** — el admin que cae en `dashboard.html` rebota a `admin.html`, y el ciudadano que cae en `admin.html` rebota a `dashboard.html`, en ambos casos manteniendo la sesión intacta. Verificado con una prueba automatizada: inicio de sesión real de cada rol, navegación a la página del otro rol, y confirmación de que termina en la URL correcta con la sesión todavía activa.
+
+### 📂 Archivos modificados
+- `web/dashboard.html` (redirige a `admin.html` si la sesión es de administrador).
+- `web/admin.html` (redirige a `dashboard.html` si la sesión es de ciudadano, sin cerrar sesión).
+
 ## 📅 [2026-08-07] — Indicadores de "Reglamento guardado" y "Contactos guardados" Eran Falsos
 
 ### 🐛 Bug: la barra de estado de "Configuración sitio" mentía sobre 2 de sus 5 secciones

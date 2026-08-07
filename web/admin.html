@@ -3146,7 +3146,8 @@ function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 let adminArticulos = [];
 
 async function initAdmin() {
-  await apiRequireSession('admin'); // redirige a login.html si no hay sesión de admin válida
+  const _user = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  if (_user.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
   await primeConfigFromServer();
   applyAdminOwnAppearance();
 
