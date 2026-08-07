@@ -1095,6 +1095,13 @@ input, select, textarea { font-family: inherit; }
 }
 .dashboard-subtitle { font-size: .82rem; color: var(--gray-2); margin-top: 2px; }
 .dashboard-content { padding: 32px; }
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1999;
+}
+.sidebar-backdrop.open { display: block; }
 .dashboard-mobile-toggle {
   display: none;
   align-items: center;
@@ -1382,13 +1389,6 @@ tbody tr:hover { background: var(--surface); }
     transition: transform .25s ease;
   }
   .sidebar.open { transform: translateX(0); }
-  .sidebar-backdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 1999;
-  }
-  .sidebar-backdrop.open { display: block; }
   .dashboard-mobile-toggle { display: flex !important; }
   .dashboard-header { padding: 14px 20px; gap: 12px; }
   .dashboard-title { font-size: 1.05rem; }

@@ -2,6 +2,16 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-07] — Corrección: el Menú Lateral se Rompía en PC tras el Arreglo Móvil
+
+### 🐛 Bug introducido por la corrección anterior (menú deslizable móvil)
+Al agregar el fondo oscuro (`sidebar-backdrop`) para el menú deslizable de celular, ese `<div>` se insertó como hijo directo de `.dashboard-layout` — el contenedor CSS Grid de 2 columnas (menú + contenido). Solo se le dio `position: fixed` **dentro** de la media query de celular; en pantallas de computadora ese `<div>` vacío no tenía ningún estilo, así que el navegador lo trataba como una tercera celda real del grid. Eso corría al menú lateral hacia la segunda columna (estirándolo a todo lo ancho) y empujaba el contenido principal (mapa, gráficas, tabla) fuera de la vista. En celular no se notaba porque ahí `position: fixed` sí sacaba ese `<div>` del flujo del grid.
+
+**Corrección:** se movió el estilo base de `.sidebar-backdrop` (`position: fixed`, `display: none` por defecto) fuera de la media query, para que en cualquier tamaño de pantalla quede completamente fuera del flujo normal del documento y nunca participe del grid del layout. Verificado con una captura de escritorio (1600px) tras el cambio: el panel admin se ve completo y sin deformaciones.
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (`.sidebar-backdrop` con `position:fixed` como regla base, no solo dentro de la media query móvil).
+
 ## 📅 [2026-08-07] — Menú Lateral Invisible en Celular al Iniciar Sesión (Dashboard y Panel Admin)
 
 ### 🐛 Bug crítico: tras iniciar sesión en celular, no había forma de navegar
