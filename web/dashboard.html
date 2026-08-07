@@ -194,8 +194,9 @@
 <body>
 
 <div class="dashboard-layout">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
   <!-- ── Sidebar ── -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento de El Grullo" class="navbar-brand-img" style="height:38px;" />
       <div>
@@ -242,6 +243,9 @@
 
     <!-- Header -->
     <div class="dashboard-header">
+      <button class="dashboard-mobile-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+        <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16" /><path d="M4 6h16" /><path d="M4 18h16" /></svg>
+      </button>
       <div>
         <div class="dashboard-title" id="headerTitle">Mis mascotas</div>
         <div class="dashboard-subtitle" id="headerSubtitle">Administra el registro de tus animales de compañía</div>
@@ -641,6 +645,20 @@ function showSection(name, linkEl) {
   } else {
     btn.style.display = 'none';
   }
+
+  toggleSidebar(false);
+}
+
+/**
+ * Menú deslizable del sidebar en móvil. Sin args alterna, con
+ * booleano fuerza abrir/cerrar (usado al navegar o tocar el fondo).
+ */
+function toggleSidebar(force) {
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', open);
+  backdrop.classList.toggle('open', open);
 }
 
 /* ══════════════════════════════════════════════════ */

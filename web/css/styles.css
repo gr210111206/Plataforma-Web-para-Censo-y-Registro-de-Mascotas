@@ -1095,6 +1095,18 @@ input, select, textarea { font-family: inherit; }
 }
 .dashboard-subtitle { font-size: .82rem; color: var(--gray-2); margin-top: 2px; }
 .dashboard-content { padding: 32px; }
+.dashboard-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--gray-4);
+  background: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--dark);
+}
 
 /* ── Stats Cards ── */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
@@ -1358,7 +1370,29 @@ tbody tr:hover { background: var(--surface); }
   .auth-page         { grid-template-columns: 1fr; }
   .auth-aside        { display: none; }
   .dashboard-layout  { grid-template-columns: 1fr; }
-  .sidebar           { display: none; }
+
+  /* Sidebar del dashboard/admin: en vez de desaparecer sin dejar forma de
+     navegar, se convierte en un panel que se desliza desde la izquierda. */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 260px;
+    z-index: 2000;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1999;
+  }
+  .sidebar-backdrop.open { display: block; }
+  .dashboard-mobile-toggle { display: flex !important; }
+  .dashboard-header { padding: 14px 20px; gap: 12px; }
+  .dashboard-title { font-size: 1.05rem; }
+
   .cta-banner        { flex-direction: column; text-align: center; }
   .cta-banner-actions { flex-wrap: wrap; justify-content: center; }
   .footer-grid       { grid-template-columns: 1fr; }

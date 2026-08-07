@@ -2,6 +2,24 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-07] — Menú Lateral Invisible en Celular al Iniciar Sesión (Dashboard y Panel Admin)
+
+### 🐛 Bug crítico: tras iniciar sesión en celular, no había forma de navegar
+El usuario probó en su celular real después de la corrección anterior: el login ya funcionaba, pero una vez dentro (como ciudadano o como administrador) el menú lateral (`sidebar`) simplemente desaparecía en pantallas angostas (`display:none` en la media query móvil) **sin dejar ningún botón para abrirlo de nuevo**. Un ciudadano no podía llegar a "Mi perfil" ni "Cerrar sesión"; un administrador no podía llegar a "Seguimiento", "Usuarios", "Nuevo artículo" ni "Configuración sitio" — quedaba atrapado en la primera sección.
+
+**Corrección:** el menú lateral ahora es un panel deslizable ("off-canvas"), igual en `dashboard.html` y `admin.html` (comparten las mismas clases CSS):
+- Se agregó un botón ☰ (ícono de línea, `.dashboard-mobile-toggle`) en el encabezado, visible solo en celular.
+- El sidebar pasa a `position:fixed` fuera de la pantalla (`translateX(-100%)`) y se desliza a la vista (`.open`) al tocar el botón ☰, con un fondo oscuro semitransparente (`.sidebar-backdrop`) detrás.
+- Se cierra tocando el fondo oscuro o al elegir cualquier opción del menú (`toggleSidebar(false)` dentro de `showSection()` / `showAdmin()`).
+- En escritorio no cambia nada — el sidebar sigue fijo y visible como siempre.
+
+**Verificación:** se probó con un arnés de iframe a 390px de ancho apuntando a `http://localhost`, con sesión real (login vía API, cuentas de prueba `maria@demo.com` y `admin@remac.elgrullo.mx`) para confirmar visualmente el estado cerrado y abierto en ambas páginas, sin desbordamiento horizontal (`scrollWidth` ≤ `innerWidth` del viewport simulado).
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (sidebar off-canvas + backdrop en la media query móvil, botón `.dashboard-mobile-toggle`).
+- `web/dashboard.html` (botón ☰, `id="sidebar"`, `sidebar-backdrop`, función `toggleSidebar()`).
+- `web/admin.html` (mismos cambios que dashboard.html).
+
 ## 📅 [2026-08-07] — Corrección Crítica: el Sitio No Funcionaba desde el Celular (ni Otro Equipo)
 
 ### 🐛 Bug crítico: "Failed to fetch" al iniciar sesión desde el celular
