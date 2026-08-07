@@ -1104,8 +1104,8 @@
       <div class="config-status-bar">
         <span style="font-weight:700; color:var(--dark); font-size:.78rem;">⚙️ Configuración del sitio</span>
         <div style="flex:1;"></div>
-        <div class="status-item"><div class="status-dot saved"></div> Reglamento guardado</div>
-        <div class="status-item"><div class="status-dot saved"></div> Contactos guardados</div>
+        <div class="status-item" id="statusReglamento"><div class="status-dot empty"></div> Reglamento (sin cambios)</div>
+        <div class="status-item" id="statusContactos"><div class="status-dot empty"></div> Contactos (sin cambios)</div>
         <div class="status-item" id="statusApariencia"><div class="status-dot empty"></div> Apariencia (sin cambios)</div>
         <div class="status-item" id="statusTema"><div class="status-dot empty"></div> Tema (sin cambios)</div>
         <div class="status-item" id="statusSEO"><div class="status-dot empty"></div> SEO (sin cambios)</div>
@@ -2714,6 +2714,8 @@ function saveReglamento() {
   }
   localStorage.setItem('padron_reglamento', JSON.stringify(data));
   pushConfigToServer('padron_reglamento', data);
+  const stEl = document.getElementById('statusReglamento');
+  if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Reglamento guardado';
   showToast('✅ Reglamento actualizado y publicado en el portal', 'success');
 }
 
@@ -3272,6 +3274,8 @@ function saveSiteConfig() {
   const cfg = getSiteConfigValues();
   localStorage.setItem('padron_site_config', JSON.stringify(cfg));
   pushConfigToServer('padron_site_config', cfg);
+  const stEl = document.getElementById('statusContactos');
+  if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Contactos guardados';
   showToast('✅ Configuración guardada — el encabezado y footer del portal han sido actualizados', 'success');
 
   // Flash the preview border

@@ -2,6 +2,18 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-07] — Indicadores de "Reglamento guardado" y "Contactos guardados" Eran Falsos
+
+### 🐛 Bug: la barra de estado de "Configuración sitio" mentía sobre 2 de sus 5 secciones
+El usuario preguntó por qué el ícono de la patita del hero no se veía en el portal aunque el panel de "Apariencia e íconos" mostraba uno. Al investigar se confirmó que la tabla `site_config` en la base de datos estaba completamente vacía (0 filas) — nunca se había guardado nada de esa sección, lo cual es correcto y ya lo indicaba el propio panel con "Apariencia (sin cambios)".
+
+Pero se encontró un problema real de paso: los indicadores **"Reglamento guardado"** y **"Contactos guardados"**, a diferencia de Apariencia/Tema/SEO, estaban escritos como texto fijo directo en el HTML — siempre mostraban el punto verde de "guardado" sin importar si en verdad había algo persistido en el servidor, dando una falsa sensación de seguridad al administrador.
+
+**Corrección:** ambos indicadores ahora son dinámicos como los otros tres: arrancan en gris ("Reglamento (sin cambios)" / "Contactos (sin cambios)") y solo cambian a verde ("guardado") cuando `saveReglamento()` o `saveSiteConfig()` (guardado de Contactos) se ejecutan con éxito en esa sesión del panel. Verificado con un arnés headless que simula guardar el Reglamento y confirma que el punto pasa de gris a verde justo en ese momento, mientras los demás siguen en gris hasta que también se guarden.
+
+### 📂 Archivos modificados
+- `web/admin.html` (`id="statusReglamento"` / `id="statusContactos"` dinámicos; actualización de estado dentro de `saveReglamento()` y `saveSiteConfig()`).
+
 ## 📅 [2026-08-07] — Corrección: el Menú Lateral se Rompía en PC tras el Arreglo Móvil
 
 ### 🐛 Bug introducido por la corrección anterior (menú deslizable móvil)
