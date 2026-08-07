@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-07] — Corrección Crítica: el Sitio No Funcionaba desde el Celular (ni Otro Equipo)
+
+### 🐛 Bug crítico: "Failed to fetch" al iniciar sesión desde el celular
+**Causa:** `js/api-client.js` tenía la URL de la API escrita fija como `http://localhost/remac/api`. Eso solo funciona en la misma computadora — cuando el celular (o cualquier otro dispositivo) abre el sitio por la IP de la red (`http://192.168.0.230/...`), "localhost" para el celular es el propio celular, no la computadora donde corre el servidor. Por eso no cargaban las estadísticas (mostraba puros ceros) y el login fallaba con "Failed to fetch".
+
+**Corrección:** `API_BASE_URL` ahora se calcula solo, a partir de dónde se cargó la página (`window.location.origin` + carpeta actual), en vez de un valor fijo. Funciona automáticamente en la computadora, en el celular por IP de red, y también en HostGator cuando se suba — **ya no hay que editar este archivo antes de subir a producción**, como sí se pedía antes.
+
+### 🐛 Bug de diseño: el sitio se veía "roto" en pantallas de celular
+Revisando capturas reales desde un celular, la portada (`index.html`) tenía scroll lateral y un hueco vacío enorme antes del contenido principal. Se encontraron y corrigieron 3 causas:
+1. **Barra de navegación:** el logo completo (ícono + título + subtítulo) más los botones "Iniciar sesión"/"Registrar mascota" más el menú ☰ intentaban caber en una sola fila sin nunca colapsar — no cabían en una pantalla angosta. Ahora en celular se ve solo el ícono del logo, el botón dice "Registrar" (más corto), "Iniciar sesión" se mueve dentro del menú ☰, y ese menú ahora sí se despliega como un panel completo (antes no tenía estilo de menú móvil real).
+2. **Sección "El Grullo cuida a sus mascotas":** las gráficas de barra "Por especie"/"Por estatus" tenían columnas de ancho fijo que no cabían a la mitad en pantallas angostas — esta fue la causa real del scroll lateral en todo el sitio. Ahora se apilan en una sola columna en celular.
+3. **Hero:** forzaba una altura mínima de 88% de la pantalla (pensada para acomodar 2 columnas en escritorio) y centraba verticalmente el contenido corto de una sola columna dentro de eso, dejando un hueco vacío enorme arriba. Ahora en celular se ajusta al contenido real.
+4. Se agregó `overflow-x: hidden` en `body` como protección general para que ningún elemento vuelva a forzar scroll lateral en el sitio.
+
+### 📂 Archivos modificados
+- `web/js/api-client.js` (`API_BASE_URL` dinámico).
+- `web/css/styles.css` (`overflow-x:hidden`, navbar móvil, `.hero` en móvil).
+- `web/index.html` (enlace "Iniciar sesión" dentro del menú móvil, texto corto del botón, clase para la grilla de gráficas).
+
 ## 📅 [2026-08-06] — Reemplazo de Emojis por Íconos de Línea Profesionales (Lucide, MIT)
 
 ### 🚀 Contexto

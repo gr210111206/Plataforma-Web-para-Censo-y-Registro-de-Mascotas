@@ -16,10 +16,14 @@
    CONFIGURACIÓN
    ══════════════════════════════════════════════ */
 
-// Desarrollo local (XAMPP, junction htdocs/remac → web/):
-const API_BASE_URL = 'http://localhost/remac/api';
-// ⚠️ ANTES DE SUBIR A HOSTGATOR: cambia esto a tu dominio real, ej:
-// const API_BASE_URL = 'https://tudominio.com/api';
+// Se calcula solo a partir de dónde se cargó la página (no un valor fijo):
+// http://localhost/remac/index.html      → http://localhost/remac/api
+// http://192.168.0.230/remac/index.html  → http://192.168.0.230/remac/api  (celular en la misma red)
+// https://tudominio.com/index.html       → https://tudominio.com/api      (HostGator, sin tocar nada)
+// La carpeta api/ siempre vive junto a los archivos .html, así que esto
+// funciona en cualquier equipo/dispositivo/dominio sin editar este archivo.
+const API_BASE_URL = window.location.origin +
+  window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/api';
 
 // En desarrollo local, usa mock-data en vez de la API:
 const USE_MOCK = false;  // → Cambia a true si aún no tienes hosting

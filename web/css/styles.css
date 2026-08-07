@@ -61,6 +61,7 @@ body {
   background: var(--white);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* nada debe poder forzar scroll lateral en el sitio */
 }
 
 h1,h2,h3,h4,h5,h6 {
@@ -273,6 +274,7 @@ input, select, textarea { font-family: inherit; }
   background: var(--orange-pale);
   color: var(--orange-dark);
 }
+.navbar-nav a.navbar-nav-mobile-login { display: none; border-top: 1px solid var(--gray-4); margin-top: 6px; padding-top: 12px; }
 .navbar-actions {
   display: flex;
   align-items: center;
@@ -1364,6 +1366,37 @@ tbody tr:hover { background: var(--surface); }
   .navbar-hamburger  { display: flex; }
   .hero-stats        { grid-template-columns: 1fr 1fr; }
   .section           { padding: 48px 0; }
+
+  /* ── Navbar móvil: la versión de escritorio (logo + subtítulo + nav +
+     2 botones + hamburguesa, todo en una sola fila) no cabe en una
+     pantalla angosta y forzaba scroll lateral en todo el sitio. ── */
+  .navbar-logo .logo-text     { display: none; } /* en móvil solo el ícono, sin título/subtítulo */
+  .navbar-actions .btn-ghost  { display: none; } /* "Iniciar sesión" pasa al menú ☰ */
+  .navbar-actions .btn-primary.btn-sm { padding: 8px 14px; font-size: .82rem; white-space: nowrap; }
+  .navbar-btn-full { display: none; } /* botón dice solo "Registrar" en vez de "Registrar mascota" */
+  .navbar-nav a.navbar-nav-mobile-login { display: block; }
+  .navbar-nav {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-4);
+    box-shadow: var(--shadow-md);
+    padding: 8px 16px 16px;
+  }
+  .navbar-nav a { padding: 12px 14px; }
+
+  /* "El Grullo cuida a sus mascotas": las 2 gráficas de barra tenían un
+     ancho mínimo (columnas de 80px+50px fijas) que no cabía a la mitad
+     en pantallas angostas y forzaba scroll lateral en todo el sitio. */
+  .census-charts-grid { grid-template-columns: 1fr !important; }
+
+  /* El hero forzaba 88vh de alto (pensado para las 2 columnas de
+     escritorio) y centraba el contenido corto de una sola columna
+     dentro de eso, dejando un hueco vacío enorme arriba en celulares. */
+  .hero { min-height: auto; padding: 32px 0 56px; }
 }
 
 /* ════════════════════════════════════════════
