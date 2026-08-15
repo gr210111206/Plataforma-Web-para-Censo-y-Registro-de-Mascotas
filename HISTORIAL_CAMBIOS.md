@@ -2,6 +2,51 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-14] — Aviso de Privacidad real, Avisos/Eventos ya persisten y se muestran al público
+
+### 📄 Aviso de Privacidad (antes era un enlace muerto)
+El checkbox obligatorio del registro ("Acepto el Aviso de Privacidad") enlazaba a "#" — a ningún lado. Comparando contra los wireframes originales del proyecto, esa página sí es un requerimiento real (identidad del responsable, datos que se recaban, finalidad del tratamiento). Se agregó como modal en `login.html`, con contenido real específico de REMAC/H. Ayuntamiento de El Grullo (no genérico): responsable, domicilio, datos recabados, finalidad, y derechos ARCO.
+
+### 🐛 Avisos y Eventos del admin no persistían en el servidor
+A diferencia de Reglamento/FAQ/Contactos (ya corregidos antes), las pestañas "Avisos y promociones" y "Eventos próximos" del admin guardaban los datos **solo en memoria del navegador** (ni siquiera en localStorage) — se perdían por completo al recargar la página. Además el botón "✏️ Editar" de Avisos no hacía nada real (solo mostraba un mensaje), el botón "Eliminar" quitaba la tarjeta de la pantalla sin quitarla de los datos, y la imagen subida para el banner de un aviso nunca se guardaba. `eventosData` también traía 2 eventos de ejemplo escritos directo en el código, como si fueran reales.
+
+**Corrección:** ambas listas ahora se guardan en `localStorage` y se sincronizan con el servidor (`padron_avisos`, `padron_eventos` en `site_config`), exactamente igual que Reglamento/FAQ. Se agregó edición real de avisos (con botón "Cancelar"), se corrigió el borrado para que sí actualice los datos, y ahora sí se guarda la imagen del banner subida.
+
+### 🆕 La portada pública nunca mostraba Avisos ni Eventos
+Al revisar el alcance completo, se encontró que `index.html` **nunca tuvo una sección que mostrara** lo publicado en esas dos pestañas — ni siquiera antes de este arreglo. Se agregó:
+- Los avisos ahora se insertan en la misma sección "Avisos y campañas" (el encabezado ya prometía ambas cosas), usando la imagen subida como fondo de la tarjeta si existe, o el ícono/color si no.
+- Nueva sección pública "Próximos eventos" (se oculta sola si no hay eventos publicados), con tarjetas estilo calendario (mes/día + lugar + hora).
+
+### 🔧 Corrección de infraestructura: `database.php` detecta el entorno solo
+Durante las pruebas de este cambio se encontró un bug propio: `database.php` tenía las credenciales reales de HostGator puestas a mano, lo que rompía silenciosamente cualquier prueba local en XAMPP (login fallando sin explicación clara). Se corrigió para que el archivo detecte automáticamente si corre en local (`localhost`/`192.168.x.x`) o en HostGator, y use las credenciales correctas en cada caso — ya no hay que ir cambiando esto a mano nunca más.
+
+### 📂 Archivos modificados
+- `web/login.html` (modal de Aviso de Privacidad + función `openModal`/`closeModal`).
+- `web/admin.html` (persistencia real de Avisos/Eventos, edición real de avisos, botón cancelar).
+- `web/index.html` (renderiza avisos dentro de "Avisos y campañas", nueva sección "Próximos eventos").
+- `web/css/styles.css` (estilos `.event-card` y responsivo en móvil).
+- `web/api/config/database.php` (detección automática de entorno local/producción).
+
+## 📅 [2026-08-09] — Preparación para subir a HostGator de prueba: quitar accesos rápidos y proteger credenciales
+
+### 🧹 Se quitó el bloque "Cuentas de prueba" del login
+`login.html` mostraba dos botones ("👤 Ciudadano" / "🔧 Administrador") que rellenaban automáticamente el correo y contraseña de las cuentas de prueba, incluida la del admin. Tenía sentido en desarrollo, pero no debe verse en un sitio ya subido, aunque sea de prueba — cualquier visitante podía iniciar sesión como administrador con un clic. Se eliminó el bloque completo y la función `fillLogin()` que ya no se usaba. Las credenciales de esas cuentas se documentaron aparte en `CUENTAS_PRUEBA.md` (no se sube a git, ver abajo).
+
+### 🔒 Corrección de seguridad: `database.php` con credenciales reales no debe estar en git
+Al configurar la conexión a la base de datos real de HostGator, se detectó que `web/api/config/database.php` seguía siendo rastreado por git — y el repositorio de GitHub del proyecto es **público**. Subir ese archivo habría expuesto la contraseña real de la base de datos a cualquiera.
+
+**Corrección:**
+- Se sacó `database.php` del control de versiones (`git rm --cached`, el archivo se queda en el equipo local con los datos reales).
+- Se agregó `web/api/config/database.php` al `.gitignore`.
+- Se creó `web/api/config/database.example.php` (SÍ se sube a git) con valores de ejemplo/desarrollo, para que el repositorio siga documentando la estructura esperada sin exponer secretos reales.
+
+### 📂 Archivos modificados / creados
+- `web/login.html` (se quitó el bloque de cuentas de prueba y `fillLogin()`).
+- `web/api/config/database.php` (ahora con las credenciales reales de HostGator; dejó de rastrearse en git).
+- `web/api/config/database.example.php` (nuevo, plantilla pública sin secretos).
+- `.gitignore` (agrega `database.php` y `CUENTAS_PRUEBA.md`).
+- `CUENTAS_PRUEBA.md` (nuevo, no se sube a git — referencia local de cuentas/credenciales).
+
 ## 📅 [2026-08-07] — El Administrador Podía Terminar Viendo el Dashboard de Ciudadano (y Viceversa)
 
 ### 🐛 Bug: `dashboard.html` aceptaba sesión de cualquier rol

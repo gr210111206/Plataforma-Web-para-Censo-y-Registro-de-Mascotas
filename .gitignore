@@ -16,6 +16,10 @@ desktop.ini
 .env
 .env.local
 
+# Credenciales / cuentas de referencia (contraseñas en texto plano)
+CUENTAS_PRUEBA.md
+web/api/config/database.php
+
 # Dependencias (futuro)
 node_modules/
 vendor/

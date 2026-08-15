@@ -200,6 +200,20 @@
   </div>
 </section>
 
+<!-- ── Eventos próximos (oculta si el admin no tiene eventos publicados) ── -->
+<section class="section" id="eventos" style="display:none;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Agenda municipal</div>
+      <h2 class="section-title">Próximos eventos</h2>
+      <p class="section-desc">Fechas confirmadas de campañas, talleres y jornadas de salud animal.</p>
+    </div>
+    <div class="events-grid" id="eventsContainer">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
 <!-- ── Estadísticas ── -->
 <section class="section section-dark">
   <div class="container">
@@ -431,6 +445,58 @@ function renderCampaigns(campaigns) {
       </div>
     </div>
   `).join('');
+}
+
+/* ── Render Avisos (publicados desde el admin) — se agregan al mismo
+   grid que las campañas, ya que el encabezado de la sección dice
+   "Avisos y campañas". Si el aviso trae imagen se usa como fondo del
+   banner; si no, cae al ícono + color como las campañas. ── */
+function renderAvisos(avisos) {
+  const container = document.getElementById('campaignsContainer');
+  if (!avisos || avisos.length === 0) return;
+  const html = avisos.filter(a => a.publicado !== false).map(a => {
+    const bg = a.imagen
+      ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('${a.imagen}'); background-size:cover; background-position:center;`
+      : `background:${a.banner_color || '#F27A00'};`;
+    return `
+    <div class="campaign-card">
+      <div class="campaign-banner" style="${bg}">
+        ${a.imagen ? '' : `<div class="campaign-icon">${a.icono || '📢'}</div>`}
+        <div class="campaign-banner-text">
+          <div class="campaign-banner-tag">Aviso</div>
+          <div class="campaign-banner-title">${a.titulo}</div>
+        </div>
+      </div>
+      <div class="campaign-body">
+        <p class="campaign-desc">${a.descripcion || ''}</p>
+        <div class="campaign-footer">
+          <span class="campaign-date">${a.fecha_inicio ? formatDate(a.fecha_inicio) + (a.fecha_fin ? ` — ${formatDate(a.fecha_fin)}` : '') : ''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  container.insertAdjacentHTML('afterbegin', html);
+}
+
+/* ── Render Eventos próximos (publicados desde el admin) ── */
+function renderEvents(events) {
+  const section   = document.getElementById('eventos');
+  const container = document.getElementById('eventsContainer');
+  if (!events || events.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const sorted = [...events].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+  container.innerHTML = sorted.map(e => `
+    <div class="event-card">
+      <div class="event-date-badge">
+        <div class="event-date-month">${e.fecha ? new Date(e.fecha + 'T12:00:00').toLocaleString('es-MX', { month: 'short' }).toUpperCase() : '—'}</div>
+        <div class="event-date-day">${e.fecha ? new Date(e.fecha + 'T12:00:00').getDate() : '—'}</div>
+      </div>
+      <div class="event-info">
+        <div class="event-title">${e.titulo}</div>
+        <div class="event-meta">${e.lugar ? `📍 ${e.lugar}` : ''}${e.hora ? ` · ⏰ ${e.hora}` : ''}</div>
+        ${e.descripcion ? `<p class="event-desc">${e.descripcion}</p>` : ''}
+      </div>
+    </div>`).join('');
 }
 
 /* ── Render Articles ── */
@@ -705,7 +771,7 @@ async function initMap() {
 async function primeConfigFromServer() {
   try {
     const all = await apiGetSiteConfig();
-    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq'].forEach(key => {
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_avisos', 'padron_eventos'].forEach(key => {
       if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
     });
   } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
@@ -778,6 +844,14 @@ async function initIndex() {
   try {
     renderCampaigns(await apiGetCampanas());
   } catch (e) { /* sección queda vacía si falla */ }
+  try {
+    const avisosRaw = localStorage.getItem('padron_avisos');
+    if (avisosRaw) renderAvisos(JSON.parse(avisosRaw));
+  } catch (e) { /* sin avisos publicados */ }
+  try {
+    const eventosRaw = localStorage.getItem('padron_eventos');
+    renderEvents(eventosRaw ? JSON.parse(eventosRaw) : []);
+  } catch (e) { /* sin eventos publicados */ }
   try {
     renderArticles(await apiGetArticulos());
   } catch (e) { /* sección queda vacía si falla */ }

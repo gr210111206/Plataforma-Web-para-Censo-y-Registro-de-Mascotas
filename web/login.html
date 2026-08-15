@@ -165,30 +165,6 @@
           </label>
         </div>
 
-        <!-- Cuentas de prueba -->
-        <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gray-1); margin-bottom:20px;">
-          <strong style="color:var(--orange-dark);">🧪 Cuentas de prueba (clic para rellenar):</strong>
-          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-            <button type="button"
-              onclick="fillLogin('maria@demo.com', 'Demo12345');"
-              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
-              onmouseover="this.style.background='var(--orange)'; this.style.color='white';"
-              onmouseout="this.style.background='white'; this.style.color='';">
-              👤 Ciudadano<br/>
-              <span style="font-weight:400; font-size:.7rem;">maria@demo.com</span>
-            </button>
-            <button type="button"
-              onclick="fillLogin('admin@remac.elgrullo.mx', 'Admin1234');"
-              style="flex:1; padding:8px 10px; border-radius:var(--radius-sm); border:1.5px solid rgba(242,122,0,.4); background:white; cursor:pointer; font-size:.75rem; font-weight:600; transition:all .2s;"
-              onmouseover="this.style.background='var(--dark)'; this.style.color='white';"
-              onmouseout="this.style.background='white'; this.style.color='';">
-              🔧 Administrador<br/>
-              <span style="font-weight:400; font-size:.7rem;">admin@remac.elgrullo.mx</span>
-            </button>
-          </div>
-          <div style="font-size:.68rem; color:var(--gray-2); margin-top:6px;">Al iniciar sesión te llevamos automáticamente a tu portal o al panel admin, según tu cuenta.</div>
-        </div>
-
         <button type="submit" class="btn btn-primary btn-block">Acceder a mi portal →</button>
 
         <div class="form-divider">o</div>
@@ -247,7 +223,7 @@
 
         <label style="display:flex; align-items:flex-start; gap:8px; font-size:.82rem; cursor:pointer; color:var(--gray-1); margin-top:14px; margin-bottom:18px;">
           <input type="checkbox" required style="accent-color:var(--orange); margin-top:2px; flex-shrink:0;"/>
-          <span>Acepto el <a href="#" style="color:var(--orange);">Aviso de Privacidad</a> del H. Ayuntamiento de El Grullo.</span>
+          <span>Acepto el <a href="#" onclick="event.preventDefault(); openModal('modal-privacidad');" style="color:var(--orange);">Aviso de Privacidad</a> del H. Ayuntamiento de El Grullo.</span>
         </label>
 
         <button type="submit" class="btn btn-primary btn-block">Crear mi cuenta →</button>
@@ -263,11 +239,52 @@
   </main>
 </div>
 
+<!-- ── Modal: Aviso de Privacidad ── -->
+<div class="modal-overlay" id="modal-privacidad">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Aviso de Privacidad</h2>
+      <button class="modal-close" onclick="closeModal('modal-privacidad')">✕</button>
+    </div>
+    <div class="modal-body" style="font-size:.88rem; color:var(--gray-1); line-height:1.6;">
+      <p><strong>1. Identidad y domicilio del responsable</strong><br/>
+      El <strong>H. Ayuntamiento Constitucional de El Grullo, Jalisco</strong> (Administración 2024–2027), con domicilio en Calle Álvaro Obregón No. 48, Colonia Centro, El Grullo, Jalisco, C.P. 48970, a través de la Dirección de Medio Ambiente en coordinación con la Dirección de Informática Municipal, es responsable del tratamiento de los datos personales que usted proporcione en la plataforma REMAC (Padrón Municipal de Mascotas).</p>
+
+      <p><strong>2. Datos personales que se recaban</strong><br/>
+      Para crear tu cuenta y registrar a tus mascotas, se recaban: nombre completo, teléfono de contacto, correo electrónico, contraseña (almacenada de forma cifrada), y de forma opcional dirección y colonia. Al registrar una mascota también se recaban datos del animal (nombre, especie, raza, edad, fotografía, entre otros).</p>
+
+      <p><strong>3. Finalidad del tratamiento</strong><br/>
+      Tus datos se utilizan exclusivamente para: (a) crear y administrar tu cuenta ciudadana en el padrón; (b) vincular cada mascota registrada con su tutor responsable; (c) generar tu acta oficial de registro con folio único; (d) contactarte en caso de reportes relacionados con tu mascota (por ejemplo, si se encuentra extraviada); y (e) generar estadísticas agregadas y anónimas del censo municipal de mascotas. No se usan tus datos para fines de publicidad ni se comparten con terceros ajenos al Ayuntamiento.</p>
+
+      <p><strong>4. Derechos ARCO</strong><br/>
+      Puedes solicitar el Acceso, Rectificación, Cancelación u Oposición (derechos ARCO) al tratamiento de tus datos personales, acudiendo directamente a la Dirección de Medio Ambiente del H. Ayuntamiento de El Grullo, o a través de los medios de contacto publicados en el pie de página de este portal.</p>
+
+      <p style="margin-bottom:0; color:var(--gray-2); font-size:.8rem;">Última actualización: agosto de 2026.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-privacidad')">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="js/api-client.js"></script>
 <script>
+/* ── Modal genérico (Aviso de Privacidad) ── */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
 /* ── Tab switching ── */
 function switchTab(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -275,18 +292,6 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('form-' + tab).classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ── Quick fill credentials ── */
-function fillLogin(email, password) {
-  document.getElementById('login-email').value    = email;
-  document.getElementById('login-password').value = password;
-  document.getElementById('login-email').style.borderColor = 'var(--orange)';
-  document.getElementById('login-password').style.borderColor = 'var(--orange)';
-  setTimeout(() => {
-    document.getElementById('login-email').style.borderColor = '';
-    document.getElementById('login-password').style.borderColor = '';
-  }, 1500);
 }
 
 /* ── Login handler único: detecta el rol real (viene del servidor) y

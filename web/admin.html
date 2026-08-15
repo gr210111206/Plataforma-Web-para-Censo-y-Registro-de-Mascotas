@@ -1446,7 +1446,10 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary btn-block" onclick="saveAviso()">📢 Publicar aviso</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-primary" id="avisoSaveBtn" onclick="saveAviso()" style="flex:1;">📢 Publicar aviso</button>
+              <button class="btn btn-ghost" id="avisoCancelBtn" onclick="cancelEditAviso()" style="display:none;">Cancelar</button>
+            </div>
           </div>
 
           <!-- Lista avisos publicados -->
@@ -2939,51 +2942,111 @@ function resetSEO() {
 /* ══════════════════════════════════════════════════ */
 /*  AVISOS                                            */
 /* ══════════════════════════════════════════════════ */
+let editingAvisoId = null;
+
 function saveAviso() {
   const titulo = document.getElementById('aviso-titulo').value.trim();
   const desc   = document.getElementById('aviso-desc').value.trim();
   if (!titulo) { showToast('⚠️ El título es obligatorio', 'error'); return; }
-  avisoData.push({ id: Date.now(), titulo, descripcion: desc, publicado: true, banner_color: '#F27A00', icono: '📢', fecha_inicio: document.getElementById('aviso-inicio').value || '' });
+  const imgEl  = document.querySelector('#aviso-prev img');
+  const datos  = {
+    titulo, descripcion: desc, publicado: true,
+    banner_color: '#F27A00', icono: '📢',
+    imagen: imgEl ? imgEl.src : (editingAvisoId !== null ? avisoData[editingAvisoId].imagen : null),
+    fecha_inicio: document.getElementById('aviso-inicio').value || '',
+    fecha_fin: document.getElementById('aviso-fin').value || '',
+  };
+  if (editingAvisoId !== null) {
+    avisoData[editingAvisoId] = { ...avisoData[editingAvisoId], ...datos };
+    editingAvisoId = null;
+    document.getElementById('avisoSaveBtn').textContent = '📢 Publicar aviso';
+    document.getElementById('avisoCancelBtn').style.display = 'none';
+    showToast('✅ Aviso actualizado correctamente', 'success');
+  } else {
+    avisoData.push({ id: Date.now(), ...datos });
+    showToast('✅ Aviso publicado correctamente', 'success');
+  }
   renderAvisos();
+  persistAvisos();
   document.getElementById('aviso-titulo').value = '';
   document.getElementById('aviso-desc').value = '';
   document.getElementById('aviso-inicio').value = '';
   document.getElementById('aviso-fin').value = '';
   document.getElementById('aviso-prev').innerHTML = '';
-  showToast('✅ Aviso publicado correctamente', 'success');
 }
 function renderAvisos() {
   const list = document.getElementById('avisosList');
-  list.innerHTML = avisoData.map(a => `
+  list.innerHTML = avisoData.map((a, i) => `
     <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius); padding:14px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <span>${a.icono}</span>
+        <span>${a.icono || '📢'}</span>
         <div style="font-weight:700; font-size:.88rem;">${a.titulo}</div>
         <span class="badge badge-green" style="margin-left:auto; font-size:.65rem;">Publicado</span>
       </div>
-      <div style="font-size:.78rem; color:var(--gray-2); margin-bottom:8px;">${a.descripcion?.substring(0,80) || ''}...</div>
+      <div style="font-size:.78rem; color:var(--gray-2); margin-bottom:8px;">${(a.descripcion || '').substring(0,80)}</div>
       <div style="display:flex; gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="showToast('✏️ Editando aviso...','info')" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="this.closest('div[style]').remove(); showToast('🗑️ Aviso eliminado','success')" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="editAviso(${i})" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAviso(${i})" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
       </div>
     </div>`).join('');
+}
+function editAviso(i) {
+  editingAvisoId = i;
+  const a = avisoData[i];
+  document.getElementById('aviso-titulo').value = a.titulo;
+  document.getElementById('aviso-desc').value = a.descripcion || '';
+  document.getElementById('aviso-inicio').value = a.fecha_inicio || '';
+  document.getElementById('aviso-fin').value = a.fecha_fin || '';
+  document.getElementById('aviso-prev').innerHTML = a.imagen ? `<img src="${a.imagen}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />` : '';
+  document.getElementById('avisoSaveBtn').textContent = '💾 Guardar cambios';
+  document.getElementById('avisoCancelBtn').style.display = 'inline-flex';
+  document.getElementById('aviso-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function cancelEditAviso() {
+  editingAvisoId = null;
+  document.getElementById('aviso-titulo').value = '';
+  document.getElementById('aviso-desc').value = '';
+  document.getElementById('aviso-inicio').value = '';
+  document.getElementById('aviso-fin').value = '';
+  document.getElementById('aviso-prev').innerHTML = '';
+  document.getElementById('avisoSaveBtn').textContent = '📢 Publicar aviso';
+  document.getElementById('avisoCancelBtn').style.display = 'none';
+}
+function deleteAviso(i) {
+  avisoData.splice(i, 1);
+  renderAvisos();
+  persistAvisos();
+  showToast('🗑️ Aviso eliminado', 'success');
+}
+// Guarda avisoData completo en localStorage y lo sincroniza con el
+// servidor, para que el banner público (index.html) refleje lo último.
+function persistAvisos() {
+  localStorage.setItem('padron_avisos', JSON.stringify(avisoData));
+  pushConfigToServer('padron_avisos', avisoData);
+}
+function loadAvisosFromServer() {
+  const raw = localStorage.getItem('padron_avisos');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved)) { avisoData = saved; renderAvisos(); }
+  } catch (e) { /* ignore */ }
 }
 
 /* ══════════════════════════════════════════════════ */
 /*  EVENTOS                                           */
 /* ══════════════════════════════════════════════════ */
-let eventosData = [
-  { titulo: 'Campaña Vacunación Antirrábica', fecha: '2026-07-15', hora: '09:00', lugar: 'Centro de Salud Municipal' },
-  { titulo: 'Taller de Tenencia Responsable', fecha: '2026-08-05', hora: '10:00', lugar: 'Palacio Municipal' },
-];
+let eventosData = [];
 function saveEvento() {
   const titulo = document.getElementById('evt-titulo').value.trim();
   const fecha  = document.getElementById('evt-fecha').value;
   const hora   = document.getElementById('evt-hora').value;
   const lugar  = document.getElementById('evt-lugar').value.trim();
+  const desc   = document.getElementById('evt-desc').value.trim();
   if (!titulo || !fecha) { showToast('⚠️ Completa título y fecha', 'error'); return; }
-  eventosData.push({ titulo, fecha, hora, lugar });
+  eventosData.push({ id: Date.now(), titulo, fecha, hora, lugar, descripcion: desc });
   renderEventos();
+  persistEventos();
   document.getElementById('evt-titulo').value = '';
   document.getElementById('evt-fecha').value = '';
   document.getElementById('evt-hora').value = '';
@@ -3003,8 +3066,20 @@ function renderEventos() {
         <div style="font-weight:700; font-size:.88rem;">${e.titulo}</div>
         <div style="font-size:.75rem; color:var(--gray-2);">📍 ${e.lugar || '—'} · ⏰ ${e.hora || '—'}</div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); showToast('🗑️ Evento eliminado','success')" style="padding:4px 8px;">🗑️</button>
+      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); persistEventos(); showToast('🗑️ Evento eliminado','success')" style="padding:4px 8px;">🗑️</button>
     </div>`).join('');
+}
+function persistEventos() {
+  localStorage.setItem('padron_eventos', JSON.stringify(eventosData));
+  pushConfigToServer('padron_eventos', eventosData);
+}
+function loadEventosFromServer() {
+  const raw = localStorage.getItem('padron_eventos');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved)) { eventosData = saved; renderEventos(); }
+  } catch (e) { /* ignore */ }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -3748,6 +3823,8 @@ const SERVER_CONFIG_KEYS = [
   'padron_municipio_config',
   'padron_reglamento',
   'padron_faq',
+  'padron_avisos',
+  'padron_eventos',
 ];
 
 // Envía una clave al servidor (además de guardarse en localStorage
@@ -3777,6 +3854,8 @@ async function primeConfigFromServer() {
   loadSiteContentConfig();
   loadReglamento();
   loadFaqFromServer();
+  loadAvisosFromServer();
+  loadEventosFromServer();
   previewFooter();
   buildIconSelectors();
 }

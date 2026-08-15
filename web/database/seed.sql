@@ -1,9 +1,8 @@
 -- ══════════════════════════════════════════════════
 -- REMAC — Datos de prueba (seed)
--- Ejecutar DESPUÉS de schema.sql
+-- Ejecutar DESPUÉS de schema.sql, en la misma base de datos
+-- (no lleva "USE remac_db" para funcionar con cualquier nombre real).
 -- ══════════════════════════════════════════════════
-
-USE remac_db;
 
 -- ── Dueños / Usuarios ────────────────────────────
 INSERT INTO duenos (nombre, telefono, email, direccion, colonia, password_hash, rol) VALUES

@@ -5,11 +5,12 @@
 -- Ejecutar en phpMyAdmin de HostGator
 -- ══════════════════════════════════════════════════
 
-CREATE DATABASE IF NOT EXISTS remac_db
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE remac_db;
+-- NOTA: no se incluye "CREATE DATABASE" ni "USE" aquí a propósito.
+-- En hosting compartido (HostGator) la base de datos ya se crea desde
+-- cPanel con su propio nombre (con prefijo del usuario, ej. ferna814_remac)
+-- y ese usuario de MySQL no tiene permiso para crear bases nuevas.
+-- Este script se ejecuta ya con la base de datos correcta seleccionada
+-- en phpMyAdmin (Import dentro de esa base), no importa cómo se llame.
 
 -- ── Tabla de dueños / ciudadanos ─────────────────
 CREATE TABLE IF NOT EXISTS duenos (

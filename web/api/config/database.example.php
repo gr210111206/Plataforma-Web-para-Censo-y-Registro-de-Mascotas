@@ -1,24 +1,24 @@
 <?php
 /**
- * REMAC — Configuración de la base de datos
+ * REMAC — Configuración de la base de datos (PLANTILLA)
  * H. Ayuntamiento de El Grullo, Jalisco
  *
- * ⚠️  ESTOS SON VALORES DE DESARROLLO LOCAL (XAMPP).
- *     ANTES DE SUBIR A HOSTGATOR: reemplaza DB_USER, DB_PASS
- *     y BASE_URL con los datos reales que te da el cPanel
- *     al crear la base de datos (ver checklist de despliegue).
+ * Copia este archivo como "database.php" (mismo folder) y rellena
+ * tus credenciales reales. "database.php" NUNCA se sube a git
+ * (está en .gitignore) precisamente para no exponer contraseñas
+ * reales en un repositorio público.
  */
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'remac_db');
-define('DB_USER', 'remac_local');       // ← Cambiar por el usuario real de HostGator
-define('DB_PASS', 'remac_local_pw');    // ← Cambiar por la contraseña real de HostGator
+define('DB_USER', 'remac_local');
+define('DB_PASS', 'remac_local_pw');
 define('DB_CHARSET', 'utf8mb4');
 
 /**
  * Configuración de la aplicación
  */
-define('BASE_URL',    'http://localhost/remac');  // ← Cambiar al dominio real antes de subir
+define('BASE_URL',    'http://localhost/remac');  // ← Cambiar al dominio/URL real antes de subir
 define('TOKEN_EXPIRY', 86400);                    // 24 horas en segundos
 
 /**
