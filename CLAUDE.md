@@ -17,7 +17,7 @@ Este documento sirve como archivo de contexto principal (`CLAUDE.md`) para guiar
 La plataforma está diseñada con una arquitectura ligera, rápida y modular sin dependencias complejas de build:
 
 1. **Frontend Público y Administrativo:**
-   - **HTML5 Semántico:** Estructura limpia y accesible (`index.html`, `login.html`, `dashboard.html`, `mascota.html`, `admin.html`).
+   - **HTML5 Semántico:** Estructura limpia y accesible (`index.html`, `login.html`, `dashboard.html`, `mascota.html`, `admin.html`, `asistente.html`).
    - **CSS Vanilla Moderno (`web/css/styles.css`):** Sistema de diseño con variables CSS (`--orange`, `--dark`, `--surface`), glassmorphism, degradados, animaciones micro-interactivas y diseño 100% responsivo.
    - **JavaScript Vanilla Modular (`web/js/`):** Manipulación dinámica del DOM, clientes de API HTTP (`api-client.js`) y fallback simulado (`mock-data.js`).
 
@@ -36,10 +36,11 @@ La plataforma está diseñada con una arquitectura ligera, rápida y modular sin
 
 ### A. Autenticación y Cuentas de Usuarios (`duenos`)
 - ⚠️ **CURP ELIMINADA:** La CURP fue eliminada por completo de todo el sistema (base de datos, formularios HTML, perfil y APIs PHP).
-- 📧 **Correo Electrónico (Email):** Es el identificador único principal de acceso junto con la **Contraseña**.
+- 📧 **Correo Electrónico (Email):** Es el identificador único principal de acceso junto con la **Contraseña** — pero ya **no es obligatorio a nivel de base de datos** (ver rol `asistente` abajo).
 - 📞 **Teléfono de Contacto:** Campo **OBLIGATORIO (`NOT NULL`)** en el registro de usuarios.
+- **Tres roles:** `ciudadano` (autoregistro con correo), `admin` (solo se crea directo en la base de datos, nunca desde la interfaz), y **`asistente`** — personal municipal que registra mascotas a nombre de ciudadanos sin correo electrónico (ej. personas adultas mayores), en ventanilla o en campañas fuera de la oficina. Las cuentas de asistente las crea un admin desde la pestaña "Roles" del panel admin (`web/admin.html`), nunca se auto-registran.
 - **Estructura de la tabla `duenos`:**
-  `id`, `nombre`, `telefono` (NOT NULL), `email` (NOT NULL UNIQUE), `direccion`, `colonia`, `password_hash`, `rol` ('ciudadano' | 'admin'), `activo`, `created_at`, `updated_at`.
+  `id`, `nombre`, `telefono` (NOT NULL), `email` (UNIQUE, puede ser `NULL` — un ciudadano registrado por un asistente no tiene correo ni puede iniciar sesión él mismo), `direccion`, `colonia`, `password_hash`, `rol` ('ciudadano' | 'admin' | 'asistente'), `activo`, `created_at`, `updated_at`.
 
 ### B. Registro de Mascotas (`mascotas`)
 - Pertenecen a un dueño (`dueno_id`).
@@ -75,6 +76,7 @@ Anteproyecto/
 ├── HISTORIAL_CAMBIOS.md           # Registro obligatorio cronológico de cambios
 └── web/
     ├── admin.html                 # Panel de administración completo
+    ├── asistente.html             # Registro asistido (rol Asistente: mascotas para ciudadanos sin correo)
     ├── dashboard.html             # Panel ciudadano (mis mascotas, perfil, actas)
     ├── index.html                 # Portada principal pública
     ├── login.html                 # Acceso y registro de ciudadanos

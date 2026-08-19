@@ -371,16 +371,16 @@
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
               <label>Domicilio</label>
-              <input class="form-control" value="Calle Morelos #45" id="perfil-domicilio" />
+              <input class="form-control" list="lista-calles" placeholder="Ej. Calle Morelos #45" id="perfil-domicilio" />
+              <datalist id="lista-calles"></datalist>
             </div>
             <div class="form-group">
               <label>Colonia</label>
-              <select class="form-control" id="perfil-colonia">
-                <option>Centro</option>
-                <option>El Sabino</option>
-                <option>La Loma</option>
-                <option>Las Flores</option>
-              </select>
+              <div class="combo" id="combo-colonia">
+                <input class="form-control" id="perfil-colonia-input" placeholder="Busca tu colonia…" autocomplete="off" />
+                <input type="hidden" id="perfil-colonia" />
+                <div class="combo-list" id="combo-colonia-list"></div>
+              </div>
             </div>
           </div>
           <button class="btn btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
@@ -540,7 +540,9 @@
 <!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
+<script src="js/tema.js"></script>
 <script>
 /* ══════════════════════════════════════════════════ */
 /*  SESSION — validada contra el servidor, no solo localStorage */
@@ -564,6 +566,51 @@ const ICON_FILE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke
 const ICON_CAMERA = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg>';
 const ICON_PHONE = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg>';
 
+/* ── Combo: buscador desplegable reutilizable (ej. Colonia) ──
+   input visible (texto, filtrable) + input oculto (valor real) +
+   lista desplegable con scroll, estilizada con los mismos colores
+   del sitio en vez del <select> nativo del navegador. */
+function initCombo(inputId, hiddenId, listId, options) {
+  const input  = document.getElementById(inputId);
+  const hidden = document.getElementById(hiddenId);
+  const list   = document.getElementById(listId);
+  if (!input || !hidden || !list) return;
+
+  function render(filtro) {
+    const q = (filtro || '').toLowerCase();
+    const filtradas = options.filter(o => o.nombre.toLowerCase().includes(q));
+    list.innerHTML = filtradas.length
+      ? filtradas.map(o => `<div class="combo-option" data-value="${o.nombre}">${o.nombre}${o.cp ? `<span class="combo-option-cp">C.P. ${o.cp}</span>` : ''}</div>`).join('')
+      : '<div class="combo-empty">Sin resultados</div>';
+    list.querySelectorAll('.combo-option').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault(); // evita que el blur del input cierre la lista antes del click
+        input.value = opt.dataset.value;
+        hidden.value = opt.dataset.value;
+        list.classList.remove('open');
+      });
+    });
+  }
+  input.addEventListener('focus', () => { render(''); list.classList.add('open'); });
+  input.addEventListener('input', () => { hidden.value = ''; render(input.value); list.classList.add('open'); });
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 120));
+
+  input._comboSetValue = (value) => { input.value = value || ''; hidden.value = value || ''; };
+}
+
+/* Llena el buscador de colonia y el <datalist> de calles con el
+   catálogo real de El Grullo (js/el-grullo-data.js), en vez de las
+   4 colonias de ejemplo que había antes. */
+function poblarDireccionElGrullo() {
+  if (typeof COLONIAS_EL_GRULLO !== 'undefined') {
+    initCombo('perfil-colonia-input', 'perfil-colonia', 'combo-colonia-list', COLONIAS_EL_GRULLO);
+  }
+  const datalistCalles = document.getElementById('lista-calles');
+  if (datalistCalles && typeof CALLES_EL_GRULLO !== 'undefined') {
+    datalistCalles.innerHTML = CALLES_EL_GRULLO.map(c => `<option value="Calle ${c}"></option>`).join('');
+  }
+}
+
 function applySessionToUI() {
   const sessionNombre = session.nombre   || 'Ciudadano';
   const sessionEmail  = session.email    || '';
@@ -583,8 +630,10 @@ function applySessionToUI() {
   document.getElementById('perfil-nombre').value          = sessionNombre;
   document.getElementById('perfil-telefono').value        = sessionPhone;
   document.getElementById('perfil-email-field').value     = sessionEmail;
+  poblarDireccionElGrullo();
   if (document.getElementById('perfil-domicilio')) document.getElementById('perfil-domicilio').value = session.direccion || '';
-  if (document.getElementById('perfil-colonia'))   document.getElementById('perfil-colonia').value   = session.colonia   || '';
+  const coloniaInput = document.getElementById('perfil-colonia-input');
+  if (coloniaInput && coloniaInput._comboSetValue) coloniaInput._comboSetValue(session.colonia || '');
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -593,7 +642,9 @@ function applySessionToUI() {
 async function initDashboard() {
   session = await apiRequireSession(); // redirige a login.html si no hay sesión válida
   if (session.rol === 'admin') { window.location.href = 'admin.html'; return; }
+  if (session.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
   applySessionToUI();
+  aplicarTemaVisual();
 
   try {
     myPets = await apiGetMisMascotas();

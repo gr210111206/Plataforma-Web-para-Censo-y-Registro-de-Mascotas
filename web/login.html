@@ -271,6 +271,7 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="js/api-client.js"></script>
+<script src="js/tema.js"></script>
 <script>
 /* ── Modal genérico (Aviso de Privacidad) ── */
 function openModal(id) {
@@ -295,9 +296,12 @@ function switchTab(tab) {
 }
 
 /* ── Login handler único: detecta el rol real (viene del servidor) y
-   manda a cada quien a su portal — el ciudadano a dashboard.html, el
-   administrador a admin.html. No hay una pestaña de login separada
-   para admin: cualquier cuenta entra por el mismo formulario. ── */
+   manda a cada quien a su portal — ciudadano a dashboard.html,
+   administrador a admin.html, asistente a asistente.html. No hay una
+   pestaña de login separada por rol: cualquier cuenta entra por el
+   mismo formulario. ── */
+const DESTINO_POR_ROL = { admin: 'admin.html', asistente: 'asistente.html' };
+
 async function handleLogin(e) {
   e.preventDefault();
   const inputEmail = document.getElementById('login-email').value.trim();
@@ -306,8 +310,8 @@ async function handleLogin(e) {
 
   try {
     const data = await apiLoginUser(inputEmail, inputPass);
-    const destino = data.rol === 'admin' ? 'admin.html' : 'dashboard.html';
-    showToast(`✅ ¡Bienvenido${data.rol === 'admin' ? '' : ' de nuevo'}, ${data.nombre}!`, 'success');
+    const destino = DESTINO_POR_ROL[data.rol] || 'dashboard.html';
+    showToast(`✅ ¡Bienvenido${data.rol === 'ciudadano' ? ' de nuevo' : ''}, ${data.nombre}!`, 'success');
     setTimeout(() => window.location.href = destino, 1000);
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
@@ -359,6 +363,7 @@ document.addEventListener('click', e => {
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
   applyAppearanceConfig();
+  aplicarTemaVisual();
 });
 
 /* ── Aplica apariencia/textos configurados por el admin.

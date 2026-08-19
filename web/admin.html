@@ -824,6 +824,9 @@
     <a class="sidebar-link" id="nav-usuarios" onclick="showAdmin('usuarios')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg></span> Usuarios
     </a>
+    <a class="sidebar-link" id="nav-roles" onclick="showAdmin('roles')">
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span> Roles
+    </a>
     <a class="sidebar-link" id="nav-articulo" onclick="showAdmin('articulo')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5" /><path d="M18 14h-8" /><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg></span> Nuevo artículo
     </a>
@@ -979,6 +982,88 @@
           </thead>
           <tbody id="usuariosTableBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: ROLES Y CUENTAS DE PERSONAL       -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-roles" style="display:none;">
+      <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:14px 18px; font-size:.85rem; color:var(--gray-1); margin-bottom:20px;">
+        Las cuentas de <strong>Asistente</strong> pueden registrar mascotas a nombre de ciudadanos que no tienen correo electrónico (por ejemplo, personas adultas mayores), tanto en ventanilla como en una campaña fuera de la oficina. No pueden ver ni editar el resto del panel admin. <strong>Nunca se puede crear otra cuenta de Administrador desde aquí.</strong>
+      </div>
+
+      <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px; font-weight:700; font-family:'Outfit',sans-serif;">Cuentas de personal (Asistente)</div>
+        <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
+      </div>
+
+      <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); overflow:hidden;">
+        <table class="table" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--surface); text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--gray-2);">
+              <th style="padding:12px 14px;">Nombre</th>
+              <th style="padding:12px 14px;">Contacto</th>
+              <th style="padding:12px 14px;">Rol</th>
+              <th style="padding:12px 14px;">Creada</th>
+              <th style="padding:12px 14px;">Estatus</th>
+              <th style="padding:12px 14px;"></th>
+            </tr>
+          </thead>
+          <tbody id="rolesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Modal: Nueva cuenta (Ciudadano o Asistente) ── -->
+    <div class="modal-overlay" id="modal-nuevo-usuario">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Nueva cuenta</h2>
+          <button class="modal-close" onclick="closeModal('modal-nuevo-usuario')">✕</button>
+        </div>
+        <div class="modal-body">
+          <form id="form-nuevo-usuario" onsubmit="handleNuevoUsuario(event)">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label for="nu-rol">Rol de la cuenta</label>
+                <select class="form-control" id="nu-rol" required>
+                  <option value="asistente" selected>Asistente</option>
+                  <option value="ciudadano">Ciudadano</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="nu-nombre">Nombre completo</label>
+                <input class="form-control" id="nu-nombre" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nu-email">Correo electrónico</label>
+                  <input class="form-control" type="email" id="nu-email" required />
+                </div>
+                <div class="form-group">
+                  <label for="nu-telefono">Teléfono</label>
+                  <input class="form-control" id="nu-telefono" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nu-password">Contraseña</label>
+                  <input class="form-control" type="password" id="nu-password" minlength="8" required />
+                </div>
+                <div class="form-group">
+                  <label for="nu-password-confirm">Confirmar contraseña</label>
+                  <input class="form-control" type="password" id="nu-password-confirm" minlength="8" required />
+                </div>
+              </div>
+              <div style="font-size:.78rem; color:var(--gray-2);">Comparte esta contraseña directamente con la persona — no se le puede enviar por correo si es una cuenta de Asistente que tú mismo estás creando.</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" onclick="closeModal('modal-nuevo-usuario')">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Crear cuenta</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -2101,6 +2186,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="js/api-client.js"></script>
+<script src="js/tema.js"></script>
 <script>
 /* ══════════════════════════════════════════════════ */
 /*  DATA — cargada de la API real en initAdmin()      */
@@ -2129,6 +2215,7 @@ const sections = {
   datos:       { title: 'Datos del Padrón',       sub: 'Mapa de mascotas · Gráficas · Seguimiento en tiempo real' },
   seguimiento: { title: 'Seguimiento de Mascotas', sub: 'Busca y gestiona el registro individual de cada mascota' },
   usuarios:    { title: 'Cuentas Ciudadanas',      sub: 'Consulta y gestiona las cuentas registradas de los ciudadanos' },
+  roles:       { title: 'Roles y Cuentas de Personal', sub: 'Crea cuentas de Asistente para registro en ventanilla o en campo' },
   articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
   config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
 };
@@ -2145,6 +2232,7 @@ function showAdmin(name) {
   document.getElementById('adminSub').textContent   = info.sub   || '';
 
   if (name === 'datos' && !window._mapInit) initMap();
+  if (name === 'roles') loadRolesTable();
 
   toggleSidebar(false);
 }
@@ -2435,7 +2523,7 @@ function renderUsuariosTable(data) {
   tbody.innerHTML = data.map(u => `
     <tr style="border-top:1px solid var(--gray-4);">
       <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
-      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
       <td style="padding:12px 14px; font-size:.82rem;">${u.colonia || '—'}</td>
       <td style="padding:12px 14px; text-align:center;">${u.total_mascotas}</td>
       <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
@@ -2456,7 +2544,7 @@ function filterUsuarios() {
   const q = document.getElementById('userSearch').value.toLowerCase();
   const data = !q ? allUsuarios : allUsuarios.filter(u =>
     u.nombre.toLowerCase().includes(q) ||
-    u.email.toLowerCase().includes(q) ||
+    (u.email || '').toLowerCase().includes(q) ||
     (u.telefono || '').includes(q)
   );
   renderUsuariosTable(data);
@@ -2469,6 +2557,100 @@ async function toggleUsuarioActivo(id, estaActivo) {
     if (u) u.activo = estaActivo ? 0 : 1;
     filterUsuarios();
     showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  MODAL genérico (admin.html no tenía ninguno antes) */
+/* ══════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
+/* ══════════════════════════════════════════════════ */
+/*  ROLES — cuentas de personal (Asistente)            */
+/* ══════════════════════════════════════════════════ */
+let allAsistentes = [];
+
+async function loadRolesTable() {
+  try {
+    allAsistentes = await apiGetUsuarios({ rol: 'asistente' });
+    renderRolesTable();
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar las cuentas de personal: ${err.message}`, 'error');
+  }
+}
+
+function renderRolesTable() {
+  const tbody = document.getElementById('rolesTableBody');
+  if (allAsistentes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">Todavía no hay cuentas de Asistente. Crea la primera con "+ Nueva cuenta".</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allAsistentes.map(u => `
+    <tr style="border-top:1px solid var(--gray-4);">
+      <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
+      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '—'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+      <td style="padding:12px 14px;"><span class="badge badge-orange">Asistente</span></td>
+      <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
+      <td style="padding:12px 14px;">
+        ${u.activo == 1
+          ? '<span class="badge badge-green">✓ Activa</span>'
+          : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
+      </td>
+      <td style="padding:12px 14px; text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="toggleAsistenteActivo(${u.id}, ${u.activo == 1})">
+          ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+async function toggleAsistenteActivo(id, estaActivo) {
+  try {
+    await apiSetUsuarioActivo(id, !estaActivo);
+    const u = allAsistentes.find(x => x.id === id);
+    if (u) u.activo = estaActivo ? 0 : 1;
+    renderRolesTable();
+    showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+function abrirNuevoUsuario() {
+  document.getElementById('form-nuevo-usuario').reset();
+  document.getElementById('nu-rol').value = 'asistente';
+  openModal('modal-nuevo-usuario');
+}
+
+async function handleNuevoUsuario(e) {
+  e.preventDefault();
+  const rol      = document.getElementById('nu-rol').value;
+  const nombre   = document.getElementById('nu-nombre').value.trim();
+  const email    = document.getElementById('nu-email').value.trim();
+  const telefono = document.getElementById('nu-telefono').value.trim();
+  const pass     = document.getElementById('nu-password').value;
+  const passConf = document.getElementById('nu-password-confirm').value;
+
+  if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
+  if (pass.length < 8)   { showToast('❌ La contraseña debe tener al menos 8 caracteres', 'error'); return; }
+
+  try {
+    await apiCrearCuentaUsuario({ nombre, email, telefono, password: pass, rol });
+    closeModal('modal-nuevo-usuario');
+    showToast(`✅ Cuenta de ${rol === 'asistente' ? 'Asistente' : 'Ciudadano'} creada correctamente`, 'success');
+    if (rol === 'asistente') loadRolesTable();
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
@@ -2819,6 +3001,8 @@ function saveTema() {
     showFolio:  document.getElementById('toggle-folio').checked,
   };
   localStorage.setItem('padron_tema_config', JSON.stringify(data));
+  pushConfigToServer('padron_tema_config', data);
+  aplicarTemaVisual(); // aplica el color/bordes de inmediato, también aquí en el propio admin
   // Mark status bar
   const stEl = document.getElementById('statusTema');
   if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Tema guardado';
@@ -2827,17 +3011,47 @@ function saveTema() {
   const badge = document.createElement('div');
   badge.className = 'config-nav-badge saved';
   document.getElementById('cnav-tema').prepend(badge);
-  showToast('🖌️ Tema aplicado. Recarga el portal para verlo.', 'success');
+  showToast('🖌️ Tema aplicado en todo el sitio.', 'success');
 }
 
 function resetTema() {
   localStorage.removeItem('padron_tema_config');
+  pushConfigToServer('padron_tema_config', {});
   _currentColor = '#F27A00';
   _currentFont  = 'Inter';
+  document.documentElement.style.removeProperty('--orange');
+  document.documentElement.style.removeProperty('--orange-dark');
+  document.documentElement.style.removeProperty('--orange-light');
+  document.documentElement.style.removeProperty('--orange-pale');
+  document.documentElement.style.removeProperty('--radius-sm');
+  document.documentElement.style.removeProperty('--radius');
+  document.documentElement.style.removeProperty('--radius-lg');
+  document.documentElement.style.removeProperty('--radius-xl');
   document.querySelectorAll('.color-swatch').forEach(s => { s.classList.remove('selected'); if (s.style.background.includes('242, 122') || s.style.background === 'rgb(242, 122, 0)') s.classList.add('selected'); });
   document.querySelectorAll('.font-card').forEach(c => { c.classList.remove('selected'); if (c.querySelector('.font-card-name')?.textContent === 'Inter') c.classList.add('selected'); });
   renderThemePreview();
   showToast('♻️ Tema restablecido al predeterminado', 'info');
+}
+
+// Restaura el tema guardado al abrir el panel (antes no se recordaba
+// ni siquiera dentro del propio admin al recargar la página).
+function loadTemaFromServer() {
+  const raw = localStorage.getItem('padron_tema_config');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (saved && saved.color) {
+      _currentColor = saved.color;
+      _currentFont  = saved.font || 'Inter';
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      document.querySelectorAll('.font-card').forEach(c => c.classList.remove('selected'));
+      if (document.getElementById('toggle-darkmode')) document.getElementById('toggle-darkmode').checked = !!saved.darkmode;
+      if (document.getElementById('toggle-anim'))     document.getElementById('toggle-anim').checked     = saved.anim !== false;
+      if (document.getElementById('toggle-radius'))   document.getElementById('toggle-radius').checked   = saved.radius !== false;
+      if (document.getElementById('toggle-folio'))    document.getElementById('toggle-folio').checked    = saved.showFolio !== false;
+      renderThemePreview();
+    }
+  } catch (e) { /* ignore */ }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -3222,6 +3436,7 @@ let adminArticulos = [];
 
 async function initAdmin() {
   const _user = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  if (_user.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
   if (_user.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
   await primeConfigFromServer();
   applyAdminOwnAppearance();
@@ -3825,6 +4040,7 @@ const SERVER_CONFIG_KEYS = [
   'padron_faq',
   'padron_avisos',
   'padron_eventos',
+  'padron_tema_config',
 ];
 
 // Envía una clave al servidor (además de guardarse en localStorage
@@ -3856,6 +4072,8 @@ async function primeConfigFromServer() {
   loadFaqFromServer();
   loadAvisosFromServer();
   loadEventosFromServer();
+  loadTemaFromServer();
+  aplicarTemaVisual();
   previewFooter();
   buildIconSelectors();
 }

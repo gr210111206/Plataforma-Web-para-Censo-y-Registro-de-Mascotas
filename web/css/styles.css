@@ -1268,6 +1268,33 @@ tbody tr:hover { background: var(--surface); }
   flex-shrink: 0;
 }
 
+/* ── Combo (buscador desplegable, ej. Colonia en Mi perfil) ── */
+.combo { position: relative; }
+.combo-list {
+  display: none;
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  max-height: 240px; overflow-y: auto;
+  background: var(--white); border: 1.5px solid var(--orange);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  z-index: 999;
+}
+.combo-list.open { display: block; }
+.combo-option {
+  padding: 10px 14px;
+  font-size: .86rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--gray-4);
+  transition: background .12s;
+}
+.combo-option:last-child { border-bottom: none; }
+.combo-option:hover, .combo-option.active { background: var(--orange-pale); }
+.combo-option-cp { color: var(--gray-2); font-size: .74rem; white-space: nowrap; }
+.combo-empty { padding: 14px; font-size: .82rem; color: var(--gray-2); text-align: center; }
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;

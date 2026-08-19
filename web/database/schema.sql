@@ -17,11 +17,11 @@ CREATE TABLE IF NOT EXISTS duenos (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   nombre        VARCHAR(150)  NOT NULL,
   telefono      VARCHAR(20)   NOT NULL,
-  email         VARCHAR(150)  NOT NULL UNIQUE,
+  email         VARCHAR(150)  DEFAULT NULL UNIQUE, -- NULL = ciudadano sin correo, registrado por un asistente
   direccion     VARCHAR(200)  DEFAULT NULL,
   colonia       VARCHAR(100)  DEFAULT NULL,
   password_hash VARCHAR(255)  DEFAULT NULL,
-  rol           ENUM('ciudadano','admin') NOT NULL DEFAULT 'ciudadano',
+  rol           ENUM('ciudadano','admin','asistente') NOT NULL DEFAULT 'ciudadano',
   activo        TINYINT(1)   NOT NULL DEFAULT 1,
   token_sesion  VARCHAR(64)   DEFAULT NULL,
   token_creado_en TIMESTAMP  NULL DEFAULT NULL,

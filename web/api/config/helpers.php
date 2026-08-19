@@ -102,6 +102,16 @@ function requireAdmin(): array {
     return $user;
 }
 
+/* Igual que requireAdmin() pero acepta una lista de roles permitidos,
+   ej. requireRole(['admin', 'asistente']). */
+function requireRole(array $roles): array {
+    $user = requireAuth();
+    if (!in_array($user['rol'], $roles, true)) {
+        jsonError('Acceso denegado. No tienes permiso para esta acción.', 403);
+    }
+    return $user;
+}
+
 /* ── Generador de folio REMAC-GRU-XXXXX ─────────── */
 function generarFolioREMAC(): string {
     $db = getDB();

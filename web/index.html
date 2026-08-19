@@ -423,6 +423,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
 
 <script src="js/api-client.js"></script>
+<script src="js/tema.js"></script>
 <script>
 /* ── Render Campaigns ── */
 function renderCampaigns(campaigns) {
@@ -840,6 +841,7 @@ async function applyRealStats() {
 /* ── Init ── */
 async function initIndex() {
   await primeConfigFromServer();
+  aplicarTemaVisual();
 
   try {
     renderCampaigns(await apiGetCampanas());

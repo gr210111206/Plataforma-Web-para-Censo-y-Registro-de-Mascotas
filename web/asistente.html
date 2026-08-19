@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Registro asistido de mascotas — Padrón Municipal de Mascotas, El Grullo, Jalisco." />
+  <title>Panel de Asistente — Padrón de Mascotas · El Grullo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="Imagenes/Distintivo HAyto El Grullo CB.png" alt="H. Ayuntamiento de El Grullo" class="navbar-brand-img" style="height:38px;" />
+      <div>
+        <div class="sidebar-logo-title">Padrón Mascotas</div>
+        <div class="sidebar-logo-sub">El Grullo · 2024-2027</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">Registro asistido</div>
+    <a class="sidebar-link active">
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></span> Registrar mascota
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebarName">Cargando...</div>
+          <div class="sidebar-user-role" id="sidebarRole">Asistente</div>
+        </div>
+      </div>
+      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="event.preventDefault(); apiLogout().finally(() => window.location.href='login.html');">
+        <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></svg></span> Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="dashboard-main">
+
+    <!-- Header -->
+    <div class="dashboard-header">
+      <button class="dashboard-mobile-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+        <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16" /><path d="M4 6h16" /><path d="M4 18h16" /></svg>
+      </button>
+      <div>
+        <div class="dashboard-title">Registrar mascota</div>
+        <div class="dashboard-subtitle">Busca o registra al ciudadano, y luego registra a su mascota</div>
+      </div>
+      <div class="flex gap-8 items-center">
+        <span class="badge badge-orange"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg> Asistente</span>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+
+      <!-- ── Paso 1: buscar o registrar ciudadano ── -->
+      <div id="paso-buscar" style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-bottom:24px;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:1rem; margin-bottom:4px;">1. ¿A nombre de quién se registra la mascota?</div>
+        <div style="font-size:.85rem; color:var(--gray-2); margin-bottom:16px;">Busca por nombre o teléfono. Si la persona no tiene cuenta ni correo, igual puedes registrarla aquí.</div>
+
+        <div class="search-box" style="margin-bottom:14px;">
+          <span class="search-icon">🔍</span>
+          <input class="form-control" id="buscarCiudadanoInput" placeholder="Nombre o teléfono..." oninput="buscarCiudadanos()" style="width:100%; padding-left:36px;" />
+        </div>
+
+        <div id="resultadosBusqueda" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+        <button class="btn btn-ghost btn-sm" style="margin-top:14px;" onclick="toggleFormNuevoCiudadano()">
+          + No encuentro a esta persona / no tiene correo
+        </button>
+
+        <div id="formNuevoCiudadano" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--gray-4);">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label for="nc-nombre">Nombre completo *</label>
+            <input class="form-control" id="nc-nombre" placeholder="Nombre de la persona" required />
+          </div>
+          <div class="form-row" style="margin-bottom:14px;">
+            <div class="form-group">
+              <label for="nc-telefono">Teléfono *</label>
+              <input class="form-control" id="nc-telefono" placeholder="Ej. 341-123-4567" required />
+            </div>
+            <div class="form-group">
+              <label for="nc-domicilio">Domicilio</label>
+              <input class="form-control" list="lista-calles" placeholder="Ej. Calle Morelos #45" id="nc-domicilio" />
+              <datalist id="lista-calles"></datalist>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Colonia</label>
+            <div class="combo" id="combo-nc-colonia">
+              <input class="form-control" id="nc-colonia-input" placeholder="Busca la colonia…" autocomplete="off" />
+              <input type="hidden" id="nc-colonia" />
+              <div class="combo-list" id="nc-colonia-list"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="crearCiudadanoSinCorreo()">Registrar persona</button>
+        </div>
+      </div>
+
+      <!-- ── Paso 2: persona seleccionada ── -->
+      <div id="paso-seleccionado" style="display:none; background:var(--orange-pale); border:1.5px solid var(--orange); border-radius:var(--radius-lg); padding:20px 24px; margin-bottom:24px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+          <div>
+            <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--orange-dark); font-weight:700; margin-bottom:4px;">Registrando mascota para</div>
+            <div style="font-weight:700; font-size:1.05rem;" id="sel-nombre">—</div>
+            <div style="font-size:.85rem; color:var(--gray-1);" id="sel-detalle">—</div>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" onclick="cambiarPersona()">Cambiar persona</button>
+            <button class="btn btn-primary btn-sm" onclick="abrirNuevaMascota()">+ Registrar mascota</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mascotas registradas en esta sesión ── -->
+      <div id="paso-registradas" style="display:none;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.95rem; margin-bottom:12px;">Mascotas registradas hoy</div>
+        <div id="listaRegistradas" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Registrar mascota (versión simplificada, solo alta) ── -->
+<div class="modal-overlay" id="modal-nueva-mascota">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Registrar mascota</h2>
+      <button class="modal-close" onclick="closeModal('modal-nueva-mascota')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-mascota" onsubmit="handleNewPet(event)">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="photo-upload" onclick="document.getElementById('foto-input').click()">
+            <div class="photo-upload-icon" id="photoPreviewIcon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg></div>
+            <div class="photo-upload-text">
+              <strong>Subir foto</strong> (opcional)<br/>
+              <span>JPG o PNG, máximo 5 MB</span>
+            </div>
+            <input type="file" id="foto-input" accept="image/jpeg,image/png" style="display:none;" onchange="previewPhoto(this)" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-nombre">Nombre de la mascota *</label>
+              <input type="text" id="pet-nombre" class="form-control" placeholder="Ej. Max, Luna..." required />
+            </div>
+            <div class="form-group">
+              <label for="pet-especie">Especie *</label>
+              <select id="pet-especie" class="form-control" required>
+                <option value="">Seleccionar...</option>
+                <option value="perro">🐕 Perro</option>
+                <option value="gato">🐈 Gato</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-raza">Raza (Opcional)</label>
+              <input type="text" id="pet-raza" class="form-control" placeholder="Ej. Labrador, Cruzado, No se sabe..." />
+            </div>
+            <div class="form-group">
+              <label for="pet-edad">Edad (años)</label>
+              <input type="number" id="pet-edad" class="form-control" min="0" max="30" placeholder="Ej. 3" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-sexo">Sexo *</label>
+              <select id="pet-sexo" class="form-control" required>
+                <option value="">Seleccionar...</option>
+                <option value="macho">♂ Macho</option>
+                <option value="hembra">♀ Hembra</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pet-color">Color / descripción física</label>
+              <input type="text" id="pet-color" class="form-control" placeholder="Ej. Dorado, negro y blanco..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:14px; border:1.5px solid var(--gray-4); border-radius:var(--radius); font-size:.88rem; flex:1;">
+              <input type="checkbox" id="pet-vacunado" style="accent-color:var(--orange); width:16px; height:16px;" />
+              <div>
+                <div style="font-weight:600;">💉 Con vacunas al día</div>
+                <div style="font-size:.75rem; color:var(--gray-2);">Antirrábica vigente</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:14px; border:1.5px solid var(--gray-4); border-radius:var(--radius); font-size:.88rem; flex:1;">
+              <input type="checkbox" id="pet-esterilizado" style="accent-color:var(--orange); width:16px; height:16px;" />
+              <div>
+                <div style="font-weight:600;">✂️ Esterilizado/a</div>
+                <div style="font-size:.75rem; color:var(--gray-2);">Operación realizada</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nueva-mascota')">Cancelar</button>
+      <button class="btn btn-primary" onclick="handleNewPet()">Registrar mascota →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/el-grullo-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/api-client.js"></script>
+<script src="js/tema.js"></script>
+<script>
+let session = null;
+let selectedDueno = null;
+let registradasHoy = [];
+let ultimoResultadoBusqueda = [];
+
+const ICON_CAMERA = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg>';
+
+/* ══════════════════════════════════════════════════ */
+/*  INIT                                              */
+/* ══════════════════════════════════════════════════ */
+async function initAsistente() {
+  session = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  if (session.rol === 'admin') { window.location.href = 'admin.html'; return; }
+  if (session.rol !== 'asistente') { window.location.href = 'dashboard.html'; return; }
+
+  const initials = (session.nombre || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarName').textContent   = (session.nombre || '').split(' ').slice(0, 2).join(' ');
+
+  aplicarTemaVisual();
+  poblarDireccionElGrullo();
+}
+initAsistente();
+
+/* ══════════════════════════════════════════════════ */
+/*  PASO 1 — Buscar / registrar ciudadano             */
+/* ══════════════════════════════════════════════════ */
+function poblarDireccionElGrullo() {
+  if (typeof COLONIAS_EL_GRULLO !== 'undefined') {
+    initCombo('nc-colonia-input', 'nc-colonia', 'nc-colonia-list', COLONIAS_EL_GRULLO);
+  }
+  const datalistCalles = document.getElementById('lista-calles');
+  if (datalistCalles && typeof CALLES_EL_GRULLO !== 'undefined') {
+    datalistCalles.innerHTML = CALLES_EL_GRULLO.map(c => `<option value="Calle ${c}"></option>`).join('');
+  }
+}
+
+/* Combo reutilizable (idéntico al de dashboard.html "Mi perfil") */
+function initCombo(inputId, hiddenId, listId, options) {
+  const input  = document.getElementById(inputId);
+  const hidden = document.getElementById(hiddenId);
+  const list   = document.getElementById(listId);
+  if (!input || !hidden || !list) return;
+
+  function render(filtro) {
+    const q = (filtro || '').toLowerCase();
+    const filtradas = options.filter(o => o.nombre.toLowerCase().includes(q));
+    list.innerHTML = filtradas.length
+      ? filtradas.map(o => `<div class="combo-option" data-value="${o.nombre}">${o.nombre}${o.cp ? `<span class="combo-option-cp">C.P. ${o.cp}</span>` : ''}</div>`).join('')
+      : '<div class="combo-empty">Sin resultados</div>';
+    list.querySelectorAll('.combo-option').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        input.value = opt.dataset.value;
+        hidden.value = opt.dataset.value;
+        list.classList.remove('open');
+      });
+    });
+  }
+  input.addEventListener('focus', () => { render(''); list.classList.add('open'); });
+  input.addEventListener('input', () => { hidden.value = ''; render(input.value); list.classList.add('open'); });
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 120));
+}
+
+let _buscarTimer = null;
+function buscarCiudadanos() {
+  clearTimeout(_buscarTimer);
+  const q = document.getElementById('buscarCiudadanoInput').value.trim();
+  const cont = document.getElementById('resultadosBusqueda');
+  if (q.length < 2) { cont.innerHTML = ''; return; }
+
+  _buscarTimer = setTimeout(async () => {
+    try {
+      ultimoResultadoBusqueda = await apiGetUsuarios({ q });
+      renderResultadosBusqueda();
+    } catch (err) {
+      showToast(`❌ ${err.message}`, 'error');
+    }
+  }, 300);
+}
+
+function renderResultadosBusqueda() {
+  const cont = document.getElementById('resultadosBusqueda');
+  if (ultimoResultadoBusqueda.length === 0) {
+    cont.innerHTML = `<div style="font-size:.85rem; color:var(--gray-2); padding:8px 2px;">Sin resultados. Puedes registrar a la persona abajo.</div>`;
+    return;
+  }
+  cont.innerHTML = ultimoResultadoBusqueda.map((u, i) => `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--gray-4); border-radius:var(--radius); ${u.activo == 1 ? '' : 'opacity:.6;'}">
+      <div>
+        <div style="font-weight:600; font-size:.9rem;">${u.nombre} ${u.activo == 1 ? '' : '<span class="badge" style="background:var(--gray-4); color:var(--gray-1); font-size:.65rem;">Cuenta desactivada</span>'}</div>
+        <div style="font-size:.78rem; color:var(--gray-2);">${u.telefono || '—'} · ${u.email || 'Sin correo'} · ${u.colonia || 'Sin colonia'} · ${u.total_mascotas} mascota${u.total_mascotas === 1 ? '' : 's'}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" ${u.activo == 1 ? '' : 'disabled'} onclick="seleccionarPersonaPorIndice(${i})">Seleccionar</button>
+    </div>`).join('');
+}
+function seleccionarPersonaPorIndice(i) { seleccionarPersona(ultimoResultadoBusqueda[i]); }
+
+function toggleFormNuevoCiudadano() {
+  const el = document.getElementById('formNuevoCiudadano');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function crearCiudadanoSinCorreo() {
+  const nombre    = document.getElementById('nc-nombre').value.trim();
+  const telefono  = document.getElementById('nc-telefono').value.trim();
+  const direccion = document.getElementById('nc-domicilio').value.trim();
+  const colonia   = document.getElementById('nc-colonia').value;
+
+  if (!nombre)   { showToast('⚠️ El nombre es obligatorio', 'error'); return; }
+  if (!telefono) { showToast('⚠️ El teléfono es obligatorio', 'error'); return; }
+
+  try {
+    const data = await apiBuscarOCrearCiudadano({ nombre, telefono, direccion, colonia });
+    showToast(data.existed ? 'ℹ️ Ya existía una persona con ese teléfono, se seleccionó' : `✅ ${nombre} registrado/a correctamente`, data.existed ? 'info' : 'success');
+    seleccionarPersona(data);
+    document.getElementById('formNuevoCiudadano').style.display = 'none';
+    document.getElementById('nc-nombre').value = '';
+    document.getElementById('nc-telefono').value = '';
+    document.getElementById('nc-domicilio').value = '';
+    document.getElementById('nc-colonia-input').value = '';
+    document.getElementById('nc-colonia').value = '';
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PASO 2 — Persona seleccionada                     */
+/* ══════════════════════════════════════════════════ */
+function seleccionarPersona(u) {
+  selectedDueno = u;
+  document.getElementById('sel-nombre').textContent  = u.nombre;
+  document.getElementById('sel-detalle').textContent = `${u.telefono || '—'} · ${u.email || 'Sin correo'} · ${u.colonia || 'Sin colonia'}`;
+  document.getElementById('paso-buscar').style.display = 'none';
+  document.getElementById('paso-seleccionado').style.display = 'block';
+}
+
+function cambiarPersona() {
+  selectedDueno = null;
+  document.getElementById('paso-seleccionado').style.display = 'none';
+  document.getElementById('paso-buscar').style.display = 'block';
+  document.getElementById('buscarCiudadanoInput').value = '';
+  document.getElementById('resultadosBusqueda').innerHTML = '';
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  PASO 3 — Registrar mascota                        */
+/* ══════════════════════════════════════════════════ */
+function abrirNuevaMascota() {
+  if (!selectedDueno) { showToast('⚠️ Primero selecciona o registra a la persona', 'error'); return; }
+  document.getElementById('form-mascota').reset();
+  document.getElementById('photoPreviewIcon').innerHTML = ICON_CAMERA;
+  window._pendingFoto = null;
+  openModal('modal-nueva-mascota');
+}
+
+async function handleNewPet(e) {
+  if (e) e.preventDefault();
+  if (!selectedDueno) { showToast('⚠️ Primero selecciona o registra a la persona', 'error'); return; }
+
+  const nombre  = document.getElementById('pet-nombre').value.trim();
+  const especie = document.getElementById('pet-especie').value;
+  const sexo    = document.getElementById('pet-sexo').value;
+  if (!nombre || !especie || !sexo) { showToast('⚠️ Completa los campos obligatorios', 'error'); return; }
+
+  const edadAnios = parseInt(document.getElementById('pet-edad').value) || null;
+  const payload = {
+    nombre, especie, sexo,
+    raza:         document.getElementById('pet-raza').value || null,
+    edad:         edadAnios !== null ? String(edadAnios) : null,
+    edad_label:   edadAnios !== null ? `${edadAnios} ${edadAnios === 1 ? 'año' : 'años'}` : null,
+    color:        document.getElementById('pet-color').value || null,
+    vacunado:     document.getElementById('pet-vacunado').checked,
+    esterilizado: document.getElementById('pet-esterilizado').checked,
+    foto_url:     window._pendingFoto || null,
+    dueno_id:     selectedDueno.id,
+  };
+
+  try {
+    const created = await apiRegistrarMascota(payload);
+    registradasHoy.unshift(created);
+    renderRegistradasHoy();
+    closeModal('modal-nueva-mascota');
+    showToast(`✅ ${nombre} registrado/a a nombre de ${selectedDueno.nombre} · Folio: ${created.id}`, 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+function renderRegistradasHoy() {
+  const wrap = document.getElementById('paso-registradas');
+  const cont = document.getElementById('listaRegistradas');
+  if (registradasHoy.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  cont.innerHTML = registradasHoy.map((p, i) => `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; background:white; border:1px solid var(--gray-4); border-radius:var(--radius); flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:600;">${p.nombre} <span style="font-weight:400; color:var(--gray-2); font-size:.8rem;">· ${p.id}</span></div>
+        <div style="font-size:.8rem; color:var(--gray-2);">Propietario: ${p.persona || '—'} · ${p.telefono || '—'}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="downloadActa(registradasHoy[${i}])">📄 Descargar acta</button>
+    </div>`).join('');
+}
+
+function previewPhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ La foto no debe superar 5 MB', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.85);
+
+      window._pendingFoto = optimized;
+      document.getElementById('photoPreviewIcon').innerHTML =
+        `<img src="${optimized}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  ACTA (PDF) — usa los datos del DUEÑO del registro,  */
+/*  no la sesión del asistente (que no es el dueño).    */
+/* ══════════════════════════════════════════════════ */
+function downloadActa(pet) {
+  showToast(`📄 Generando acta ${pet.id}...`, 'info');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFillColor(242, 122, 0);
+  doc.rect(0, 0, pageW, 24, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('H. Ayuntamiento Constitucional de El Grullo, Jalisco', pageW / 2, 10, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('Acta Oficial de Registro — Padrón Municipal de Mascotas (REMAC)', pageW / 2, 18, { align: 'center' });
+
+  doc.setTextColor(30, 30, 30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(`Folio: ${pet.id}`, 14, 36);
+
+  const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : 'N/D');
+  const rows = [
+    ['Nombre de la mascota', pet.nombre || ''],
+    ['Especie', capitalize(pet.especie || '')],
+    ['Raza', pet.raza || 'No especificada'],
+    ['Edad', edad],
+    ['Sexo', capitalize(pet.sexo || '')],
+    ['Color', pet.color || '—'],
+    ['Vacunado', pet.vacunado ? 'Sí' : 'No'],
+    ['Esterilizado', pet.esterilizado ? 'Sí' : 'No'],
+    ['Estatus', pet.estatus || 'Alta'],
+    ['Fecha de registro', pet.fecha_registro || pet.created_at || 'N/D'],
+    ['Propietario', pet.persona || '—'],
+    ['Teléfono de contacto', pet.telefono || '—'],
+  ];
+
+  let y = 46;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  rows.forEach(([label, value]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${label}:`, 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(value), 80, y);
+    y += 8;
+  });
+
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('asistente.html','')}mascota.html?id=${pet.id}`, 14, y + 6);
+  doc.text('Documento generado por el sistema REMAC. Válido como comprobante de registro municipal.', 14, y + 12);
+
+  doc.save(`${pet.id}.pdf`);
+  showToast('✅ Acta descargada correctamente', 'success');
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+/* ══════════════════════════════════════════════════ */
+/*  MODAL / TOAST / SIDEBAR MÓVIL                     */
+/* ══════════════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+function toggleSidebar(force) {
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', open);
+  backdrop.classList.toggle('open', open);
+}
+</script>
+
+</body>
+</html>

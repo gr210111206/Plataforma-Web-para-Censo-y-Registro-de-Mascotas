@@ -97,6 +97,18 @@ if ($method === 'POST') {
     if (!in_array($body['especie'], ['perro','gato'])) jsonError('Especie no válida.');
 
     $db    = getDB();
+
+    // Un ciudadano solo puede registrar mascotas para sí mismo. Admin y
+    // asistente pueden registrar a nombre de otro ciudadano (ej. registro
+    // asistido de alguien sin correo electrónico) si mandan un dueno_id.
+    $duenoId = $user['id'];
+    if (in_array($user['rol'], ['admin', 'asistente'], true) && !empty($body['dueno_id'])) {
+        $chk = $db->prepare('SELECT id FROM duenos WHERE id = ? AND rol = "ciudadano" AND activo = 1');
+        $chk->execute([$body['dueno_id']]);
+        if (!$chk->fetch()) jsonError('El ciudadano seleccionado no es válido.', 400);
+        $duenoId = (int)$body['dueno_id'];
+    }
+
     $folio = generarFolioREMAC();
 
     $stmt = $db->prepare('
@@ -123,7 +135,7 @@ if ($method === 'POST') {
         (int)($body['vacunado']    ?? 0),
         (int)($body['esterilizado']?? 0),
         $body['estatus']      ?? 'Alta',
-        $user['id'],
+        $duenoId,
         $fecha,
         "mascota.html?id=$folio",
         "$folio.pdf",

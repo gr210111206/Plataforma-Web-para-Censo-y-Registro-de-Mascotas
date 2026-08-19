@@ -244,10 +244,10 @@ async function apiEliminarArticulo(id) {
 }
 
 /* ══════════════════════════════════════════════
-   USUARIOS (gestión de cuentas ciudadanas, solo admin)
+   USUARIOS (gestión de cuentas ciudadanas y de personal)
    ══════════════════════════════════════════════ */
 
-/** Lista las cuentas de ciudadanos registrados. Requiere sesión de admin. */
+/** Lista/busca cuentas de ciudadanos registrados. Requiere sesión de admin o asistente. */
 async function apiGetUsuarios(filtros = {}) {
   const params = new URLSearchParams(filtros);
   return _fetch(`${API_BASE_URL}/usuarios?${params}`);
@@ -258,6 +258,31 @@ async function apiSetUsuarioActivo(id, activo) {
   return _fetch(`${API_BASE_URL}/usuarios?id=${encodeURIComponent(id)}`, {
     method: 'PUT',
     body: JSON.stringify({ activo }),
+  });
+}
+
+/**
+ * Crea una cuenta con correo y contraseña (puede iniciar sesión).
+ * Requiere sesión de admin. rol debe ser 'ciudadano' o 'asistente'
+ * (el servidor rechaza cualquier otro valor, incluido 'admin').
+ */
+async function apiCrearCuentaUsuario(data) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=crear-cuenta`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Busca un ciudadano por teléfono; si no existe, lo crea SIN correo
+ * (registro asistido). Requiere sesión de admin o asistente.
+ * @returns {Promise<Object>} el ciudadano encontrado o recién creado,
+ *          con `existed: true|false`.
+ */
+async function apiBuscarOCrearCiudadano(data) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=buscar-o-crear`, {
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 }
 

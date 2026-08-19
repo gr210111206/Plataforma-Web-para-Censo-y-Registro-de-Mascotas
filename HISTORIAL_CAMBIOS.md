@@ -2,6 +2,93 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-19] — Nuevo rol "Asistente": registro de mascotas para ciudadanos sin correo electrónico
+
+### 🆕 Contexto
+El Ayuntamiento pidió una forma de registrar mascotas de ciudadanos que no tienen correo electrónico (por ejemplo, personas adultas mayores), tanto en ventanilla como en campañas fuera de la oficina (ej. una jornada de vacunación). Hasta ahora la única forma de entrar al padrón era que el propio ciudadano se creara una cuenta con correo y contraseña — no había manera de registrar a alguien sin correo.
+
+### 🔐 Base de datos
+- `duenos.rol` ahora acepta tres valores: `'ciudadano'`, `'admin'`, **`'asistente'`**.
+- `duenos.email` ya no es obligatorio (antes `NOT NULL UNIQUE`, ahora `NULL` permitido) — un ciudadano registrado por un asistente puede existir sin correo y sin poder iniciar sesión él mismo (no tiene con qué).
+- Migración aplicada manualmente en la base de datos local; **pendiente aplicarla también en HostGator** cuando se retome el despliegue.
+
+### 🧑‍💼 ¿Qué puede hacer un Asistente?
+- Buscar a cualquier ciudadano (con o sin cuenta propia).
+- Registrar a una persona sin correo (nombre, teléfono, domicilio, colonia) si no la encuentra — con protección para no duplicarla si ya existía (busca primero por teléfono).
+- Registrarle una mascota (mismo formulario con foto que usa cualquier ciudadano).
+- Descargar el acta oficial en PDF.
+- **No puede**: ver el panel administrativo completo, editar o dar de baja mascotas después de registrarlas, ni administrar el resto del sitio. Es un rol acotado a propósito.
+
+### 🔑 ¿Quién crea cuentas de Asistente?
+Solo el administrador, desde una pestaña nueva **"Roles"** en el panel admin (separada de "Usuarios", que sigue siendo solo para gestionar ciudadanos). El formulario de creación **nunca permite elegir el rol Administrador**, aunque se manipule la petición directamente al servidor — es una validación del backend, no solo del formulario.
+
+### 🐛 Dos bugs reales corregidos de paso
+La tabla de "Usuarios" en el admin se habría roto en cuanto existiera el primer ciudadano sin correo: el buscador (`u.email.toLowerCase()`) habría lanzado un error de JavaScript y dejado de funcionar para todos, y la columna de contacto habría mostrado literalmente la palabra `null`. Corregido antes de que pudiera pasar en producción.
+
+### ✅ Verificación
+Probado de punta a punta (vía API y visualmente): creación de cuenta de asistente, rechazo explícito al intentar crear un "admin" desde ahí, búsqueda de ciudadanos con y sin cuenta, registro de un ciudadano sin correo (con deduplicación por teléfono), registro de una mascota a su nombre, acta en PDF con los datos correctos del dueño (no de la asistente), y las restricciones de seguridad (un ciudadano no puede forzar el registro de una mascota a nombre de otro; un asistente no puede ver el listado completo de mascotas ni las cuentas de otros asistentes).
+
+### 📂 Archivos modificados / creados
+- `web/database/schema.sql` (`rol` con 'asistente', `email` opcional).
+- `web/api/config/helpers.php` (nueva `requireRole()`).
+- `web/api/usuarios.php` (reestructurado: `?action=crear-cuenta`, `?action=buscar-o-crear`, `?rol=asistente`).
+- `web/api/mascotas.php` (POST acepta `dueno_id` explícito para admin/asistente).
+- `web/js/api-client.js` (`apiCrearCuentaUsuario`, `apiBuscarOCrearCiudadano`).
+- `web/login.html` (redirección de 3 vías según rol).
+- `web/dashboard.html`, `web/admin.html` (guardas de redirección para el rol asistente).
+- `web/admin.html` (pestaña "Roles", modal "Nueva cuenta", corrección de los 2 bugs de "Usuarios").
+- `web/asistente.html` (nuevo — página completa del flujo de registro asistido).
+
+## 📅 [2026-08-18] — Verificación de disponibilidad del subdominio tumascota.elgrullo.com
+
+### 🌐 Verificación DNS y HTTP de tumascota.elgrullo.com
+- Se realizó la consulta DNS (`Resolve-DnsName`) confirmando que el subdominio `tumascota.elgrullo.com` ya resuelve a las direcciones IP `76.223.54.146` y `13.248.169.48` (mismas IPs que el dominio raíz `elgrullo.com`).
+- Se verificó la respuesta HTTP (`200 OK`), confirmando que la zona DNS está activa y apuntando a la infraestructura de hosting.
+- Se documentaron las indicaciones para asociar el subdominio al directorio del proyecto REMAC en cPanel / HostGator y la recomendación de seleccionar la opción "Outro" (Otro) en el asistente de HostGator.
+
+### 📂 Archivos modificados / creados
+- Ningún archivo de código modificado (orientación técnica en asistente de HostGator).
+
+---
+
+## 📅 [2026-08-18] — El color del "Tema visual" no se aplicaba, y nuevo buscador de Colonia
+
+### 🐛 Bug real: "Tema visual" en Configuración del sitio no cambiaba nada
+El admin podía elegir un color y una tipografía, ver una vista previa dentro del propio panel, y guardar — pero eso era todo. `saveTema()` solo escribía en `localStorage`, nunca se mandaba al servidor, y **ninguna otra página del sitio (portada, login, dashboard) leía esa configuración**. El botón decía "Recarga el portal para verlo", pero recargar no cambiaba nada porque no había código que aplicara el color en ningún lado.
+
+**Corrección:**
+- `saveTema()` ahora sí guarda en el servidor (como Reglamento/FAQ/Avisos), y el panel admin recuerda el tema guardado la próxima vez que se abre (antes tampoco hacía eso).
+- Se creó `web/js/tema.js`, incluido en `index.html`, `login.html`, `dashboard.html` y `admin.html`: lee el color guardado y sobreescribe las variables `--orange`/`--orange-dark`/`--orange-light`/`--orange-pale` de `styles.css` para **cualquier visitante**, no solo en el navegador del admin. También aplica el interruptor de "Bordes redondeados".
+- Verificado cambiando el color a uno de prueba y confirmando por captura de pantalla que toda la portada (botones, logo, fondo del hero, franja inferior) cambia de verdad; luego se regresó al naranja oficial.
+- **Pendiente, no resuelto en este cambio:** la Tipografía (Inter/Outfit/Roboto/etc.) no se aplica todavía — el sitio no carga ninguna fuente externa real (son solo nombres sin `@font-face`), así que cambiar la selección no tendría ningún efecto visual aunque se "aplicara". El Modo oscuro tampoco existe como hoja de estilos. `mascota.html` (ficha pública QR) no usa las variables compartidas de `styles.css`, así que el color de tema no le aplica.
+
+### 🎨 Mejora: buscador de Colonia en vez del `<select>` nativo
+El selector de Colonia en "Mi perfil" usaba el `<select>` nativo del navegador, que no se puede personalizar visualmente y se veía "feo" según lo reportado. Se reemplazó por un componente propio (`.combo`): un campo de texto que al enfocarse despliega una lista con scroll, con las mismas 38 colonias reales, filtrable escribiendo, con el mismo estilo del resto del sitio (bordes, colores, sombra). El campo real que se guarda sigue siendo el mismo (`#perfil-colonia`, ahora oculto), así que no cambió nada del guardado de perfil. Probado con filtro de texto, selección con clic y en ancho de celular (390px).
+
+### 📂 Archivos modificados / creados
+- `web/js/tema.js` (nuevo).
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/admin.html` (incluyen `tema.js` y llaman `aplicarTemaVisual()`).
+- `web/admin.html` (`saveTema()`, `resetTema()`, nueva `loadTemaFromServer()`, `padron_tema_config` agregado a `SERVER_CONFIG_KEYS`).
+- `web/dashboard.html` (nuevo componente `.combo` para Colonia, función reutilizable `initCombo()`).
+- `web/css/styles.css` (estilos `.combo`/`.combo-list`/`.combo-option`).
+
+## 📅 [2026-08-17] — Catálogo real de colonias y calles de El Grullo en "Mi perfil"
+
+### 🐛 El selector de Colonia solo tenía 4 opciones de ejemplo
+En "Mi perfil" (`dashboard.html`), el campo Colonia era un `<select>` con solo 4 valores inventados (Centro, El Sabino, La Loma, Las Flores), y "Domicilio" era un texto libre sin ninguna ayuda para escribir una calle real del municipio.
+
+**Corrección:** se investigaron las colonias y calles reales de El Grullo, Jalisco (directorios públicos de códigos postales y callejeros) y se creó `web/js/el-grullo-data.js` con:
+- **38 colonias reales** con su código postal, usadas para llenar el `<select>` de Colonia dinámicamente.
+- **208 calles reales** del municipio, usadas como sugerencias de autocompletado (`<datalist>`) en el campo Domicilio — el usuario puede escribir libremente (para agregar el número de casa) y ver sugerencias reales mientras teclea.
+
+Ambos controles siguen siendo elementos nativos de HTML (`<select>`, `<input list>`), así que en celular abren el picker/lista nativa del sistema operativo — no fue necesario código adicional para que funcionen bien en móvil.
+
+**Nota importante:** el mapa del censo (tanto en `index.html` como en `admin.html`) usa un catálogo *distinto y más chico* de colonias con coordenadas aproximadas para dibujar los pines — ese no se tocó en este cambio, porque ampliarlo a las 38 colonias reales requiere conseguir la ubicación (latitud/longitud) de cada una, no solo el nombre. Queda pendiente si se necesita.
+
+### 📂 Archivos modificados / creados
+- `web/js/el-grullo-data.js` (nuevo — catálogo de colonias y calles).
+- `web/dashboard.html` (Colonia y Domicilio ahora se llenan con datos reales).
+
 ## 📅 [2026-08-14] — Aviso de Privacidad real, Avisos/Eventos ya persisten y se muestran al público
 
 ### 📄 Aviso de Privacidad (antes era un enlace muerto)
