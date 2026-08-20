@@ -371,8 +371,10 @@
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
               <label>Domicilio</label>
-              <input class="form-control" list="lista-calles" placeholder="Ej. Calle Morelos #45" id="perfil-domicilio" />
-              <datalist id="lista-calles"></datalist>
+              <div class="combo" id="combo-domicilio">
+                <input class="form-control" id="perfil-domicilio" placeholder="Ej. Calle Morelos #45" autocomplete="off" />
+                <div class="combo-list" id="combo-domicilio-list"></div>
+              </div>
             </div>
             <div class="form-group">
               <label>Colonia</label>
@@ -538,11 +540,14 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- QR Code library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
 <script src="js/tema.js"></script>
+<!-- QRCode/jsPDF van al final y con defer: si el CDN tarda o falla, ya no
+     bloquean que el resto del sitio (registrar/editar mascota, perfil)
+     funcione — solo se usan para el botón "Descargar acta"/código QR. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script>
 /* ══════════════════════════════════════════════════ */
 /*  SESSION — validada contra el servidor, no solo localStorage */
@@ -591,24 +596,60 @@ function initCombo(inputId, hiddenId, listId, options) {
       });
     });
   }
-  input.addEventListener('focus', () => { render(''); list.classList.add('open'); });
+  input.addEventListener('focus', () => { _cerrarOtrosCombos(list); render(''); list.classList.add('open'); });
   input.addEventListener('input', () => { hidden.value = ''; render(input.value); list.classList.add('open'); });
   input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 120));
 
   input._comboSetValue = (value) => { input.value = value || ''; hidden.value = value || ''; };
 }
 
-/* Llena el buscador de colonia y el <datalist> de calles con el
-   catálogo real de El Grullo (js/el-grullo-data.js), en vez de las
-   4 colonias de ejemplo que había antes. */
+/* Evita que dos menús desplegables (Domicilio/Colonia, uno arriba del
+   otro en el formulario) queden abiertos al mismo tiempo — si no, el de
+   arriba tapa visualmente al campo de abajo y parece que "se movió". */
+function _cerrarOtrosCombos(exceptoList) {
+  document.querySelectorAll('.combo-list.open').forEach(l => { if (l !== exceptoList) l.classList.remove('open'); });
+}
+
+/* Llena el buscador de colonia y el de calles con el catálogo real de
+   El Grullo (js/el-grullo-data.js), en vez de las 4 colonias de
+   ejemplo que había antes. */
 function poblarDireccionElGrullo() {
   if (typeof COLONIAS_EL_GRULLO !== 'undefined') {
     initCombo('perfil-colonia-input', 'perfil-colonia', 'combo-colonia-list', COLONIAS_EL_GRULLO);
   }
-  const datalistCalles = document.getElementById('lista-calles');
-  if (datalistCalles && typeof CALLES_EL_GRULLO !== 'undefined') {
-    datalistCalles.innerHTML = CALLES_EL_GRULLO.map(c => `<option value="Calle ${c}"></option>`).join('');
+  if (typeof CALLES_EL_GRULLO !== 'undefined') {
+    initComboSugerencias('perfil-domicilio', 'combo-domicilio-list', CALLES_EL_GRULLO.map(c => `Calle ${c}`));
   }
+}
+
+/* Combo de SUGERENCIAS (no de selección cerrada como initCombo): al elegir
+   una opción solo rellena el texto, y se puede seguir editando (ej. para
+   agregar el número de casa). Mismo estilo visual que initCombo, en vez
+   del <datalist> nativo del navegador (que se pinta oscuro/claro según el
+   tema del sistema operativo y se ve inconsistente con el resto del sitio). */
+function initComboSugerencias(inputId, listId, opciones) {
+  const input = document.getElementById(inputId);
+  const list  = document.getElementById(listId);
+  if (!input || !list) return;
+
+  function render() {
+    const q = input.value.toLowerCase();
+    const filtradas = q ? opciones.filter(o => o.toLowerCase().includes(q)).slice(0, 30) : opciones.slice(0, 30);
+    list.innerHTML = filtradas.length
+      ? filtradas.map(o => `<div class="combo-option" data-value="${o}">${o}</div>`).join('')
+      : '<div class="combo-empty">Sin sugerencias — puedes seguir escribiendo</div>';
+    list.querySelectorAll('.combo-option').forEach(opt => {
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        input.value = opt.dataset.value;
+        list.classList.remove('open');
+        input.focus();
+      });
+    });
+  }
+  input.addEventListener('focus', () => { _cerrarOtrosCombos(list); render(); list.classList.add('open'); });
+  input.addEventListener('input', () => { render(); list.classList.add('open'); });
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 120));
 }
 
 function applySessionToUI() {

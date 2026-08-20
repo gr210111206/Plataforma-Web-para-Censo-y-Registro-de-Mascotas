@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-19] — Tres bugs reales encontrados al probar el rol Asistente en vivo
+
+Al probar `asistente.html` en un navegador real (no solo en las pruebas automatizadas) aparecieron 3 problemas que las pruebas anteriores no habían detectado:
+
+### 🐛 1. "apiBuscarOCrearCiudadano is not defined" al registrar una persona
+`asistente.html` cargaba el script de jsPDF (desde un CDN externo) **antes** de `js/api-client.js`. Los `<script src>` sin `async`/`defer` se ejecutan en orden y cada uno bloquea al siguiente hasta terminar de descargarse — si la conexión al CDN tarda o falla, todo el código propio del sitio que viene después (incluida la función que faltaba) simplemente no llega a cargarse a tiempo, aunque el HTML ya se vea completo y "usable". Se reordenaron los scripts para que el código propio cargue primero, y jsPDF (que solo hace falta hasta el paso de "Descargar acta", mucho después) se movió al final con `defer`. Se corrigió el mismo riesgo en `dashboard.html` (tenía el mismo patrón con jsPDF y QRCode.js), aunque ahí no se había reportado el error.
+
+### 🎨 2. El campo "Domicilio" se veía oscuro/nativo y "Colonia" blanco/propio
+"Colonia" ya usaba el buscador propio del sitio (`.combo`), pero "Domicilio" seguía usando el `<datalist>` nativo del navegador — que no se puede personalizar con CSS y toma el tema claro/oscuro del sistema operativo, no el del sitio. Se reemplazó por el mismo componente `.combo`, ahora con una variante de solo-sugerencia (`initComboSugerencias()`) que permite seguir escribiendo libremente (para agregar el número de casa) en vez de forzar una selección exacta. Aplicado también en "Mi perfil" (`dashboard.html`), que tenía el mismo problema.
+
+### 📐 3. La lista de Colonia "se veía mal posicionada"
+No era un bug de posición (la lista sí abre pegada a su campo) sino de superposición: si el menú de "Domicilio" quedaba abierto y luego se enfocaba "Colonia" (el campo de justo abajo), ambos menús desplegables quedaban abiertos a la vez y el de arriba tapaba visualmente al de abajo, dando la impresión de que algo se había movido. Se agregó `_cerrarOtrosCombos()`: al abrir cualquier buscador desplegable, cualquier otro que esté abierto se cierra automáticamente.
+
+### 📂 Archivos modificados
+- `web/asistente.html`, `web/dashboard.html` (orden de scripts, combo de Domicilio, coordinación entre combos).
+
 ## 📅 [2026-08-19] — Nuevo rol "Asistente": registro de mascotas para ciudadanos sin correo electrónico
 
 ### 🆕 Contexto
