@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-21] — "Roles" ahora muestra TODAS las cuentas, no solo Asistente
+
+### 🔧 Petición del usuario tras probar el panel
+La pestaña "Roles" solo mostraba cuentas de Asistente. El usuario pidió ver ahí también a los ciudadanos (con y sin correo) para poder activarlos/desactivarlos desde el mismo lugar, en vez de tener que ir a la pestaña "Usuarios" aparte.
+
+**Cambios:**
+- `GET /api/usuarios?rol=todos` (nuevo, solo admin) — devuelve ciudadanos y asistentes juntos, incluyendo el campo `rol` de cada uno (antes no se regresaba).
+- La pestaña "Roles" ahora se llama **"Roles y Cuentas"**, tiene su propio buscador (por nombre/correo/teléfono), y cada fila muestra una etiqueta de color según el rol (Asistente en naranja, Ciudadano en azul). Activar/desactivar funciona igual para cualquiera de los dos.
+- La pestaña "Usuarios" (solo ciudadanos) se dejó intacta — "Roles" es ahora un superconjunto, no la reemplaza.
+
+### 🧪 40 cuentas de prueba agregadas (solo en la base de datos LOCAL)
+A petición del usuario, para comprobar que la tabla se ve y funciona bien con volumen real: 25 ciudadanos con correo, 10 sin correo, y 5 asistentes adicionales, todas con la contraseña de prueba `12345`. Quedan documentadas en `CUENTAS_PRUEBA.md` (no se sube a git) con instrucciones para borrarlas antes de producción.
+
+### 📂 Archivos modificados
+- `web/api/usuarios.php` (`?rol=todos`, `rol` agregado al SELECT).
+- `web/admin.html` (buscador y tabla de "Roles" ampliados, sección renombrada).
+
 ## 📅 [2026-08-20] — La persona seleccionada y las mascotas registradas se perdían al recargar `asistente.html`
 
 ### 🐛 Reportado por el usuario probándolo en vivo

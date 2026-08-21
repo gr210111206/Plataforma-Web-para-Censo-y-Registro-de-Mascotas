@@ -3,6 +3,7 @@
  * REMAC — API: Gestión de cuentas ciudadanas y de personal (admin/asistente)
  * GET  /api/usuarios                        → Listar/buscar ciudadanos (admin y asistente)
  * GET  /api/usuarios?rol=asistente          → Listar cuentas de personal de apoyo (solo admin)
+ * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes juntos (solo admin)
  * PUT  /api/usuarios?id=X                   → Activar/desactivar una cuenta (solo admin)
  * POST /api/usuarios?action=crear-cuenta    → Crear cuenta de Ciudadano o Asistente (solo admin, nunca Administrador)
  * POST /api/usuarios?action=buscar-o-crear  → Buscar por teléfono o crear ciudadano sin correo (admin y asistente)
@@ -17,23 +18,29 @@ $id     = $_GET['id'] ?? null;
 $action = $_GET['action'] ?? '';
 
 /* ── GET — listar/buscar cuentas. Por default solo ciudadanos (admin y
-   asistente pueden verlos); ?rol=asistente lista al personal de apoyo,
-   reservado solo a admin (para no exponer datos de otro personal a un
-   asistente). ── */
+   asistente pueden verlos); ?rol=asistente o ?rol=todos exponen al
+   personal de apoyo, reservado solo a admin (para no exponer datos de
+   otro personal a un asistente). ── */
 if ($method === 'GET') {
     $rolFiltro = $_GET['rol'] ?? 'ciudadano';
-    if (!in_array($rolFiltro, ['ciudadano', 'asistente'], true)) {
+    if (!in_array($rolFiltro, ['ciudadano', 'asistente', 'todos'], true)) {
         jsonError('Filtro de rol no válido.', 400);
     }
-    if ($rolFiltro === 'asistente') {
+    if ($rolFiltro === 'asistente' || $rolFiltro === 'todos') {
         requireAdmin();
     } else {
         requireRole(['admin', 'asistente']);
     }
     $db = getDB();
 
-    $where  = ['rol = ?'];
-    $params = [$rolFiltro];
+    $where  = [];
+    $params = [];
+    if ($rolFiltro === 'todos') {
+        $where[] = "rol IN ('ciudadano', 'asistente')";
+    } else {
+        $where[]  = 'rol = ?';
+        $params[] = $rolFiltro;
+    }
 
     if (!empty($_GET['q'])) {
         $q = '%' . $_GET['q'] . '%';
@@ -42,7 +49,7 @@ if ($method === 'GET') {
     }
 
     $sql = '
-        SELECT d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.activo, d.created_at,
+        SELECT d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.rol, d.activo, d.created_at,
                (SELECT COUNT(*) FROM mascotas m WHERE m.dueno_id = d.id) AS total_mascotas
         FROM duenos d
         WHERE ' . implode(' AND ', $where) . '

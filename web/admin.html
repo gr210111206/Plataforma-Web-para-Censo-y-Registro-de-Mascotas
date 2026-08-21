@@ -994,7 +994,10 @@
       </div>
 
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:200px; font-weight:700; font-family:'Outfit',sans-serif;">Cuentas de personal (Asistente)</div>
+        <div class="search-box" style="flex:1; min-width:200px;">
+          <span class="search-icon">🔍</span>
+          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="filterRoles()" style="width:100%; padding-left:36px;" />
+        </div>
         <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
       </div>
 
@@ -2215,7 +2218,7 @@ const sections = {
   datos:       { title: 'Datos del Padrón',       sub: 'Mapa de mascotas · Gráficas · Seguimiento en tiempo real' },
   seguimiento: { title: 'Seguimiento de Mascotas', sub: 'Busca y gestiona el registro individual de cada mascota' },
   usuarios:    { title: 'Cuentas Ciudadanas',      sub: 'Consulta y gestiona las cuentas registradas de los ciudadanos' },
-  roles:       { title: 'Roles y Cuentas de Personal', sub: 'Crea cuentas de Asistente para registro en ventanilla o en campo' },
+  roles:       { title: 'Roles y Cuentas', sub: 'Todas las cuentas de Ciudadano y Asistente — busca, activa/desactiva, o crea cuentas nuevas' },
   articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
   config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
 };
@@ -2578,30 +2581,41 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 /* ══════════════════════════════════════════════════ */
-/*  ROLES — cuentas de personal (Asistente)            */
+/*  ROLES — todas las cuentas (Ciudadano + Asistente)  */
 /* ══════════════════════════════════════════════════ */
-let allAsistentes = [];
+let allCuentas = [];
 
 async function loadRolesTable() {
   try {
-    allAsistentes = await apiGetUsuarios({ rol: 'asistente' });
-    renderRolesTable();
+    allCuentas = await apiGetUsuarios({ rol: 'todos' });
+    filterRoles();
   } catch (err) {
-    showToast(`❌ No se pudieron cargar las cuentas de personal: ${err.message}`, 'error');
+    showToast(`❌ No se pudieron cargar las cuentas: ${err.message}`, 'error');
   }
 }
 
-function renderRolesTable() {
+function filterRoles() {
+  const q = document.getElementById('rolesSearch').value.toLowerCase();
+  const data = !q ? allCuentas : allCuentas.filter(u =>
+    u.nombre.toLowerCase().includes(q) ||
+    (u.email || '').toLowerCase().includes(q) ||
+    (u.telefono || '').includes(q)
+  );
+  renderRolesTable(data);
+}
+
+function renderRolesTable(data) {
   const tbody = document.getElementById('rolesTableBody');
-  if (allAsistentes.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">Todavía no hay cuentas de Asistente. Crea la primera con "+ Nueva cuenta".</td></tr>`;
+  const lista = data || allCuentas;
+  if (lista.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">${allCuentas.length === 0 ? 'Todavía no hay cuentas. Crea la primera con "+ Nueva cuenta".' : 'No se encontraron cuentas.'}</td></tr>`;
     return;
   }
-  tbody.innerHTML = allAsistentes.map(u => `
+  tbody.innerHTML = lista.map(u => `
     <tr style="border-top:1px solid var(--gray-4);">
       <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
-      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '—'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
-      <td style="padding:12px 14px;"><span class="badge badge-orange">Asistente</span></td>
+      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+      <td style="padding:12px 14px;">${u.rol === 'asistente' ? '<span class="badge badge-orange">Asistente</span>' : '<span class="badge badge-blue">Ciudadano</span>'}</td>
       <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
       <td style="padding:12px 14px;">
         ${u.activo == 1
@@ -2609,19 +2623,19 @@ function renderRolesTable() {
           : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
       </td>
       <td style="padding:12px 14px; text-align:right;">
-        <button class="btn btn-ghost btn-sm" onclick="toggleAsistenteActivo(${u.id}, ${u.activo == 1})">
+        <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
           ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
         </button>
       </td>
     </tr>`).join('');
 }
 
-async function toggleAsistenteActivo(id, estaActivo) {
+async function toggleCuentaActiva(id, estaActivo) {
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
-    const u = allAsistentes.find(x => x.id === id);
+    const u = allCuentas.find(x => x.id === id);
     if (u) u.activo = estaActivo ? 0 : 1;
-    renderRolesTable();
+    filterRoles();
     showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
@@ -2650,7 +2664,7 @@ async function handleNuevoUsuario(e) {
     await apiCrearCuentaUsuario({ nombre, email, telefono, password: pass, rol });
     closeModal('modal-nuevo-usuario');
     showToast(`✅ Cuenta de ${rol === 'asistente' ? 'Asistente' : 'Ciudadano'} creada correctamente`, 'success');
-    if (rol === 'asistente') loadRolesTable();
+    loadRolesTable();
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
