@@ -2,6 +2,18 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-20] — La persona seleccionada y las mascotas registradas se perdían al recargar `asistente.html`
+
+### 🐛 Reportado por el usuario probándolo en vivo
+Después de registrar una mascota correctamente, si se recargaba la página (sin querer, o para empezar de nuevo), tanto la persona seleccionada como la lista de "mascotas registradas hoy" desaparecían — vivían solo como variables en memoria de esa pestaña. Esto obligaba a volver a buscar a la misma persona para registrarle otra mascota.
+
+**Corrección:** se guardan en `localStorage` (por asistente, usando su propio id, para que si otra persona usa el mismo equipo no vea información ajena) tanto la persona seleccionada como la lista de mascotas registradas, y se restauran automáticamente al abrir la página. Se agregó un botón "Limpiar lista" para reiniciar manualmente (por ejemplo al empezar un turno nuevo), y ese estado se borra automáticamente al cerrar sesión.
+
+**Nota:** no hacía falta recargar la página para registrar una segunda mascota a la misma persona — el botón "+ Registrar mascota" ya se quedaba disponible sin salir de la pantalla. Este arreglo cubre el caso de una recarga accidental o intencional, no cambia el flujo normal.
+
+### 📂 Archivos modificados
+- `web/asistente.html`.
+
 ## 📅 [2026-08-19] — Tres bugs reales encontrados al probar el rol Asistente en vivo
 
 Al probar `asistente.html` en un navegador real (no solo en las pruebas automatizadas) aparecieron 3 problemas que las pruebas anteriores no habían detectado:

@@ -35,7 +35,7 @@
           <div class="sidebar-user-role" id="sidebarRole">Asistente</div>
         </div>
       </div>
-      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="event.preventDefault(); apiLogout().finally(() => window.location.href='login.html');">
+      <a class="sidebar-link" style="margin-top:8px;" href="login.html" onclick="event.preventDefault(); localStorage.removeItem(_claveEstadoAsistente()); apiLogout().finally(() => window.location.href='login.html');">
         <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /></svg></span> Cerrar sesión
       </a>
     </div>
@@ -121,9 +121,13 @@
         </div>
       </div>
 
-      <!-- ── Mascotas registradas en esta sesión ── -->
+      <!-- ── Mascotas registradas en esta sesión (se recuerdan aunque
+           se recargue la página; se borran al cerrar sesión) ── -->
       <div id="paso-registradas" style="display:none;">
-        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.95rem; margin-bottom:12px;">Mascotas registradas hoy</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.95rem;">Mascotas registradas hoy</div>
+          <button class="btn btn-ghost btn-sm" onclick="limpiarRegistradasHoy()">Limpiar lista</button>
+        </div>
         <div id="listaRegistradas" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
 
@@ -249,6 +253,7 @@ async function initAsistente() {
 
   aplicarTemaVisual();
   poblarDireccionElGrullo();
+  restaurarEstadoAsistente();
 }
 initAsistente();
 
@@ -400,6 +405,7 @@ function seleccionarPersona(u) {
   document.getElementById('sel-detalle').textContent = `${u.telefono || '—'} · ${u.email || 'Sin correo'} · ${u.colonia || 'Sin colonia'}`;
   document.getElementById('paso-buscar').style.display = 'none';
   document.getElementById('paso-seleccionado').style.display = 'block';
+  guardarEstadoAsistente();
 }
 
 function cambiarPersona() {
@@ -408,6 +414,37 @@ function cambiarPersona() {
   document.getElementById('paso-buscar').style.display = 'block';
   document.getElementById('buscarCiudadanoInput').value = '';
   document.getElementById('resultadosBusqueda').innerHTML = '';
+  guardarEstadoAsistente();
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  Recordar la persona seleccionada y las mascotas    */
+/*  registradas hoy si se recarga la página por        */
+/*  accidente — antes se perdía todo con un F5.        */
+/*  Se guarda por asistente (session.id) para que, si   */
+/*  otra persona usa el mismo equipo, no vea lo ajeno.  */
+/* ══════════════════════════════════════════════════ */
+function _claveEstadoAsistente() {
+  return `remac_asistente_estado_${session.id}`;
+}
+function guardarEstadoAsistente() {
+  try {
+    localStorage.setItem(_claveEstadoAsistente(), JSON.stringify({ selectedDueno, registradasHoy }));
+  } catch (e) { /* si falla, simplemente no se recuerda tras recargar */ }
+}
+function restaurarEstadoAsistente() {
+  try {
+    const raw = localStorage.getItem(_claveEstadoAsistente());
+    if (!raw) return;
+    const estado = JSON.parse(raw);
+    if (estado.registradasHoy && estado.registradasHoy.length) {
+      registradasHoy = estado.registradasHoy;
+      renderRegistradasHoy();
+    }
+    if (estado.selectedDueno) {
+      seleccionarPersona(estado.selectedDueno);
+    }
+  } catch (e) { /* estado corrupto o inexistente: se empieza de cero */ }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -447,6 +484,7 @@ async function handleNewPet(e) {
     const created = await apiRegistrarMascota(payload);
     registradasHoy.unshift(created);
     renderRegistradasHoy();
+    guardarEstadoAsistente();
     closeModal('modal-nueva-mascota');
     showToast(`✅ ${nombre} registrado/a a nombre de ${selectedDueno.nombre} · Folio: ${created.id}`, 'success');
   } catch (err) {
@@ -467,6 +505,13 @@ function renderRegistradasHoy() {
       </div>
       <button class="btn btn-ghost btn-sm" onclick="downloadActa(registradasHoy[${i}])">📄 Descargar acta</button>
     </div>`).join('');
+}
+
+function limpiarRegistradasHoy() {
+  registradasHoy = [];
+  renderRegistradasHoy();
+  guardarEstadoAsistente();
+  showToast('🧹 Lista de registradas hoy limpiada', 'info');
 }
 
 function previewPhoto(input) {
