@@ -19,7 +19,16 @@ define('DB_CHARSET', 'utf8mb4');
  * Configuración de la aplicación
  */
 define('BASE_URL',    'http://localhost/remac');  // ← Cambiar al dominio/URL real antes de subir
-define('TOKEN_EXPIRY', 86400);                    // 24 horas en segundos
+define('TOKEN_EXPIRY', 2592000);                  // 30 días en segundos (techo máx.; ver "Recordarme" en api-client.js)
+
+/**
+ * Orígenes permitidos para CORS. Rellena con el/los dominio(s) reales
+ * desde donde se sirve el sitio (ver setCorsHeaders() en helpers.php).
+ */
+define('PRODUCTION_ORIGINS', [
+    'https://tudominio.com',
+    'https://www.tudominio.com',
+]);
 
 /**
  * Devuelve una conexión PDO a la BD.

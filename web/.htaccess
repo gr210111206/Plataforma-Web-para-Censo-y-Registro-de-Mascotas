@@ -1,0 +1,14 @@
+# REMAC — Apache .htaccess para el sitio (carpeta raíz de web/)
+
+Options -Indexes
+
+# Redirección forzada a HTTPS.
+# IMPORTANTE: deja esto COMENTADO hasta confirmar que el candado SSL ya
+# funciona en el dominio (cPanel → "Certificado SSL" → debe decir activo,
+# y https://tudominio.com debe cargar sin advertencias en el navegador).
+# Si activas esto antes de tener el SSL listo, el sitio queda inaccesible
+# (redirige a una versión https:// que todavía no existe).
+#
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

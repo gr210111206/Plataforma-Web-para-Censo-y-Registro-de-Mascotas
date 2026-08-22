@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-22] — Preparación para subir a producción en HostGator (dominio real + CORS restringido)
+
+### 🌐 Contexto
+El usuario ya tiene el hosting activo en HostGator (`tumascota.elgrullo.mx`, Plan Personal) y quiere subir el sitio. Antes de eso se resolvieron los dos pendientes marcados como críticos en el análisis técnico del 2026-08-22 antes de esta entrada.
+
+### 🔒 CORS restringido (antes aceptaba cualquier sitio del mundo)
+`setCorsHeaders()` en `web/api/config/helpers.php` respondía siempre `Access-Control-Allow-Origin: *`, es decir, cualquier página web de internet podía llamar a la API de REMAC. Como el frontend de REMAC siempre llama a su propio dominio (`API_BASE_URL` en `api-client.js` se calcula con `window.location.origin`), esto nunca hacía falta. Ahora `setCorsHeaders()` solo refleja el origen si es localhost/red local (desarrollo) o si está en la nueva constante `PRODUCTION_ORIGINS` (definida en `database.php`).
+
+### 🏠 Dominio de producción actualizado
+`BASE_URL` en `database.php` (bloque de producción) apuntaba al subdominio temporal de pruebas de HostGator (`...misitiohostgator.com/remac-prueba`). Se actualizó a `https://tumascota.elgrullo.mx`, el dominio real ya activo en el hosting. Se agregó `PRODUCTION_ORIGINS` con ese dominio (con y sin `www`) y el subdominio de pruebas, por si todavía lo usan para verificar antes de apuntar el dominio final.
+
+### 📄 Nuevo `web/.htaccess` (raíz del sitio)
+No existía `.htaccess` en la raíz de `web/` (solo en `web/api/`). Se agregó uno con la regla de redirección forzada a HTTPS **comentada por default** — debe activarse manualmente solo después de confirmar que el certificado SSL del dominio ya funciona, para no dejar el sitio inaccesible si se activa antes de tiempo.
+
+**Archivos modificados:**
+- `web/api/config/database.php` (no se sube a git) — `BASE_URL` actualizado, `PRODUCTION_ORIGINS` agregado.
+- `web/api/config/database.example.php` — mismo patrón reflejado en la plantilla, y `TOKEN_EXPIRY` sincronizado a 30 días (ya se había cambiado en el archivo real pero no en la plantilla).
+- `web/api/config/helpers.php` — `setCorsHeaders()` ahora valida contra origen local o `PRODUCTION_ORIGINS` en vez de `*`.
+- `web/.htaccess` — nuevo, redirección HTTPS lista pero desactivada hasta confirmar el SSL.
+
 ## 📅 [2026-08-22] — "Recordarme" funcional en login + fondo naranja del logo del navbar eliminado
 
 ### ✅ Checkbox "Recordarme" ahora controla la persistencia real de la sesión

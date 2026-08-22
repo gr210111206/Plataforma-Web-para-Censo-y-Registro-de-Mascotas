@@ -25,8 +25,24 @@ set_exception_handler(function (Throwable $e): void {
 });
 
 /* ── CORS ──────────────────────────────────────── */
+/* Antes: 'Access-Control-Allow-Origin: *' — la API respondía a
+   cualquier sitio del mundo. El frontend de REMAC solo llama a su
+   propio dominio (API_BASE_URL en api-client.js usa
+   window.location.origin), así que restringir esto a los orígenes de
+   desarrollo local + PRODUCTION_ORIGINS (database.php) no rompe nada
+   propio, y bloquea que otro sitio use la API con las cookies/token de
+   un usuario. */
 function setCorsHeaders(): void {
-    header('Access-Control-Allow-Origin: *');
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $esOrigenLocal = (bool) preg_match(
+        '#^https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$#',
+        $origin
+    );
+
+    if ($origin !== '' && ($esOrigenLocal || in_array($origin, PRODUCTION_ORIGINS, true))) {
+        header("Access-Control-Allow-Origin: $origin");
+        header('Vary: Origin');
+    }
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
     header('Content-Type: application/json; charset=utf-8');
