@@ -65,6 +65,15 @@ function _shadeColor(hex, lFactor) {
     return _hslToHex(h, s, newL);
   } catch (e) { return hex; }
 }
+/** "#F27A00" → "242, 122, 0", para usar con rgba(var(--orange-rgb), X). */
+function _hexToRgbString(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return `${r}, ${g}, ${b}`;
+}
 
 /**
  * Lee padron_tema_config (del servidor si hay conexión, si no de
@@ -97,6 +106,13 @@ async function aplicarTemaVisual() {
     root.setProperty('--orange-dark', _shadeColor(cfg.color, -0.18));
     root.setProperty('--orange-light', _shadeColor(cfg.color, 0.3));
     root.setProperty('--orange-pale', _shadeColor(cfg.color, 0.85));
+    root.setProperty('--orange-rgb', _hexToRgbString(cfg.color));
+    // Degradado oscuro de los paneles de marca (hero, login, sidebar del
+    // admin): mismo tono que el color elegido, solo mucho más oscuro.
+    root.setProperty('--brand-dark-1', _shadeColor(cfg.color, -0.90));
+    root.setProperty('--brand-dark-2', _shadeColor(cfg.color, -0.68));
+    root.setProperty('--brand-dark-3', _shadeColor(cfg.color, -0.50));
+    root.setProperty('--brand-dark-4', _shadeColor(cfg.color, -0.35));
   }
   if (cfg.radius === false) {
     root.setProperty('--radius-sm', '3px');

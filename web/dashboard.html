@@ -27,7 +27,7 @@
     }
     .pet-card:hover {
       border-color: var(--orange);
-      box-shadow: 0 8px 24px rgba(242,122,0,.12);
+      box-shadow: 0 8px 24px rgba(var(--orange-rgb),.12);
       transform: translateY(-2px);
     }
     .pet-card-banner {
@@ -891,7 +891,7 @@ function verDetalle(i) {
       ${field('Esterilizado',  pet.esterilizado ? '✅ Sí' : '❌ No')}
     </div>
     ${pet.link_publico ? `
-    <div style="margin-top:14px; padding:12px; background:var(--orange-pale); border-radius:var(--radius); border:1px solid rgba(242,122,0,.2);">
+    <div style="margin-top:14px; padding:12px; background:var(--orange-pale); border-radius:var(--radius); border:1px solid rgba(var(--orange-rgb),.2);">
       <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; color:var(--orange-dark); margin-bottom:4px;">Link público</div>
       <a href="${pet.link_publico}" target="_blank" style="font-size:.8rem; color:var(--orange); word-break:break-all;">${pet.link_publico}</a>
     </div>` : ''}`;

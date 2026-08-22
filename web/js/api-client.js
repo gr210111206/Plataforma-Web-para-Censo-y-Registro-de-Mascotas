@@ -32,9 +32,13 @@ const USE_MOCK = false;  // → Cambia a true si aún no tienes hosting
    HELPERS INTERNOS
    ══════════════════════════════════════════════ */
 
+function _getSessionRaw() {
+  return localStorage.getItem('padron_session') || sessionStorage.getItem('padron_session');
+}
+
 function _getToken() {
   try {
-    const session = JSON.parse(localStorage.getItem('padron_session') || '{}');
+    const session = JSON.parse(_getSessionRaw() || '{}');
     return session.token || null;
   } catch { return null; }
 }
@@ -77,20 +81,30 @@ async function apiRegisterUser(nombre, email, telefono, password) {
 }
 
 /**
- * Login de usuario con email + password
+ * Login de usuario con email + password.
+ * Si remember=true, la sesión se guarda en localStorage (sobrevive a cerrar
+ * el navegador). Si remember=false, se guarda en sessionStorage (se pierde
+ * al cerrar la pestaña/navegador, sin importar cuánto le quede al token).
  */
-async function apiLoginUser(email, password) {
+async function apiLoginUser(email, password, remember = false) {
   const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
-  localStorage.setItem('padron_session', JSON.stringify({
+  const session = JSON.stringify({
     token:    data.token,
     nombre:   data.nombre,
     email:    data.email,
     telefono: data.telefono,
     rol:      data.rol,
-  }));
+  });
+  if (remember) {
+    localStorage.setItem('padron_session', session);
+    sessionStorage.removeItem('padron_session');
+  } else {
+    sessionStorage.setItem('padron_session', session);
+    localStorage.removeItem('padron_session');
+  }
   return data;
 }
 
@@ -100,6 +114,7 @@ async function apiLoginUser(email, password) {
 async function apiLogout() {
   await _fetch(`${API_BASE_URL}/auth?action=logout`, { method: 'POST' });
   localStorage.removeItem('padron_session');
+  sessionStorage.removeItem('padron_session');
 }
 
 /**
@@ -137,6 +152,7 @@ async function apiRequireSession(rolRequerido = null) {
     return user;
   } catch (err) {
     localStorage.removeItem('padron_session');
+    sessionStorage.removeItem('padron_session');
     window.location.href = 'login.html';
     throw err;
   }

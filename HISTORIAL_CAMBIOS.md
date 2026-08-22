@@ -2,6 +2,79 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-22] — "Recordarme" funcional en login + fondo naranja del logo del navbar eliminado
+
+### ✅ Checkbox "Recordarme" ahora controla la persistencia real de la sesión
+Antes, el checkbox "Recordarme" existía en `login.html` pero ningún JS lo leía: toda sesión (marcada o no) se guardaba igual en `localStorage`, con un token válido 24h en el servidor sin importar la elección del usuario. Ahora:
+- **Marcado** → la sesión se guarda en `localStorage` (sobrevive a cerrar el navegador).
+- **Desmarcado** → la sesión se guarda en `sessionStorage` (se pierde al cerrar la pestaña/navegador; debe iniciar sesión de nuevo).
+
+**Archivos modificados:**
+- `web/api/config/database.php` — `TOKEN_EXPIRY` subido de 24h a 30 días (techo máximo para sesiones "recordadas"; las no recordadas mueren solas al cerrar la pestaña por vivir en `sessionStorage`).
+- `web/js/api-client.js` — nuevo helper `_getSessionRaw()` que busca `padron_session` en `localStorage` o `sessionStorage`; `apiLoginUser()` acepta parámetro `remember` y guarda en el storage correspondiente (limpiando el otro); `apiLogout()` y `apiRequireSession()` ahora limpian la sesión en ambos storages.
+- `web/login.html` — `handleLogin()` lee `document.getElementById('remember').checked` y lo pasa a `apiLoginUser()`.
+
+### 🧹 Ícono eliminado de "Tips de salud animal" (portada y panel admin)
+Se decidió no agregar selector de imagen/ícono para los artículos (se consideró usar Base64 igual que las fotos de mascotas, pero se optó por algo más simple y limpio): se quitó por completo el campo "Ícono" del formulario "Nuevo Artículo" en el admin y el emoji que aparecía en cada tarjeta de tip, tanto en la portada pública como en el listado del panel admin. Ahora las tarjetas muestran solo título y extracto del contenido.
+
+**Archivos modificados:**
+- `web/index.html` — quitado `<span class="article-icon">` de `renderArticles()`.
+- `web/admin.html` — quitado el campo `art-icono` del formulario, su render en `renderAdminArtList()`, y sus referencias en `saveArticulo()`, `resetArticulo()` y `editarArticulo()`.
+
+No requirió cambios de base de datos ni de `web/api/contenido.php`: la columna `imagen_icono` sigue existiendo con su valor por defecto (`📄`), simplemente ya no se expone ni se edita desde la interfaz.
+
+### ✅ El navbar de la portada ya refleja si hay sesión activa
+Antes, `index.html` siempre mostraba "Iniciar sesión" en el navbar aunque el usuario ya tuviera sesión válida (token en `localStorage`/`sessionStorage`), lo que causaba que al hacer clic se le mandara de nuevo a `login.html` como si no hubiera iniciado sesión. Ahora, al cargar la portada, si hay una sesión guardada el botón cambia a "Mi cuenta" y enlaza directo al panel que corresponde según el rol (`admin.html`, `asistente.html` o `dashboard.html`).
+
+**Archivos modificados:**
+- `web/index.html` — nueva función `applyNavAuthState()` (llamada en `initIndex()`), e ids `nav-login-btn` / `nav-login-mobile` agregados a los enlaces de "Iniciar sesión" del navbar.
+
+### 🎨 Fondo naranja del logo en la barra de navegación eliminado
+Se quitó el fondo naranja del ícono del navbar en `index.html`, dejando visible solo el escudo del H. Ayuntamiento. Se verificó que `applyAppearanceConfig()` (personalización de íconos en el panel admin) solo modifica el contenido del ícono, nunca su fondo, así que la personalización sigue funcionando sin cambios.
+
+**Archivos modificados:**
+- `web/index.html` — quitado `background:var(--orange)` inline del `#nav-logo-icon`.
+- `web/css/styles.css` — quitado `background: var(--orange)` de la regla `.navbar-logo .logo-icon`.
+
+## 📅 [2026-08-22] — Análisis Técnico Completo del Proyecto REMAC
+
+### 🔍 Revisión General del Estado del Proyecto
+Se realizó un análisis integral de todos los archivos del proyecto para evaluar arquitectura, seguridad, calidad de código, UI/UX, base de datos y documentación.
+
+**Archivos analizados:**
+- `web/api/auth.php`, `mascotas.php`, `usuarios.php`, `stats.php`, `settings.php`, `contenido.php`
+- `web/api/config/database.php`, `helpers.php`
+- `web/js/api-client.js`, `mock-data.js`, `tema.js`
+- `web/database/schema.sql`, `seed.sql`
+- `web/api/.htaccess`
+- `CLAUDE.md`, `HISTORIAL_CAMBIOS.md`, `CUENTAS_PRUEBA.md`
+
+**Fortalezas identificadas:**
+1. Stack correcto para HostGator (HTML + CSS Vanilla + JS + PHP nativo + MySQL, sin build steps).
+2. Detección automática de entorno local/producción en `database.php`.
+3. URL dinámica de API en `api-client.js` — funciona en cualquier dominio sin editar código.
+4. Autenticación por Bearer Token con expiración 24h.
+5. Passwords con `password_hash()` (bcrypt) y PDO prepared statements — protegidos contra SQL Injection.
+6. Folio REMAC-GRU-XXXXX generado con transacción atómica (sin colisiones de concurrencia).
+7. Sistema de tema dinámico (`tema.js`) sincronizado entre admin y todos los visitantes.
+8. Changelog de 60 KB — documentación muy detallada.
+
+**Problemas críticos detectados (acción requerida antes de producción):**
+1. ⚠️ Credenciales de BD de producción (HostGator) en texto plano en `database.php` — mover a variables de entorno.
+2. ⚠️ CORS con `Access-Control-Allow-Origin: *` — restringir al dominio del sitio en producción.
+
+**Mejoras recomendadas:**
+- Agregar `filter_var($email, FILTER_VALIDATE_EMAIL)` en `auth.php`.
+- Normalizar números de teléfono antes de buscar en `buscar-o-crear`.
+- Agregar paginación (LIMIT/OFFSET) en listado de mascotas.
+- Redirect HTTP → HTTPS en `.htaccess`.
+- Extraer JS inline de `admin.html` (194 KB) a `js/admin.js`.
+- Migrar `foto_url` de Base64 en BD a archivos en servidor.
+
+**Evaluación final: ⭐⭐⭐⭐ (4.2/5)** — Proyecto sólido, bien pensado para su contexto. Listo para pruebas en producción tras resolver credenciales.
+
+**Archivos modificados:** `HISTORIAL_CAMBIOS.md` (solo registro)
+
 ## 📅 [2026-08-21] — "Roles" ahora muestra TODAS las cuentas, no solo Asistente
 
 ### 🔧 Petición del usuario tras probar el panel

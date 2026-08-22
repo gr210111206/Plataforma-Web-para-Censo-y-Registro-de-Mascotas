@@ -12,8 +12,8 @@
 
   <style>
     /* ── Admin overrides ── */
-    .sidebar { background: linear-gradient(180deg, #1A0F00 0%, #3D1F00 100%); }
-    .sidebar-link.active { background: rgba(242,122,0,.28); color: var(--orange-light); }
+    .sidebar { background: linear-gradient(180deg, var(--brand-dark-1) 0%, var(--brand-dark-2) 100%); }
+    .sidebar-link.active { background: rgba(var(--orange-rgb),.28); color: var(--orange-light); }
     .sidebar-link:hover { background: rgba(255,255,255,.08); color: white; }
     .sidebar-badge {
       margin-left: auto; background: var(--orange); color: white;
@@ -232,7 +232,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.3rem;
       color: white;
-      box-shadow: 0 4px 14px rgba(242,122,0,.4);
+      box-shadow: 0 4px 14px rgba(var(--orange-rgb),.4);
       cursor: pointer;
       transition: var(--transition);
       border: none;
@@ -273,7 +273,7 @@
     .config-nav-item.active {
       border-color: var(--orange);
       background: var(--orange-pale);
-      box-shadow: 0 2px 12px rgba(242,122,0,.15);
+      box-shadow: 0 2px 12px rgba(var(--orange-rgb),.15);
     }
     .config-nav-item.active::after {
       content: '';
@@ -563,7 +563,7 @@
     }
     .wysiwyg-wrap:focus-within {
       border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(242,122,0,.12);
+      box-shadow: 0 0 0 3px rgba(var(--orange-rgb),.12);
     }
     .wysiwyg-toolbar {
       display: flex;
@@ -989,7 +989,7 @@
     <!-- SECCIÓN: ROLES Y CUENTAS DE PERSONAL       -->
     <!-- ══════════════════════════════════════════ -->
     <div class="dashboard-content" id="sec-roles" style="display:none;">
-      <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.3); border-radius:var(--radius); padding:14px 18px; font-size:.85rem; color:var(--gray-1); margin-bottom:20px;">
+      <div style="background:var(--orange-pale); border:1px solid rgba(var(--orange-rgb),.3); border-radius:var(--radius); padding:14px 18px; font-size:.85rem; color:var(--gray-1); margin-bottom:20px;">
         Las cuentas de <strong>Asistente</strong> pueden registrar mascotas a nombre de ciudadanos que no tienen correo electrónico (por ejemplo, personas adultas mayores), tanto en ventanilla como en una campaña fuera de la oficina. No pueden ver ni editar el resto del panel admin. <strong>Nunca se puede crear otra cuenta de Administrador desde aquí.</strong>
       </div>
 
@@ -1078,15 +1078,11 @@
         <h3 style="font-size:1.1rem; margin-bottom:20px;">📝 Nuevo artículo / Tip de cuidado</h3>
         <div style="display:flex; flex-direction:column; gap:16px;">
 
-          <!-- Título + Ícono -->
+          <!-- Título -->
           <div class="form-row">
             <div class="form-group">
               <label for="art-titulo">Título del artículo *</label>
               <input type="text" id="art-titulo" class="form-control" placeholder="Ej. ¿Con qué frecuencia debo vacunar a mi mascota?" />
-            </div>
-            <div class="form-group" style="max-width:100px;">
-              <label for="art-icono">Ícono</label>
-              <input type="text" id="art-icono" class="form-control" placeholder="🐕" maxlength="4" style="text-align:center; font-size:1.2rem;" />
             </div>
           </div>
 
@@ -1250,7 +1246,7 @@
       <div class="config-panel active" id="cfg-portada">
         <div style="max-width:960px; display:flex; flex-direction:column; gap:24px;">
 
-          <div style="background:linear-gradient(135deg, #1A0F00, #5C3000); border-radius:var(--radius-lg); padding:24px; color:white;">
+          <div style="background:linear-gradient(135deg, var(--brand-dark-1), var(--brand-dark-3)); border-radius:var(--radius-lg); padding:24px; color:white;">
             <h3 style="font-size:1.2rem; font-family:'Outfit',sans-serif; margin-bottom:6px; color:white;">🏠 Editor de Contenidos de la Página Principal (index.html)</h3>
             <p style="font-size:.85rem; color:rgba(255,255,255,.8); margin-bottom:0;">Edita y personaliza cualquier título, descripción, contadores y textos de la portada del portal.</p>
           </div>
@@ -1758,7 +1754,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
       <!-- TAB: Apariencia / Iconos -->
       <div class="config-panel" id="cfg-apariencia">
 
-        <div style="background:var(--orange-pale); border:1px solid rgba(242,122,0,.25); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; font-size:.82rem; color:var(--orange-dark); display:flex; gap:10px; align-items:center;">
+        <div style="background:var(--orange-pale); border:1px solid rgba(var(--orange-rgb),.25); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; font-size:.82rem; color:var(--orange-dark); display:flex; gap:10px; align-items:center;">
           <span style="font-size:1.2rem;">🎨</span>
           <span>Personaliza los íconos e imágenes del portal público. Puedes usar <strong>emojis</strong>, <strong>imágenes</strong> (JPG/PNG) o <strong>GIFs</strong> (URL o archivo). Los cambios se aplican en tiempo real al guardar.</span>
         </div>
@@ -2780,14 +2776,13 @@ let editingArticuloId = null;
 
 async function saveArticulo() {
   const titulo   = document.getElementById('art-titulo').value.trim();
-  const icono    = document.getElementById('art-icono').value.trim() || '📝';
   const editor   = document.getElementById('wysiwygEditor');
   const contenido = editor.innerText.trim();
 
   if (!titulo)    { showToast('⚠️ El título es obligatorio', 'error'); return; }
   if (!contenido) { showToast('⚠️ El contenido no puede estar vacío', 'error'); return; }
 
-  const payload = { titulo, contenido, imagen_icono: icono };
+  const payload = { titulo, contenido };
 
   try {
     if (editingArticuloId !== null) {
@@ -2809,7 +2804,6 @@ async function saveArticulo() {
 
 function resetArticulo() {
   document.getElementById('art-titulo').value  = '';
-  document.getElementById('art-icono').value   = '';
   document.getElementById('wysiwygEditor').innerHTML = '';
   document.getElementById('wordCount').textContent   = '0';
   updateToolbarState();
@@ -2822,7 +2816,6 @@ function editarArticulo(id) {
   if (!a) return;
   editingArticuloId = id;
   document.getElementById('art-titulo').value = a.titulo;
-  document.getElementById('art-icono').value  = a.imagen_icono || '';
   document.getElementById('wysiwygEditor').innerHTML = a.contenido;
   updateWordCount();
   document.getElementById('art-save-btn').textContent = '💾 Guardar cambios';
@@ -2844,7 +2837,6 @@ function renderAdminArtList() {
   const container = document.getElementById('adminArtList');
   container.innerHTML = adminArticulos.map(a => `
     <div class="article-card">
-      <span class="article-icon">${a.imagen_icono}</span>
       <div class="article-title">${a.titulo}</div>
       <div class="article-excerpt">${a.contenido.substring(0, 80)}...</div>
       <div style="display:flex; gap:6px; margin-top:10px;">
@@ -3037,6 +3029,11 @@ function resetTema() {
   document.documentElement.style.removeProperty('--orange-dark');
   document.documentElement.style.removeProperty('--orange-light');
   document.documentElement.style.removeProperty('--orange-pale');
+  document.documentElement.style.removeProperty('--orange-rgb');
+  document.documentElement.style.removeProperty('--brand-dark-1');
+  document.documentElement.style.removeProperty('--brand-dark-2');
+  document.documentElement.style.removeProperty('--brand-dark-3');
+  document.documentElement.style.removeProperty('--brand-dark-4');
   document.documentElement.style.removeProperty('--radius-sm');
   document.documentElement.style.removeProperty('--radius');
   document.documentElement.style.removeProperty('--radius-lg');
