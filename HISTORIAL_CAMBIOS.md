@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-23] — Primer intento real de despliegue: base de datos y archivos subidos, bloqueado por DNS
+
+### ✅ Completado en el servidor de HostGator
+- Base de datos `ferna814_Mascotas` creada (Database Wizard), usuario `ferna814_remac` con todos los privilegios.
+- `web/database/schema.sql` importado correctamente (7 tablas: `duenos`, `mascotas`, `campanas`, `articulos`, `folio_counter`, `site_config`, y una más).
+- Todos los archivos de `web/` (excepto `.htaccess` y `database/`) subidos y extraídos en `public_html`.
+- `public_html/.htaccess` corregido a mano: se conservó el bloque `# php -- BEGIN/END cPanel-generated handler, do not edit` (fija PHP 8.4) y se agregaron las reglas del proyecto después, sin pisarlo.
+- `web/api/config/database.php` de producción subido con `DB_NAME` corregido a `ferna814_Mascotas`.
+
+### 🚧 Bloqueado: `tumascota.elgrullo.mx` no resuelve (DNS)
+Visitar el dominio da `DNS_PROBE_FINISHED_NXDOMAIN`. Se investigó con WHOIS: `elgrullo.mx` está registrado en **Namecheap**, pero su DNS real vive en **Cloudflare** (no en HostGator, ni en ninguna de las opciones del asistente "Cambiar dominio" de HostGator). Falta que quien administre esa cuenta de Cloudflare (Informática Municipal, o quien haya contratado el dominio — no identificado aún) agregue un registro **A**: `tumascota` → `162.241.60.122`, con el proxy de Cloudflare desactivado (nube gris).
+
+Se probó apuntar el dominio localmente vía el archivo `hosts` de Windows (como prueba temporal, sin depender del DNS público) — con eso el navegador sí llegó al servidor de HostGator, pero devolvió una página 404 genérica (la misma que da la IP `162.241.60.122` sola sin nombre de dominio), lo que sugiere que HostGator también necesita terminar de aprovisionar el vhost de Apache para este dominio del lado de ellos. Pendiente confirmar con soporte de HostGator en paralelo a resolver el DNS.
+
+**Nota:** no se hicieron cambios de código en esta sesión — todo lo de esta entrada es configuración del servidor/DNS, documentado aquí para no repetir la investigación.
+
 ## 📅 [2026-08-22] — Preparación para subir a producción en HostGator (dominio real + CORS restringido)
 
 ### 🌐 Contexto
