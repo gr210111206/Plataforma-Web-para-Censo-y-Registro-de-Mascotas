@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-25] — El panel admin se trababa con volumen real; tarjetas KPI y tablas ordenables/paginadas
+
+### 🐛 Diagnóstico: "Datos del Padrón" se trababa y el mapa quedaba inutilizable
+Con las ~20,000 cuentas y ~30,000 mascotas de prueba cargadas (ver entrada de carga de datos), el panel admin se congelaba al abrir "Datos" y el mapa quedaba amontonado de marcadores imposibles de tocar. Causas reales encontradas:
+1. `initMap()` dibujaba **un marcador de Leaflet por cada mascota** (hasta 30,000), sin agregación — y el diccionario `colonias` de `admin.html` tenía solo 5 entradas falsas ("Centro", "El Sabino"...) que no coincidían con las colonias reales, así que casi todos los marcadores caían amontonados en el mismo punto.
+2. `renderSeguimiento(allPets)` se ejecutaba **siempre al cargar el panel**, construyendo miles de tarjetas HTML pesadas en una pestaña que ni siquiera estaba visible, bloqueando el hilo principal antes de que "Datos" terminara de pintarse.
+3. Las tablas de "Usuarios" y "Roles y Cuentas" tenían el mismo problema latente (listaban `allUsuarios`/`allCuentas` completos sin límite) — no se había disparado porque el usuario no las había abierto todavía con el volumen de prueba cargado.
+
+**Corrección:**
+- `initMap()` ahora agrega mascotas por colonia usando `/api/stats` (mismo patrón que el mapa público de `index.html`) — como máximo ~16 marcadores, sin importar si hay 8 o 300,000 mascotas. Se corrigió también el diccionario `colonias` de `admin.html` para que use el catálogo real de 16 colonias.
+- `renderSeguimiento()` ahora es perezoso (solo se construye al abrir la pestaña "Seguimiento", vía el mismo patrón `_mapInit`/`_seguimientoInit`), y limita a 60 tarjetas por vista con aviso de "mostrando X de Y — usa la búsqueda".
+- Tablas de "Usuarios" y "Roles" reescritas con paginación real (25 filas por página, con botones Anterior/Siguiente) en vez de listar todo de golpe.
+
+### 🎨 Tarjetas KPI y tablas ordenables (inspirado en shadcn/ui, sin dependencias nuevas)
+El usuario pidió analizar un dashboard hecho con shadcn/ui + React + Vite para ver qué se podía "agregar". Ese stack requiere Node.js y build step — incompatible con HostGator (hosting compartido, sin SSH ni Node) y con la arquitectura sin build de REMAC — así que en vez de adoptar el repo, se llevó su lenguaje visual a CSS/JS vanilla:
+- **Tarjetas KPI** nuevas arriba del mapa en "Datos": mascotas registradas (con desglose perro/gato), familias registradas, vacunados (con % del padrón), nuevos este mes. Alimentadas por `/api/stats`, ya cargado. Valores con formato compacto (`compactNum()`: 1,284 / 12.9K / 4.2M).
+- Tablas de "Usuarios" y "Roles" ahora tienen **encabezados ordenables** (clic para ordenar asc/desc, con flecha indicadora) además de la paginación — mismo patrón visual (`.data-table`, header fijo/sticky) reutilizado entre ambas.
+
+**Verificación:** se corrió `admin.html` real vía Chrome headless (con sesión inyectada por token de la API) para confirmar que el JS nuevo carga sin errores en consola — no fue posible tomar una captura de pantalla utilizable en este entorno (permisos de sandbox), así que la revisión visual final la hizo el usuario directamente en su navegador.
+
+**Archivos modificados:** `web/admin.html` (CSS de `.kpi-row`/`.data-table`, HTML de `sec-datos`/`sec-usuarios`/`sec-roles`, y JS: `initMap()`, `colonias`, `renderSeguimiento()`, `showAdmin()`, `renderUsuariosTable()`/`filterUsuarios()`, `renderRolesTable()`/`filterRoles()`, más `sortRows()`/`updateSortIndicators()`/`renderPagerFooter()`/`compactNum()`/`renderKpiRow()` nuevas).
+
 ## 📅 [2026-08-23] — Primer intento real de despliegue: base de datos y archivos subidos, bloqueado por DNS
 
 ### ✅ Completado en el servidor de HostGator

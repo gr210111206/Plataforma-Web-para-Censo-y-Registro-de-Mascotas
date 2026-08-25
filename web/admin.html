@@ -26,11 +26,49 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) 220px minmax(0, 1fr);
       gap: 20px;
-      height: calc(100vh - 130px);
-      min-height: 500px;
+      height: calc(100vh - 230px);
+      min-height: 420px;
       overflow: hidden;
     }
     .datos-grid > * { min-width: 0; overflow: hidden; }
+
+    /* ── KPI stat tiles ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .kpi-tile {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .kpi-icon {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: var(--radius);
+      background: var(--orange-pale);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+    }
+    .kpi-body { min-width: 0; }
+    .kpi-label { font-size: .74rem; color: var(--gray-2); margin-bottom: 2px; }
+    .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--dark);
+      line-height: 1.15;
+    }
+    .kpi-delta { font-size: .72rem; color: var(--gray-2); margin-top: 2px; }
+    @media (max-width: 900px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
 
     /* ── Map ── */
     #mapContainer {
@@ -199,6 +237,47 @@
       padding: 4px; border-radius: var(--radius-sm);
     }
     .seguimiento-btn:hover { background: var(--orange-pale); }
+
+    /* ── Tablas de datos (Usuarios, Roles): ordenables + paginadas ──
+       Con miles de cuentas, renderizar la tabla completa de una vez
+       traba el navegador igual que pasaba con el mapa — por eso
+       paginan en vez de listar todo. */
+    .data-table-card {
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .data-table-scroll { overflow: auto; max-height: 58vh; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: var(--surface);
+      padding: 12px 14px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--gray-2);
+      border-bottom: 1px solid var(--gray-4);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .data-table th[data-sort] { cursor: pointer; user-select: none; }
+    .data-table th[data-sort]:hover { color: var(--gray-1); }
+    .data-table th .sort-arrow { display: inline-block; opacity: .35; font-size: .68rem; margin-left: 2px; }
+    .data-table th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
+    .data-table tbody td { padding: 12px 14px; border-top: 1px solid var(--gray-4); font-size: .84rem; }
+    .data-table tbody tr:hover { background: var(--surface); }
+    .data-table-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+      padding: 10px 14px;
+      border-top: 1px solid var(--gray-4);
+      font-size: .78rem;
+      color: var(--gray-2);
+      background: var(--surface);
+    }
 
     /* ── Seguimiento view ── */
     .seguimiento-layout {
@@ -873,6 +952,38 @@
     <!-- SECCIÓN: DATOS                             -->
     <!-- ══════════════════════════════════════════ -->
     <div class="dashboard-content" id="sec-datos">
+      <div class="kpi-row" id="kpiRow">
+        <div class="kpi-tile">
+          <div class="kpi-icon">🐾</div>
+          <div class="kpi-body">
+            <div class="kpi-label">Mascotas registradas</div>
+            <div class="kpi-value" id="kpi-mascotas">—</div>
+            <div class="kpi-delta" id="kpi-mascotas-delta"></div>
+          </div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-icon">👪</div>
+          <div class="kpi-body">
+            <div class="kpi-label">Familias registradas</div>
+            <div class="kpi-value" id="kpi-duenos">—</div>
+          </div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-icon">💉</div>
+          <div class="kpi-body">
+            <div class="kpi-label">Vacunados</div>
+            <div class="kpi-value" id="kpi-vacunados">—</div>
+            <div class="kpi-delta" id="kpi-vacunados-delta"></div>
+          </div>
+        </div>
+        <div class="kpi-tile">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-body">
+            <div class="kpi-label">Nuevos este mes</div>
+            <div class="kpi-value" id="kpi-nuevos">—</div>
+          </div>
+        </div>
+      </div>
       <div class="datos-grid">
 
         <!-- Columna 1: Mapa -->
@@ -963,25 +1074,28 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="filterUsuarios()" style="width:100%; padding-left:36px;" />
+          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="usuariosState.page = 1; filterUsuarios();" style="width:100%; padding-left:36px;" />
         </div>
       </div>
 
-      <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); overflow:hidden;">
-        <table class="table" style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr style="background:var(--surface); text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--gray-2);">
-              <th style="padding:12px 14px;">Ciudadano</th>
-              <th style="padding:12px 14px;">Contacto</th>
-              <th style="padding:12px 14px;">Colonia</th>
-              <th style="padding:12px 14px;">Mascotas</th>
-              <th style="padding:12px 14px;">Registrado</th>
-              <th style="padding:12px 14px;">Estatus</th>
-              <th style="padding:12px 14px;"></th>
-            </tr>
-          </thead>
-          <tbody id="usuariosTableBody"></tbody>
-        </table>
+      <div class="data-table-card">
+        <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-sort="nombre" onclick="sortUsuarios('nombre')">Ciudadano <span class="sort-arrow">⇅</span></th>
+                <th>Contacto</th>
+                <th data-sort="colonia" onclick="sortUsuarios('colonia')">Colonia <span class="sort-arrow">⇅</span></th>
+                <th data-sort="total_mascotas" onclick="sortUsuarios('total_mascotas')">Mascotas <span class="sort-arrow">⇅</span></th>
+                <th data-sort="created_at" onclick="sortUsuarios('created_at')">Registrado <span class="sort-arrow">⇅</span></th>
+                <th data-sort="activo" onclick="sortUsuarios('activo')">Estatus <span class="sort-arrow">⇅</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="usuariosTableBody"></tbody>
+          </table>
+        </div>
+        <div class="data-table-footer" id="usuariosPager"></div>
       </div>
     </div>
 
@@ -996,25 +1110,28 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="filterRoles()" style="width:100%; padding-left:36px;" />
+          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="rolesState.page = 1; filterRoles();" style="width:100%; padding-left:36px;" />
         </div>
         <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
       </div>
 
-      <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); overflow:hidden;">
-        <table class="table" style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr style="background:var(--surface); text-align:left; font-size:.72rem; text-transform:uppercase; color:var(--gray-2);">
-              <th style="padding:12px 14px;">Nombre</th>
-              <th style="padding:12px 14px;">Contacto</th>
-              <th style="padding:12px 14px;">Rol</th>
-              <th style="padding:12px 14px;">Creada</th>
-              <th style="padding:12px 14px;">Estatus</th>
-              <th style="padding:12px 14px;"></th>
-            </tr>
-          </thead>
-          <tbody id="rolesTableBody"></tbody>
-        </table>
+      <div class="data-table-card">
+        <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-sort="nombre" onclick="sortRoles('nombre')">Nombre <span class="sort-arrow">⇅</span></th>
+                <th>Contacto</th>
+                <th data-sort="rol" onclick="sortRoles('rol')">Rol <span class="sort-arrow">⇅</span></th>
+                <th data-sort="created_at" onclick="sortRoles('created_at')">Creada <span class="sort-arrow">⇅</span></th>
+                <th data-sort="activo" onclick="sortRoles('activo')">Estatus <span class="sort-arrow">⇅</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rolesTableBody"></tbody>
+          </table>
+        </div>
+        <div class="data-table-footer" id="rolesPager"></div>
       </div>
     </div>
 
@@ -2193,6 +2310,79 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 let allPets = [];
 let stats   = {};
 
+/* ══════════════════════════════════════════════════ */
+/*  TABLAS: orden por columna + paginación             */
+/*  (compartido entre Usuarios y Roles — con miles de   */
+/*  cuentas, listar todo de golpe traba el navegador)   */
+/* ══════════════════════════════════════════════════ */
+const PAGE_SIZE = 25;
+
+function sortRows(data, key, dir) {
+  if (!key) return data;
+  return [...data].sort((a, b) => {
+    let va = a[key], vb = b[key];
+    if (typeof va === 'number' || typeof vb === 'number') {
+      va = Number(va) || 0; vb = Number(vb) || 0;
+    } else {
+      va = (va ?? '').toString().toLowerCase();
+      vb = (vb ?? '').toString().toLowerCase();
+    }
+    if (va < vb) return -1 * dir;
+    if (va > vb) return  1 * dir;
+    return 0;
+  });
+}
+
+function updateSortIndicators(theadSelector, state) {
+  document.querySelectorAll(`${theadSelector} th[data-sort]`).forEach(th => {
+    const key = th.dataset.sort;
+    const active = key === state.sortKey;
+    th.classList.toggle('sorted', active);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = active ? (state.sortDir === 1 ? '↑' : '↓') : '⇅';
+  });
+}
+
+function renderPagerFooter(footerId, state, total, onChangeFn) {
+  const el = document.getElementById(footerId);
+  if (!el) return;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const start = total === 0 ? 0 : (state.page - 1) * PAGE_SIZE + 1;
+  const end = Math.min(state.page * PAGE_SIZE, total);
+  el.innerHTML = `
+    <span>${total === 0 ? 'Sin resultados' : `${start}–${end} de ${total.toLocaleString('es-MX')}`}</span>
+    <span style="display:flex; gap:6px;">
+      <button class="btn btn-ghost btn-sm" ${state.page <= 1 ? 'disabled' : ''} onclick="${onChangeFn}(${state.page - 1})">‹ Anterior</button>
+      <span style="align-self:center; color:var(--gray-2);">Página ${state.page} de ${totalPages}</span>
+      <button class="btn btn-ghost btn-sm" ${state.page >= totalPages ? 'disabled' : ''} onclick="${onChangeFn}(${state.page + 1})">Siguiente ›</button>
+    </span>`;
+}
+
+function compactNum(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 10000)   return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toLocaleString('es-MX');
+}
+
+function renderKpiRow() {
+  const totalMascotas = stats.total_mascotas ?? 0;
+  const totalDuenos   = stats.total_duenos ?? 0;
+  const vacunados     = stats.vacunados ?? 0;
+  const nuevosMes     = stats.registros_este_mes ?? 0;
+  const perros = stats.por_especie?.perro ?? 0;
+  const gatos  = stats.por_especie?.gato ?? 0;
+  const pctVac = totalMascotas > 0 ? Math.round((vacunados / totalMascotas) * 100) : 0;
+
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText('kpi-mascotas',        compactNum(totalMascotas));
+  setText('kpi-mascotas-delta',  `${compactNum(perros)} perros · ${compactNum(gatos)} gatos`);
+  setText('kpi-duenos',          compactNum(totalDuenos));
+  setText('kpi-vacunados',       compactNum(vacunados));
+  setText('kpi-vacunados-delta', `${pctVac}% del padrón`);
+  setText('kpi-nuevos',          compactNum(nuevosMes));
+}
+
 let faqData = [];
 let avisoData = [];
 let editingFaqId = null;
@@ -2200,11 +2390,22 @@ let editingFaqId = null;
 // El Grullo coordinates: ~19.8056, -104.2139
 const EL_GRULLO = [19.8056, -104.2139];
 const colonias = {
-  'Centro':    [19.8056, -104.2139],
-  'El Sabino': [19.8100, -104.2080],
-  'La Loma':   [19.8000, -104.2200],
-  'Las Flores':[19.8020, -104.2060],
-  'Otra':      [19.8090, -104.2170],
+  'El Grullo centro':      [19.8056, -104.2139],
+  '10 de mayo':            [19.8070, -104.2155],
+  '7 de abril':            [19.8045, -104.2120],
+  'Charco de los adobes':  [19.8020, -104.2170],
+  'Colomos':               [19.8090, -104.2110],
+  'Del álamo':             [19.8030, -104.2090],
+  'Del sur':               [19.8000, -104.2140],
+  'El álamo':              [19.8040, -104.2080],
+  'El cerrito':            [19.8080, -104.2180],
+  'Jardines de manantlán': [19.8100, -104.2060],
+  'La cañada':             [19.8010, -104.2160],
+  'Las flores':            [19.8060, -104.2100],
+  'Los pinos':             [19.8075, -104.2130],
+  'Magisterial':           [19.8015, -104.2115],
+  'Nueva creación':        [19.8085, -104.2145],
+  'San José':              [19.8050, -104.2165],
 };
 
 /* ══════════════════════════════════════════════════ */
@@ -2231,6 +2432,10 @@ function showAdmin(name) {
   document.getElementById('adminSub').textContent   = info.sub   || '';
 
   if (name === 'datos' && !window._mapInit) initMap();
+  if (name === 'seguimiento' && !window._seguimientoInit) {
+    renderSeguimiento(allPets);
+    window._seguimientoInit = true;
+  }
   if (name === 'roles') loadRolesTable();
 
   toggleSidebar(false);
@@ -2261,43 +2466,42 @@ function initMap() {
     maxZoom: 18,
   }).addTo(leafletMap);
 
-  // Custom orange marker icon
-  const orangeIcon = L.divIcon({
+  // Marcador de tamaño variable según cuántas mascotas hay en esa colonia.
+  // Un marcador por mascota individual no escala (con miles de registros el
+  // mapa se vuelve inutilizable) — se agrega por colonia usando /api/stats,
+  // igual que el mapa público de index.html.
+  const orangeIcon = (size) => L.divIcon({
     className: '',
     html: `<div style="
       background:var(--orange);
-      width:28px; height:28px;
+      width:${size}px; height:${size}px;
       border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);
       border:3px solid white;
       box-shadow:0 2px 8px rgba(0,0,0,.3);
       display:flex; align-items:center; justify-content:center;
     "></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
   });
 
+  const porColonia = stats.por_colonia || [];
+  const maxTotal = Math.max(1, ...porColonia.map(c => c.total));
 
-
-  // Plot all pets with small random offsets around their colonia
-  allPets.forEach(pet => {
-    const base = colonias[pet.colonia] || EL_GRULLO;
-    const lat  = base[0] + (Math.random() - 0.5) * 0.012;
-    const lng  = base[1] + (Math.random() - 0.5) * 0.016;
-    const icon = orangeIcon;
-    L.marker([lat, lng], { icon })
+  porColonia.forEach(({ colonia, total }) => {
+    const colKey = Object.keys(colonias).find(k => k.toLowerCase() === (colonia || '').toLowerCase());
+    const base   = colKey ? colonias[colKey] : EL_GRULLO;
+    const size   = 24 + Math.round((total / maxTotal) * 24);
+    L.marker(base, { icon: orangeIcon(size) })
       .addTo(leafletMap)
       .bindPopup(`
         <div style="font-family:'Inter',sans-serif; min-width:140px;">
           <div style="font-weight:700; font-size:.9rem; margin-bottom:4px;">
-            ${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}
+            📍 ${colonia || 'Sin colonia'}
           </div>
           <div style="font-size:.78rem; color:#666;">
-            ${capitalize(pet.especie)} · ${pet.raza || 'Sin raza'}<br/>
-            Dueño: ${pet.persona || '—'}<br/>
-            <b>Folio:</b> ${pet.id}<br/>
-            <b>Estatus:</b> <span style="color:#4CAF50;">${pet.estatus}</span>
+            <b>${total}</b> mascota${total === 1 ? '' : 's'} registrada${total === 1 ? '' : 's'}
           </div>
         </div>
       `);
@@ -2436,7 +2640,18 @@ function renderSeguimiento(data) {
     </div>`;
     return;
   }
-  grid.innerHTML = data.map((pet, i) => {
+
+  // Con miles de resultados, dibujar todas las tarjetas de una vez traba el
+  // navegador — se limita y se pide acotar con la búsqueda/filtros.
+  const LIMITE = 60;
+  const truncado = data.length > LIMITE;
+  const avisoHtml = truncado
+    ? `<div style="grid-column:1/-1; text-align:center; padding:14px; background:var(--orange-pale); border-radius:var(--radius); font-size:.85rem; color:var(--gray-1);">
+        Mostrando ${LIMITE} de ${data.length} resultados — usa la búsqueda o los filtros para ver mascotas específicas.
+      </div>`
+    : '';
+
+  grid.innerHTML = avisoHtml + data.slice(0, LIMITE).map((pet, i) => {
     const icon = pet.especie === 'gato' ? '🐈' : '🐕';
     const statusColor = { Alta: 'var(--green)', Baja: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
     const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : '?');
@@ -2513,39 +2728,61 @@ async function changeEstatus(id) {
 /* ══════════════════════════════════════════════════ */
 let allUsuarios = [];
 
+const usuariosState = { sortKey: null, sortDir: 1, page: 1 };
+
 function renderUsuariosTable(data) {
   const tbody = document.getElementById('usuariosTableBody');
+  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  usuariosState.page = Math.min(Math.max(1, usuariosState.page), totalPages);
+  const pageData = data.slice((usuariosState.page - 1) * PAGE_SIZE, usuariosState.page * PAGE_SIZE);
+
   if (data.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="padding:30px; text-align:center; color:var(--gray-2);">No se encontraron cuentas.</td></tr>`;
-    return;
+  } else {
+    tbody.innerHTML = pageData.map(u => `
+      <tr>
+        <td style="font-weight:600;">${u.nombre}</td>
+        <td style="font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+        <td style="font-size:.82rem;">${u.colonia || '—'}</td>
+        <td style="text-align:center;">${u.total_mascotas}</td>
+        <td style="font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
+        <td>
+          ${u.activo == 1
+            ? '<span class="badge badge-green">✓ Activa</span>'
+            : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
+        </td>
+        <td style="text-align:right;">
+          <button class="btn btn-ghost btn-sm" onclick="toggleUsuarioActivo(${u.id}, ${u.activo == 1})">
+            ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
+          </button>
+        </td>
+      </tr>`).join('');
   }
-  tbody.innerHTML = data.map(u => `
-    <tr style="border-top:1px solid var(--gray-4);">
-      <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
-      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
-      <td style="padding:12px 14px; font-size:.82rem;">${u.colonia || '—'}</td>
-      <td style="padding:12px 14px; text-align:center;">${u.total_mascotas}</td>
-      <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
-      <td style="padding:12px 14px;">
-        ${u.activo == 1
-          ? '<span class="badge badge-green">✓ Activa</span>'
-          : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
-      </td>
-      <td style="padding:12px 14px; text-align:right;">
-        <button class="btn btn-ghost btn-sm" onclick="toggleUsuarioActivo(${u.id}, ${u.activo == 1})">
-          ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
-        </button>
-      </td>
-    </tr>`).join('');
+
+  updateSortIndicators('#sec-usuarios', usuariosState);
+  renderPagerFooter('usuariosPager', usuariosState, data.length, 'goToUsuariosPage');
+}
+
+function sortUsuarios(key) {
+  if (usuariosState.sortKey === key) usuariosState.sortDir *= -1;
+  else { usuariosState.sortKey = key; usuariosState.sortDir = 1; }
+  usuariosState.page = 1;
+  filterUsuarios();
+}
+
+function goToUsuariosPage(page) {
+  usuariosState.page = page;
+  filterUsuarios();
 }
 
 function filterUsuarios() {
   const q = document.getElementById('userSearch').value.toLowerCase();
-  const data = !q ? allUsuarios : allUsuarios.filter(u =>
+  let data = !q ? allUsuarios : allUsuarios.filter(u =>
     u.nombre.toLowerCase().includes(q) ||
     (u.email || '').toLowerCase().includes(q) ||
     (u.telefono || '').includes(q)
   );
+  data = sortRows(data, usuariosState.sortKey, usuariosState.sortDir);
   renderUsuariosTable(data);
 }
 
@@ -2590,40 +2827,62 @@ async function loadRolesTable() {
   }
 }
 
+const rolesState = { sortKey: null, sortDir: 1, page: 1 };
+
 function filterRoles() {
   const q = document.getElementById('rolesSearch').value.toLowerCase();
-  const data = !q ? allCuentas : allCuentas.filter(u =>
+  let data = !q ? allCuentas : allCuentas.filter(u =>
     u.nombre.toLowerCase().includes(q) ||
     (u.email || '').toLowerCase().includes(q) ||
     (u.telefono || '').includes(q)
   );
+  data = sortRows(data, rolesState.sortKey, rolesState.sortDir);
   renderRolesTable(data);
+}
+
+function sortRoles(key) {
+  if (rolesState.sortKey === key) rolesState.sortDir *= -1;
+  else { rolesState.sortKey = key; rolesState.sortDir = 1; }
+  rolesState.page = 1;
+  filterRoles();
+}
+
+function goToRolesPage(page) {
+  rolesState.page = page;
+  filterRoles();
 }
 
 function renderRolesTable(data) {
   const tbody = document.getElementById('rolesTableBody');
   const lista = data || allCuentas;
+  const totalPages = Math.max(1, Math.ceil(lista.length / PAGE_SIZE));
+  rolesState.page = Math.min(Math.max(1, rolesState.page), totalPages);
+  const pageData = lista.slice((rolesState.page - 1) * PAGE_SIZE, rolesState.page * PAGE_SIZE);
+
   if (lista.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">${allCuentas.length === 0 ? 'Todavía no hay cuentas. Crea la primera con "+ Nueva cuenta".' : 'No se encontraron cuentas.'}</td></tr>`;
-    return;
+  } else {
+    tbody.innerHTML = pageData.map(u => `
+      <tr>
+        <td style="font-weight:600;">${u.nombre}</td>
+        <td style="font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
+        <td>${u.rol === 'asistente' ? '<span class="badge badge-orange">Asistente</span>' : '<span class="badge badge-blue">Ciudadano</span>'}</td>
+        <td style="font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
+        <td>
+          ${u.activo == 1
+            ? '<span class="badge badge-green">✓ Activa</span>'
+            : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
+        </td>
+        <td style="text-align:right;">
+          <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
+            ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
+          </button>
+        </td>
+      </tr>`).join('');
   }
-  tbody.innerHTML = lista.map(u => `
-    <tr style="border-top:1px solid var(--gray-4);">
-      <td style="padding:12px 14px; font-weight:600;">${u.nombre}</td>
-      <td style="padding:12px 14px; font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
-      <td style="padding:12px 14px;">${u.rol === 'asistente' ? '<span class="badge badge-orange">Asistente</span>' : '<span class="badge badge-blue">Ciudadano</span>'}</td>
-      <td style="padding:12px 14px; font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
-      <td style="padding:12px 14px;">
-        ${u.activo == 1
-          ? '<span class="badge badge-green">✓ Activa</span>'
-          : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
-      </td>
-      <td style="padding:12px 14px; text-align:right;">
-        <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
-          ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
-        </button>
-      </td>
-    </tr>`).join('');
+
+  updateSortIndicators('#sec-roles', rolesState);
+  renderPagerFooter('rolesPager', rolesState, lista.length, 'goToRolesPage');
 }
 
 async function toggleCuentaActiva(id, estaActivo) {
@@ -3478,10 +3737,13 @@ async function initAdmin() {
   if (mapCountEl) mapCountEl.textContent = allPets.length;
 
   renderVacunacionPie();
+  renderKpiRow();
 
   renderMiniTable(allPets.slice(0, 10));
   renderMiniBar();
-  renderSeguimiento(allPets);
+  // "Seguimiento" (tarjetas detalladas) se renderiza solo cuando el admin
+  // abre esa pestaña (ver showAdmin) — con miles de mascotas, construirlas
+  // todas de entrada aquí bloqueaba el navegador antes de poder ver "Datos".
   renderAdminArtList();
   renderAvisos();
   renderEventos();
