@@ -6,6 +6,7 @@
  * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes juntos (solo admin)
  * PUT  /api/usuarios?id=X                   → Activar/desactivar una cuenta (solo admin)
  * POST /api/usuarios?action=crear-cuenta    → Crear cuenta de Ciudadano o Asistente (solo admin, nunca Administrador)
+ * POST /api/usuarios?action=promover-admin  → Convierte una cuenta existente en admin (solo superadmin)
  * POST /api/usuarios?action=buscar-o-crear  → Buscar por teléfono o crear ciudadano sin correo (admin y asistente)
  */
 
@@ -123,6 +124,63 @@ if ($method === 'POST' && $action === 'crear-cuenta') {
         'telefono'=> $telefono,
         'rol'     => $rol,
         'message' => 'Cuenta creada correctamente.',
+    ]);
+}
+
+/* ── POST ?action=promover-admin — el superadmin (única cuenta con
+   es_superadmin=1 en la BD) convierte una cuenta YA existente (ciudadano
+   o asistente) en admin. Los admins normales (los que el superadmin cree
+   después) NO pueden llamar esto — requireSuperAdmin() lo exige en el
+   servidor, no solo se oculta el botón en el HTML. Esta acción NUNCA
+   marca es_superadmin=1 en la cuenta promovida: solo otorga rol='admin'
+   normal, sin el poder de promover a otros. Revocar el rol admin sigue
+   siendo solo por acceso directo a la base de datos, igual que hoy. ── */
+if ($method === 'POST' && $action === 'promover-admin') {
+    $yo = requireSuperAdmin();
+    $db = getDB();
+
+    $body = getBody();
+    $id   = (int)($body['id'] ?? 0);
+    if ($id <= 0) jsonError('Falta el id de la cuenta a promover.', 400);
+
+    if ($id === (int)$yo['id']) {
+        jsonError('No puedes cambiar tu propio rol desde aquí.', 400);
+    }
+
+    $stmt = $db->prepare('SELECT id, nombre, email, rol, activo, password_hash FROM duenos WHERE id = ?');
+    $stmt->execute([$id]);
+    $cuenta = $stmt->fetch();
+    if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
+
+    if (!in_array($cuenta['rol'], ['ciudadano', 'asistente'], true)) {
+        jsonError('Rol no válido para promover. Solo se puede convertir en admin a una cuenta de Ciudadano o Asistente.', 400);
+    }
+    if ((int)$cuenta['activo'] !== 1) {
+        jsonError('No se puede promover una cuenta desactivada. Actívala primero.', 400);
+    }
+    if (empty($cuenta['email']) || empty($cuenta['password_hash'])) {
+        jsonError('Esta cuenta no tiene correo y contraseña propios (fue registrada sin correo por un asistente) — no podría iniciar sesión como admin.', 400);
+    }
+
+    // UPDATE atómico con las mismas condiciones ya validadas arriba: si otra
+    // petición cambió la cuenta justo en medio (doble clic, otra pestaña),
+    // rowCount() da 0 en vez de promover una fila que ya no cumple.
+    $upd = $db->prepare("
+        UPDATE duenos SET rol = 'admin', token_sesion = NULL
+        WHERE id = ? AND rol IN ('ciudadano', 'asistente') AND activo = 1
+          AND email IS NOT NULL AND password_hash IS NOT NULL
+    ");
+    $upd->execute([$id]);
+    if ($upd->rowCount() === 0) {
+        jsonError('La cuenta cambió mientras se procesaba. Intenta de nuevo.', 409);
+    }
+
+    jsonOk([
+        'id'      => $cuenta['id'],
+        'nombre'  => $cuenta['nombre'],
+        'email'   => $cuenta['email'],
+        'rol'     => 'admin',
+        'message' => 'Cuenta promovida a administrador correctamente.',
     ]);
 }
 

@@ -2,6 +2,38 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-29] — Rol "superadmin": `admin@remac.elgrullo.mx` ya puede otorgar el rol Admin desde el panel
+
+### 🆕 Contexto
+Hasta ahora, el rol `admin` **solo se podía crear directo en la base de datos, nunca desde la interfaz** — cualquier admin nuevo dependía de alguien con acceso a phpMyAdmin/MySQL. El usuario pidió una excepción controlada: que la única cuenta admin real del sistema (`admin@remac.elgrullo.mx`) se convierta en "superadmin" — la única cuenta capaz de convertir, desde el panel, a un Ciudadano o Asistente existente en Administrador. Los admins que ese superadmin cree después **no** heredan ese poder; siguen siendo admins normales, y revocar el rol admin sigue siendo solo por base de datos directa (fuera de alcance de este cambio, a propósito).
+
+### 🔐 Base de datos
+- Nueva columna `duenos.es_superadmin TINYINT(1) NOT NULL DEFAULT 0` (`schema.sql`), activada **solo a mano en la base de datos** — misma filosofía que "admin solo se crea directo en BD, nunca desde la interfaz".
+- Migración aplicada manualmente en la base de datos local (`ALTER TABLE` + `UPDATE ... WHERE email = 'admin@remac.elgrullo.mx'`); **pendiente aplicarla también en HostGator** cuando se retome el despliegue — mismo patrón ya usado para la migración del rol `asistente`.
+- `seed.sql` actualizado para que una instalación nueva desde cero ya nazca con el superadmin marcado.
+
+### 🔧 Backend
+- `requireAuth()` (`helpers.php`) ahora incluye `es_superadmin` en el `SELECT`, por lo que fluye automáticamente a través de `requireAdmin()`, `requireRole()` y `GET /auth?action=me`.
+- Nueva `requireSuperAdmin()` en `helpers.php`, mismo patrón que `requireAdmin()`.
+- Nuevo endpoint `POST /api/usuarios?action=promover-admin` (protegido con `requireSuperAdmin()`): convierte una cuenta existente (ciudadano o asistente) en admin. Nunca lee `rol`/`es_superadmin` del cliente — el `UPDATE` hardcodea `rol='admin'` como literal SQL, así que auto-otorgarse superadmin vía este endpoint es estructuralmente imposible. `UPDATE` con `WHERE` + `rowCount()` para ser seguro ante condiciones de carrera (doble clic, dos pestañas).
+- **Caso límite real encontrado y bloqueado**: `?action=buscar-o-crear` crea ciudadanos sin correo ni contraseña a propósito (personas registradas por un asistente sin correo electrónico). El endpoint nuevo rechaza explícitamente promover una cuenta así (`email`/`password_hash` nulos) — de lo contrario se crearía un "admin fantasma" que nunca podría iniciar sesión.
+- `auth.php` (login) ahora también devuelve `es_superadmin` en la respuesta.
+
+### 🎨 Frontend (`admin.html`, "Roles y Cuentas")
+- La variable de sesión (antes local a `initAdmin()`) ahora es `currentUser`, a nivel de módulo, reutilizable en el resto del archivo — antes no se guardaba en ningún sitio global.
+- Nuevo botón "⭐ Hacer administrador" por fila, visible solo si `esSuperAdmin(currentUser)` (cosmético — la protección real es el 403 del servidor) y solo en cuentas activas con correo propio.
+- El aviso fijo de la pestaña ("Nunca se puede crear otra cuenta de Administrador desde aquí") se reemplaza dinámicamente por una nota explicando el poder de superadmin, solo para esa cuenta — para el resto de los admins el texto original sigue siendo cierto y no cambia.
+- `api-client.js`: nueva `apiPromoverAAdmin(id)`, y `es_superadmin` agregado al objeto de sesión que guarda `apiLoginUser()`.
+
+### ✅ Verificado
+Migración aplicada en la base de datos local (confirmado por consulta directa: `admin@remac.elgrullo.mx` con `es_superadmin=1`). Pendiente que el usuario pruebe el flujo completo en el navegador (login como superadmin, promover una cuenta de prueba, confirmar que la cuenta ya-admin no ve el botón) antes de dar esto por cerrado.
+
+### 📂 Archivos modificados
+- `web/database/schema.sql`, `web/database/seed.sql`.
+- `web/api/config/helpers.php`, `web/api/usuarios.php`, `web/api/auth.php`.
+- `web/admin.html`, `web/js/api-client.js`.
+- `CLAUDE.md` (matiza la regla de "admin nunca desde la interfaz" con esta excepción puntual).
+
 ## 📅 [2026-08-28] — Recuperación de contexto tras chat trabado; dominio nuevo detectado sin conectar y CORS desalineado
 
 ### 🚧 Contexto: la sesión anterior (~6 horas) se quedó en bucle sin responder

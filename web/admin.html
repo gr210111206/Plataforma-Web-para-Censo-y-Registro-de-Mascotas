@@ -1104,7 +1104,7 @@
     <!-- ══════════════════════════════════════════ -->
     <div class="dashboard-content" id="sec-roles" style="display:none;">
       <div style="background:var(--orange-pale); border:1px solid rgba(var(--orange-rgb),.3); border-radius:var(--radius); padding:14px 18px; font-size:.85rem; color:var(--gray-1); margin-bottom:20px;">
-        Las cuentas de <strong>Asistente</strong> pueden registrar mascotas a nombre de ciudadanos que no tienen correo electrónico (por ejemplo, personas adultas mayores), tanto en ventanilla como en una campaña fuera de la oficina. No pueden ver ni editar el resto del panel admin. <strong>Nunca se puede crear otra cuenta de Administrador desde aquí.</strong>
+        Las cuentas de <strong>Asistente</strong> pueden registrar mascotas a nombre de ciudadanos que no tienen correo electrónico (por ejemplo, personas adultas mayores), tanto en ventanilla como en una campaña fuera de la oficina. No pueden ver ni editar el resto del panel admin. <span id="roles-admin-note"><strong>Nunca se puede crear otra cuenta de Administrador desde aquí.</strong></span>
       </div>
 
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
@@ -2874,6 +2874,9 @@ function renderRolesTable(data) {
             : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
         </td>
         <td style="text-align:right;">
+          ${esSuperAdmin(currentUser) && u.activo == 1 && u.email
+            ? `<button class="btn btn-ghost btn-sm" style="color:var(--amber);" onclick="promoverAAdmin(${u.id})">⭐ Hacer administrador</button>`
+            : ''}
           <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
             ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
           </button>
@@ -2892,6 +2895,20 @@ async function toggleCuentaActiva(id, estaActivo) {
     if (u) u.activo = estaActivo ? 0 : 1;
     filterRoles();
     showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/** Convierte una cuenta de Ciudadano/Asistente en Administrador. Solo
+    visible/permitido para el superadmin (ver esSuperAdmin()). */
+async function promoverAAdmin(id) {
+  const u = allCuentas.find(x => x.id === id);
+  if (!u) return;
+  try {
+    await apiPromoverAAdmin(id);
+    showToast(`⭐ ${u.nombre} ahora es Administrador`, 'success');
+    loadRolesTable(); // la fila desaparece: ya no es ciudadano/asistente
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
@@ -3703,13 +3720,24 @@ function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 /*  INIT — protege la página (solo admin) y carga datos reales */
 /* ══════════════════════════════════════════════════ */
 let adminArticulos = [];
+let currentUser = null;
+
+/** true si la cuenta en sesión es la única marcada es_superadmin=1 en la BD. */
+function esSuperAdmin(u) {
+  return !!u && Number(u.es_superadmin) === 1;
+}
 
 async function initAdmin() {
-  const _user = await apiRequireSession(); // redirige a login.html si no hay sesión válida
-  if (_user.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
-  if (_user.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
+  currentUser = await apiRequireSession(); // redirige a login.html si no hay sesión válida
+  if (currentUser.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
+  if (currentUser.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
   await primeConfigFromServer();
   applyAdminOwnAppearance();
+
+  const notaRoles = document.getElementById('roles-admin-note');
+  if (notaRoles && esSuperAdmin(currentUser)) {
+    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "⭐ Hacer administrador"). La cuenta resultante será un admin normal: no podrá promover a nadie más.';
+  }
 
   try {
     allPets = await apiGetTodasMascotas();

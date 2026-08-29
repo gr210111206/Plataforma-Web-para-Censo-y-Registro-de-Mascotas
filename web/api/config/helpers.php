@@ -97,7 +97,7 @@ function requireAuth(): array {
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
     $db   = getDB();
-    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
+    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol, es_superadmin, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
 
@@ -108,6 +108,7 @@ function requireAuth(): array {
         jsonError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
     }
 
+    $user['es_superadmin'] = (int) $user['es_superadmin']; // normaliza a 0|1 (PDO puede devolver string)
     unset($user['token_creado_en']);
     return $user;
 }
@@ -115,6 +116,16 @@ function requireAuth(): array {
 function requireAdmin(): array {
     $user = requireAuth();
     if ($user['rol'] !== 'admin') jsonError('Acceso denegado. Se requiere rol admin.', 403);
+    return $user;
+}
+
+/* Igual que requireAdmin() pero además exige que la cuenta esté marcada
+   como superadmin (columna es_superadmin, activada a mano en la BD solo
+   para admin@remac.elgrullo.mx — ver HISTORIAL_CAMBIOS.md). Los admins
+   normales (los que el superadmin cree después) no pasan este check. */
+function requireSuperAdmin(): array {
+    $user = requireAdmin();
+    if ($user['es_superadmin'] !== 1) jsonError('Acceso denegado. Se requiere ser superadmin.', 403);
     return $user;
 }
 

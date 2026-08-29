@@ -92,11 +92,12 @@ async function apiLoginUser(email, password, remember = false) {
     body: JSON.stringify({ email, password }),
   });
   const session = JSON.stringify({
-    token:    data.token,
-    nombre:   data.nombre,
-    email:    data.email,
-    telefono: data.telefono,
-    rol:      data.rol,
+    token:         data.token,
+    nombre:        data.nombre,
+    email:         data.email,
+    telefono:      data.telefono,
+    rol:           data.rol,
+    es_superadmin: data.es_superadmin,
   });
   if (remember) {
     localStorage.setItem('padron_session', session);
@@ -286,6 +287,18 @@ async function apiCrearCuentaUsuario(data) {
   return _fetch(`${API_BASE_URL}/usuarios?action=crear-cuenta`, {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Convierte una cuenta existente (ciudadano o asistente) en admin.
+ * Requiere sesión de SUPERADMIN (no cualquier admin) — el servidor
+ * responde 403 si la llama un admin normal.
+ */
+async function apiPromoverAAdmin(id) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=promover-admin`, {
+    method: 'POST',
+    body: JSON.stringify({ id }),
   });
 }
 

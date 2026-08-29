@@ -76,7 +76,7 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $pass  = $body['password'];
 
         $db   = getDB();
-        $stmt = $db->prepare("SELECT id, nombre, email, telefono, rol, password_hash FROM duenos WHERE email = ? AND activo = 1");
+        $stmt = $db->prepare("SELECT id, nombre, email, telefono, rol, es_superadmin, password_hash FROM duenos WHERE email = ? AND activo = 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
@@ -88,12 +88,13 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $db->prepare('UPDATE duenos SET token_sesion = ?, token_creado_en = NOW() WHERE id = ?')->execute([$token, $user['id']]);
 
         jsonOk([
-            'token'    => $token,
-            'id'       => $user['id'],
-            'nombre'   => $user['nombre'],
-            'email'    => $user['email'],
-            'telefono' => $user['telefono'],
-            'rol'      => $user['rol'],
+            'token'         => $token,
+            'id'            => $user['id'],
+            'nombre'        => $user['nombre'],
+            'email'         => $user['email'],
+            'telefono'      => $user['telefono'],
+            'rol'           => $user['rol'],
+            'es_superadmin' => (int) $user['es_superadmin'],
         ]);
     }
 

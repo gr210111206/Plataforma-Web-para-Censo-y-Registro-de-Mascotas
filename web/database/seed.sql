@@ -14,6 +14,9 @@ INSERT INTO duenos (nombre, telefono, email, direccion, colonia, password_hash, 
 ('Laura Mendoza Cruz',   '341-567-8901', 'laura@demo.com',        'Reforma 56',   'Jardines de manantlán', NULL, 'ciudadano'),
 ('Roberto Vargas Soto',  '341-678-9012', 'roberto@demo.com',      'Constitución 89','Del álamo',     NULL, 'ciudadano');
 
+-- Marca la única cuenta admin del seed como superadmin (ver es_superadmin en schema.sql)
+UPDATE duenos SET es_superadmin = 1 WHERE email = 'admin@remac.elgrullo.mx';
+
 -- Actualiza el contador de folios
 UPDATE folio_counter SET ultimo = 6;
 
