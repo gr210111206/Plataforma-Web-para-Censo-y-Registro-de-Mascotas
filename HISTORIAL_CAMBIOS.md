@@ -2,6 +2,34 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-28] — Recuperación de contexto tras chat trabado; dominio nuevo detectado sin conectar y CORS desalineado
+
+### 🚧 Contexto: la sesión anterior (~6 horas) se quedó en bucle sin responder
+El usuario tuvo que abrir una conversación nueva porque la anterior (dedicada a resolver el despliegue en HostGator) dejó de responder. Se recuperó el contexto completo revisando el proyecto, este historial, el log de git y 5 capturas de pantalla del chat anterior que el usuario compartió — todas sobre el mismo tema en el que se quedó: falta el registro DNS en Cloudflare para `tumascota.elgrullo.mx`.
+
+### 🔍 Hallazgo: hubo un cambio de dominio real que nunca quedó documentado
+Comparando las capturas (hablan solo de `tumascota.elgrullo.mx`) contra el estado actual del código, se encontró que `web/api/config/database.php` (no rastreado por git) fue editado hoy mismo — después del último commit — cambiando `BASE_URL` a un dominio distinto: **`https://tumascota-elgrullo.com`**. Ese cambio no estaba documentado en ninguna entrada de este historial. Todo indica que, en algún punto de la sesión trabada, se optó por registrar un dominio nuevo directo en HostGator (usando el "dominio gratis" del plan) para evitar seguir esperando el acceso a Cloudflare — pero el cambio quedó a medias y sin registrar.
+
+**Verificado en vivo (DNS + conexión) durante esta sesión:**
+- `tumascota.elgrullo.mx` (dominio original): sigue sin existir en DNS (`NXDOMAIN`) — el registro A en Cloudflare **nunca se agregó**. Este punto sigue exactamente donde lo dejaron las capturas, sin ningún avance.
+- `tumascota-elgrullo.com` (dominio nuevo): sí resuelve en DNS, pero apunta a `162.240.81.81` — una IP **distinta** a la del hosting real (`162.241.60.122`, confirmada en el primer intento de despliegue del 23 de agosto). No responde nada en el puerto 80 ni 443 (conexión rechazada / tiempo agotado, probado desde dos redes distintas). Esto indica que el dominio se registró en HostGator pero **nunca se conectó al hosting** — falta el mismo tipo de paso que ya se hizo antes para el dominio viejo: entrar a "Dominios" en HostGator y usar "Configurar dominio"/"Administrar" junto a `tumascota-elgrullo.com` para apuntarlo al paquete de hosting con `public_html` (donde ya están subidos los archivos del sitio).
+
+### 🐛 Bug real encontrado y corregido: CORS seguía apuntando solo al dominio viejo
+Aunque `BASE_URL` ya apuntaba al dominio nuevo, la lista `PRODUCTION_ORIGINS` (controla qué orígenes acepta la API — ver `setCorsHeaders()` en `helpers.php`) **nunca se actualizó**; seguía teniendo solo `tumascota.elgrullo.mx`. Esto significa que, aunque se termine de conectar `tumascota-elgrullo.com` al hosting, el sitio cargaría pero **todas las llamadas a la API fallarían silenciosamente por CORS** (el navegador las bloquea sin un aviso claro del servidor) — candidato muy probable para explicar buena parte del bucle de 6 horas sin resolución aparente. Se agregó `https://tumascota-elgrullo.com` y su variante `www` a `PRODUCTION_ORIGINS`, dejando también las entradas del dominio `.mx` por si se retoma ese camino más adelante.
+
+### 🔒 Seguridad: `web/web.zip` (paquete de despliegue) estaba en staging de git con credenciales reales adentro
+Al revisar `git status` se encontró `web/web.zip` (el paquete subido a HostGator el 23 de agosto) ya agregado al staging (`git add`), listo para el próximo commit. Se confirmó que ese zip **incluye `api/config/database.php` con la contraseña real de la base de datos de producción** — `.gitignore` excluye ese archivo cuando se sube suelto, pero no protegía contra que terminara empaquetado dentro de un `.zip`. Como el repositorio de GitHub del proyecto es público, commitear ese archivo habría expuesto la contraseña real de la base de datos. Se quitó del staging (`git restore --staged`) y se agregó `*.zip` a `.gitignore` para que no vuelva a pasar.
+
+### 📌 Qué sigue pendiente (acciones fuera del código, solo las puede hacer el usuario)
+1. **Decidir qué dominio usar de forma definitiva**: ¿seguir con `tumascota-elgrullo.com` (ya registrado en HostGator, solo falta conectarlo al hosting) o seguir esperando el acceso a Cloudflare para `tumascota.elgrullo.mx` (el dominio oficial del municipio, registrado en Namecheap)?
+2. Si se sigue con `tumascota-elgrullo.com`: en HostGator → "Dominios" → "Configurar dominio" (o "Administrar") junto a ese dominio, y apuntarlo al mismo `public_html` donde ya están los archivos del sitio.
+3. Si se retoma `tumascota.elgrullo.mx`: sigue faltando el registro DNS tipo A (`tumascota` → `162.241.60.122`, proxy de Cloudflare desactivado) en la cuenta de Cloudflare de `elgrullo.mx` — pendiente identificar quién tiene acceso (Informática Municipal o quien haya contratado el dominio).
+
+### 📂 Archivos modificados
+- `web/api/config/database.php` (no se sube a git) — `PRODUCTION_ORIGINS` actualizado con el dominio nuevo.
+- `.gitignore` — se agrega `*.zip` para evitar que paquetes de despliegue con credenciales vuelvan a quedar en staging.
+- `HISTORIAL_CAMBIOS.md` (este registro).
+
 ## 📅 [2026-08-25] — El panel admin se trababa con volumen real; tarjetas KPI y tablas ordenables/paginadas
 
 ### 🐛 Diagnóstico: "Datos del Padrón" se trababa y el mapa quedaba inutilizable

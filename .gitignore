@@ -23,3 +23,6 @@ web/api/config/database.php
 # Dependencias (futuro)
 node_modules/
 vendor/
+
+# Paquetes de despliegue locales (pueden contener database.php con credenciales reales adentro)
+*.zip
