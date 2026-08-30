@@ -757,7 +757,22 @@
       .charts-col { flex-direction: row; }
     }
     @media (max-width: 768px) {
-      .datos-grid { grid-template-columns: 1fr; }
+      /* .datos-grid ya baja a 1 columna arriba, pero seguía con la
+         altura fija (calc(100vh - 230px)) y overflow:hidden pensados
+         para 3 columnas lado a lado en escritorio — en celular eso
+         recortaba el mapa/gráficas/tabla en vez de dejarlos apilarse
+         con su alto natural y que la página scrollee normal. */
+      .datos-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+      .datos-grid > * { overflow: visible; }
+      .charts-col { flex-direction: column; }
+      .chart-box { flex: none; }
+      .right-col { flex: none; }
+      .padron-table-mini { flex: none; max-height: 50vh; }
       .seguimiento-layout { grid-template-columns: 1fr; }
       .faq-mgmt-layout { grid-template-columns: 1fr; }
     }

@@ -2,6 +2,34 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-29] — Corrección de layout en celular: panel admin ("Datos"), encabezados y formularios en modales
+
+### 🐛 Diagnóstico a partir de capturas reales del celular del usuario
+El usuario probó el sitio desde su celular (vía la IP de red, `192.168.0.230`) y reportó que varias pantallas se veían "cortadas"/mal centradas, sobre todo la pestaña "Datos" del panel admin, y pidió revisar a fondo que `asistente.html` (el flujo de registro asistido, el más usado en campo) se viera bien. Se investigó el CSS real (no solo las capturas) antes de tocar nada.
+
+### 🐛 Bug real: `.datos-grid` (pestaña "Datos" del admin) recortaba su contenido en celular
+`.datos-grid` (mapa + gráficas + tabla, 3 columnas en escritorio) sí bajaba a 1 columna en celular, pero seguía con una altura fija (`calc(100vh - 230px)`) y `overflow: hidden` pensados para el layout de 3 columnas — en celular, apilar las 3 secciones dentro de esa altura fija con recorte activo ocultaba la mayor parte del mapa, las gráficas y la tabla (los recuadros vacíos grandes de las capturas). Corregido: en el `@media (max-width: 768px)` propio de `admin.html`, `.datos-grid` ahora usa `height: auto`/`overflow: visible`, y sus columnas internas (`.charts-col`, `.chart-box`, `.right-col`, `.padron-table-mini`) dejan de depender de `flex:1` sobre una altura que ya no existe.
+
+### 🐛 Bug real (compartido): el encabezado de admin/asistente/dashboard se cortaba en celular
+`.dashboard-header` (título + subtítulo + acciones a la derecha, compartido por `admin.html`, `asistente.html` y `dashboard.html`) no tenía tratamiento de celular más allá de reducir el padding: el subtítulo largo ("Mapa de mascotas · Gráficas · Seguimiento en tiempo real", etc.) envolvía en varias líneas, y el botón de la derecha (`.btn` tiene `white-space:nowrap` por diseño) no podía bajar de línea — con `body{overflow-x:hidden}` ya activo en todo el sitio, ese contenido simplemente quedaba cortado contra el borde de la pantalla. Corregido en `styles.css` (beneficia a las 3 páginas por igual): el subtítulo se oculta en celular (mismo criterio que ya usa el navbar con el suyo), y el encabezado ahora permite que las acciones bajen a su propia línea si hace falta.
+
+### 🎨 Mejoras adicionales de celular (mismo `@media (max-width: 768px)` de `styles.css`)
+- `.dashboard-content`: el padding fijo de 32px (nunca se reducía en celular) baja a 20px/16px — libera ancho útil en las 3 páginas de panel.
+- `.form-row` (pares de campos lado a lado, ej. Nombre/Especie en el modal de registrar mascota de `asistente.html`): ahora se apila a 1 columna en celular — con 2 columnas fijas, cada campo quedaba muy angosto dentro de un modal que además resta su propio padding.
+- `.modal-overlay`: padding reducido en celular para dejar más ancho útil al modal mismo.
+- `asistente.html`: las tarjetas de resultado al buscar un ciudadano (nombre + datos + botón "Seleccionar") ahora permiten que el botón baje de línea si el texto es largo, en vez de forzar todo en una sola fila sin wrap.
+
+### ✅ Revisado, sin cambios necesarios
+`dashboard.html`, `login.html`, `index.html` y `mascota.html` se revisaron buscando el mismo tipo de problema (contenedores con alto fijo + `overflow:hidden`, filas sin `flex-wrap` con botones de ancho fijo) — no se encontró nada equivalente; de todas formas se benefician de las correcciones de `styles.css` al compartir `.dashboard-header`/`.form-row`. `mascota.html` no comparte `styles.css` (tiene su propio `<style>` autocontenido, ya documentado antes) pero su layout de una sola tarjeta centrada con `max-width` ya es responsivo por construcción, sin necesitar media queries.
+
+### ⚠️ Pendiente / no se pudo verificar
+No hay forma de abrir un navegador real en este entorno para confirmar visualmente el resultado — los cambios se basan en la lectura directa del CSS/HTML real (contrastada contra las capturas del celular), no en una prueba visual propia. Falta que el usuario confirme en su celular.
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (`.dashboard-header`, `.dashboard-subtitle`, `.dashboard-content`, `.form-row`, `.modal-overlay` — dentro de `@media (max-width: 768px)`).
+- `web/admin.html` (`.datos-grid` y columnas internas — dentro de su propio `@media (max-width: 768px)`).
+- `web/asistente.html` (tarjetas de resultado de búsqueda con `flex-wrap`).
+
 ## 📅 [2026-08-29] — Rol "superadmin": `admin@remac.elgrullo.mx` ya puede otorgar el rol Admin desde el panel
 
 ### 🆕 Contexto

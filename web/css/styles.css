@@ -1454,8 +1454,23 @@ tbody tr:hover { background: var(--surface); }
   }
   .sidebar.open { transform: translateX(0); }
   .dashboard-mobile-toggle { display: flex !important; }
-  .dashboard-header { padding: 14px 20px; gap: 12px; }
+  /* El header (título + subtítulo + acciones a la derecha) es una sola
+     fila sin wrap en escritorio — en celular el subtítulo largo ("Mapa
+     de mascotas · Gráficas · Seguimiento en tiempo real", etc.) y un
+     botón de ancho fijo (.btn tiene white-space:nowrap) no cabían y
+     quedaban cortados contra el borde de la pantalla. Se oculta el
+     subtítulo (mismo criterio que ya usa el navbar) y se permite que las
+     acciones bajen a su propia línea si hace falta. */
+  .dashboard-header { padding: 14px 20px; gap: 10px 12px; flex-wrap: wrap; }
   .dashboard-title { font-size: 1.05rem; }
+  .dashboard-subtitle { display: none; }
+  .dashboard-content { padding: 20px 16px; }
+
+  /* Pares de campos lado a lado (Nombre/Especie, Raza/Edad, etc.) — con
+     dos columnas fijas quedaban demasiado angostos en un celular,
+     sobre todo dentro de un modal (que además resta su propio padding). */
+  .form-row { grid-template-columns: 1fr; }
+  .modal-overlay { padding: 12px; }
 
   .cta-banner        { flex-direction: column; text-align: center; }
   .cta-banner-actions { flex-wrap: wrap; justify-content: center; }

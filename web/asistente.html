@@ -357,7 +357,7 @@ function renderResultadosBusqueda() {
     return;
   }
   cont.innerHTML = ultimoResultadoBusqueda.map((u, i) => `
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--gray-4); border-radius:var(--radius); ${u.activo == 1 ? '' : 'opacity:.6;'}">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px; padding:12px 14px; border:1px solid var(--gray-4); border-radius:var(--radius); ${u.activo == 1 ? '' : 'opacity:.6;'}">
       <div>
         <div style="font-weight:600; font-size:.9rem;">${u.nombre} ${u.activo == 1 ? '' : '<span class="badge" style="background:var(--gray-4); color:var(--gray-1); font-size:.65rem;">Cuenta desactivada</span>'}</div>
         <div style="font-size:.78rem; color:var(--gray-2);">${u.telefono || '—'} · ${u.email || 'Sin correo'} · ${u.colonia || 'Sin colonia'} · ${u.total_mascotas} mascota${u.total_mascotas === 1 ? '' : 's'}</div>
