@@ -2,6 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-29] — El botón "Registrar mascota" se veía gris (no era CSS): el Tema visual guardado en BD estaba en gris; se agrega versión al CSS para evitar caché viejo en celular
+
+### 🐛 No era un bug de layout — el color del sitio estaba mal guardado en la base de datos
+El usuario reportó (con captura desde el celular) que el botón "+ Registrar mascota" en `asistente.html` se veía "hueco"/gris en vez del naranja institucional, mientras que el botón secundario de al lado ("Cambiar persona") se veía normal. La diferencia entre un botón primario (usa `--orange`) y uno secundario (no lo usa) fue la pista: se revisó `padron_tema_config` en la tabla `site_config` y su color guardado era **`#b5b5b5`** (gris), no `#F27A00` (el naranja oficial de El Grullo). `web/js/tema.js` (incluido en las 5 páginas) sobreescribe `--orange`/`--orange-dark`/`--orange-light`/`--orange-pale` y los degradados de marca con ese valor guardado — así que **todo** el sitio (no solo ese botón) estaba renderizando en gris: botones primarios, degradados del hero/login/sidebar, badges, etc. Es casi seguro que quedó así de alguna prueba anterior del selector "Tema visual" (Configuración sitio → Tema) que nunca se revirtió en el servidor.
+
+**Corrección:** se actualizó directamente en la base de datos local `padron_tema_config.color` de vuelta a `#F27A00`, conservando el resto de la configuración (tipografía, animaciones, bordes redondeados) tal cual estaba. **Pendiente:** si esta misma prueba se hizo alguna vez contra HostGator, revisar ahí también cuando se retome el despliegue — de momento no aplica porque el sitio en producción no está conectado todavía.
+
+### 🔧 Versión en el link del CSS, para que el celular no siga mostrando cambios viejos
+Al revisar la misma captura, el subtítulo del encabezado ("Busca o registra al ciudadano...") seguía apareciendo aunque ya se había ocultado en celular en el cambio anterior de este mismo día — el celular estaba mostrando una copia en caché de `styles.css`, no la más reciente. Se agregó `?v=20260829` al `<link>` de `css/styles.css` en las 5 páginas que lo cargan; hay que subir ese número (fecha del día, o cualquier valor distinto) cada vez que se toque `styles.css` de forma visible, para forzar que el navegador (sobre todo en celular, donde no es tan fácil hacer un "hard refresh") pida el archivo de nuevo en vez de reusar el viejo.
+
+### 📂 Archivos modificados
+- `web/database` (BD local, no versionada en git) — `site_config.padron_tema_config` corregido.
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/asistente.html`, `web/admin.html` — `?v=20260829` agregado al link de `styles.css`.
+
 ## 📅 [2026-08-29] — Corrección de layout en celular: panel admin ("Datos"), encabezados y formularios en modales
 
 ### 🐛 Diagnóstico a partir de capturas reales del celular del usuario
