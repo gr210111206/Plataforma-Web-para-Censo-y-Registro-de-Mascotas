@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-08-29] — Encabezado "chueco" en celular, falla silenciosa al cargar estadísticas, y placeholder viejo "342" en el mapa
+
+### 🐛 El encabezado del panel (☰ + título + acciones) se veía descuadrado en celular
+La corrección anterior de este mismo día (ocultar el subtítulo largo) resolvió que el contenido se cortara, pero dejó un problema distinto: con `justify-content: space-between` (el valor de escritorio) y solo el botón ☰ + el bloque de título cabiendo en la primera línea, el algoritmo de flexbox manda el título pegado al borde derecho de la pantalla — lejos del botón ☰ — dejando un hueco grande en medio, con las acciones (badge + botón) flotando solas en una segunda línea. Confirmado con una captura real del usuario. Corregido: en celular ahora es `justify-content: flex-start` y el bloque de título crece para ocupar el espacio libre junto al botón ☰ (quedan juntos, como una sola unidad), mientras que el grupo de acciones baja a su propia fila completa alineada a la derecha. Aplica a las 3 páginas que comparten `.dashboard-header` (`admin.html`, `asistente.html`, `dashboard.html`).
+
+### 🐛 Bug real encontrado: si fallaba la carga de estadísticas, no se avisaba — parecía que "no había datos"
+El usuario reportó capturas donde el mapa, "Cobertura de vacunación" y "Tipos de mascotas" se veían vacíos/en cero en celular, aunque la base de datos real tiene ~29,900 mascotas (confirmado por consulta directa, y el endpoint `/api/stats` responde correcto y rápido probado por la misma IP de red que usa el celular — no es un problema del servidor ni de CORS). Revisando `initAdmin()` se encontró la causa: **la petición de estadísticas (`apiGetStats()`) tenía un `catch` silencioso** (`catch (err) { stats = {}; }`, sin aviso alguno), a diferencia de la petición de mascotas (`apiGetTodasMascotas()`) que sí muestra un toast de error si falla. `initMap()` **no hace su propia petición** — lee del mismo `stats` ya cargado (`stats.por_colonia`), así que si esa petición fallaba (ej. un hipo de la red WiFi del celular), el mapa se veía igual (siempre se centra en El Grullo) pero sin ningún marcador, y KPIs/gráfica de vacunación/tipos de mascota mostraban ceros silenciosos — indistinguible en pantalla de "el padrón está vacío de verdad". Corregido: ahora muestra el mismo tipo de aviso (`❌ No se pudieron cargar las estadísticas: ...`) que ya usa la petición de mascotas, para que quede claro que fue un error de carga y no falta de datos.
+
+### 🧹 Limpieza: placeholder viejo "342" en el contador del mapa
+`<span id="mapCount">342</span>` seguía teniendo el número de ejemplo fijo como valor inicial en el HTML (el mismo "342" que se documentó como dato falso y se quitó de todos lados en la entrada del `[2026-08-01]` de este historial — este `id="mapCount"` en particular se les pasó en aquel momento). El JS sí lo actualiza correctamente al cargar (`mapCountEl.textContent = allPets.length`), pero mientras tanto —o si la carga fallaba— se veía el "342" viejo en vez de un placeholder neutro. Cambiado a "—", igual que el resto de las tarjetas KPI.
+
+### 🔧 Versión del CSS actualizada
+`?v=20260829` → `?v=20260829b` en las 5 páginas, para que el cambio de `.dashboard-header` de esta entrada sí llegue a los celulares que ya habían cacheado la versión anterior de hoy.
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (`.dashboard-header` reestructurado en `@media (max-width: 768px)`).
+- `web/admin.html` (placeholder `mapCount`, toast de error en la carga de estadísticas).
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/asistente.html`, `web/admin.html` (versión del link de `styles.css`).
+
 ## 📅 [2026-08-29] — El botón "Registrar mascota" se veía gris (no era CSS): el Tema visual guardado en BD estaba en gris; se agrega versión al CSS para evitar caché viejo en celular
 
 ### 🐛 No era un bug de layout — el color del sitio estaba mal guardado en la base de datos

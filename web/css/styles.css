@@ -1461,7 +1461,25 @@ tbody tr:hover { background: var(--surface); }
      quedaban cortados contra el borde de la pantalla. Se oculta el
      subtítulo (mismo criterio que ya usa el navbar) y se permite que las
      acciones bajen a su propia línea si hace falta. */
-  .dashboard-header { padding: 14px 20px; gap: 10px 12px; flex-wrap: wrap; }
+  .dashboard-header {
+    padding: 14px 20px;
+    gap: 10px 12px;
+    flex-wrap: wrap;
+    /* space-between (el valor de escritorio) con solo 2 de los 3
+       elementos cabiendo en la primera línea mandaba el título pegado
+       al borde derecho, lejos del botón ☰ — se veía "chueco". Con
+       flex-start + el título creciendo (ver regla de abajo) quedan
+       juntos a la izquierda, como una sola unidad. */
+    justify-content: flex-start;
+  }
+  /* Bloque de título (título + subtítulo, el <div> sin clase entre el
+     botón ☰ y las acciones): ocupa el espacio libre junto al botón en
+     vez de encogerse a su contenido y saltar al extremo derecho. */
+  .dashboard-header > div:first-of-type { flex: 1; min-width: 0; }
+  /* Grupo de acciones (badge + botón, ej. "Admin" + "Exportar CSV"):
+     baja a su propia fila completa y se alinea a la derecha, en vez de
+     quedar flotando pegado al botón ☰ en el lado izquierdo. */
+  .dashboard-header > .flex.gap-8.items-center { flex-basis: 100%; justify-content: flex-end; }
   .dashboard-title { font-size: 1.05rem; }
   .dashboard-subtitle { display: none; }
   .dashboard-content { padding: 20px 16px; }

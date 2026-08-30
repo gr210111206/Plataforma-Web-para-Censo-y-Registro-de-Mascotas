@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>" />
-  <link rel="stylesheet" href="css/styles.css?v=20260829" />
+  <link rel="stylesheet" href="css/styles.css?v=20260829b" />
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1006,7 +1006,7 @@
           <div id="mapContainer">
             <div id="map"></div>
             <div class="map-footer">
-              📍 Mascotas en el padrón: <span id="mapCount">342</span>
+              📍 Mascotas en el padrón: <span id="mapCount">—</span>
             </div>
           </div>
         </div>
@@ -3762,7 +3762,10 @@ async function initAdmin() {
   }
   try {
     stats = await apiGetStats();
-  } catch (err) { stats = {}; }
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar las estadísticas: ${err.message}`, 'error');
+    stats = {};
+  }
   try {
     avisoData = [...(await apiGetCampanas())];
   } catch (err) { avisoData = []; }
