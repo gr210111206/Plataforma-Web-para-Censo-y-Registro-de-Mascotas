@@ -97,7 +97,7 @@ function requireAuth(): array {
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
     $db   = getDB();
-    $stmt = $db->prepare('SELECT id, nombre, email, telefono, rol, es_superadmin, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
+    $stmt = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
 

@@ -76,7 +76,7 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $pass  = $body['password'];
 
         $db   = getDB();
-        $stmt = $db->prepare("SELECT id, nombre, email, telefono, rol, es_superadmin, password_hash FROM duenos WHERE email = ? AND activo = 1");
+        $stmt = $db->prepare("SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin, password_hash FROM duenos WHERE email = ? AND activo = 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
@@ -93,6 +93,9 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
             'nombre'        => $user['nombre'],
             'email'         => $user['email'],
             'telefono'      => $user['telefono'],
+            'direccion'     => $user['direccion'],
+            'colonia'       => $user['colonia'],
+            'foto_perfil'   => $user['foto_perfil'],
             'rol'           => $user['rol'],
             'es_superadmin' => (int) $user['es_superadmin'],
         ]);
@@ -121,11 +124,40 @@ if ($method === 'GET' && $action === 'me') {
 if ($method === 'POST' && $action === 'update-profile') {
     $user = requireAuth();
     $body = getBody();
+    $db   = getDB();
 
-    $campos  = [];
-    $params  = [];
+    $campos = [];
+    $params = [];
+
+    // Correo: es el identificador con el que se inicia sesión (columna
+    // UNIQUE), así que además de limpiarlo hay que validar formato y que
+    // no choque con otra cuenta ya existente antes de aceptarlo.
+    if (array_key_exists('email', $body)) {
+        $nuevoEmail = strtolower(trim((string)$body['email']));
+        if (empty($nuevoEmail)) jsonError('El correo electrónico no puede quedar vacío.', 400);
+        if (!filter_var($nuevoEmail, FILTER_VALIDATE_EMAIL)) jsonError('El correo electrónico no es válido.', 400);
+        if ($nuevoEmail !== strtolower((string)($user['email'] ?? ''))) {
+            $chk = $db->prepare('SELECT id FROM duenos WHERE email = ? AND id != ?');
+            $chk->execute([$nuevoEmail, $user['id']]);
+            if ($chk->fetch()) jsonError('Ese correo electrónico ya está en uso por otra cuenta.', 400);
+        }
+        $campos[] = 'email = ?';
+        $params[] = $nuevoEmail;
+    }
+
+    // Foto de perfil: Base64 (mismo patrón que mascotas.foto_url). El
+    // cliente ya la redimensiona antes de enviarla; este límite es solo
+    // un respaldo por si la petición se hace directo, sin pasar por la UI.
+    if (array_key_exists('foto_perfil', $body)) {
+        $foto = $body['foto_perfil'];
+        if ($foto !== null && strlen((string)$foto) > 3_000_000) {
+            jsonError('La imagen es demasiado grande.', 400);
+        }
+        $campos[] = 'foto_perfil = ?';
+        $params[] = clean($foto);
+    }
+
     $allowed = ['nombre', 'telefono', 'direccion', 'colonia'];
-
     foreach ($allowed as $campo) {
         if (array_key_exists($campo, $body)) {
             $campos[] = "$campo = ?";
@@ -136,10 +168,9 @@ if ($method === 'POST' && $action === 'update-profile') {
     if (!$campos) jsonError('No se recibieron campos para actualizar.');
 
     $params[] = $user['id'];
-    $db = getDB();
     $db->prepare('UPDATE duenos SET ' . implode(', ', $campos) . ' WHERE id = ?')->execute($params);
 
-    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, rol FROM duenos WHERE id = ?');
+    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol FROM duenos WHERE id = ?');
     $updated->execute([$user['id']]);
     jsonOk($updated->fetch());
 }

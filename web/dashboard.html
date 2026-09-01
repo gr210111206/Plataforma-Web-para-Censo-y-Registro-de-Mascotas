@@ -366,7 +366,8 @@
           </div>
           <div class="form-group" style="margin-bottom:16px;">
             <label>Correo electrónico (Cuenta)</label>
-            <input class="form-control" type="email" id="perfil-email-field" readonly style="background: var(--surface); color: var(--gray-2);" />
+            <input class="form-control" type="email" id="perfil-email-field" />
+            <div class="form-hint">Es el correo con el que inicias sesión — si lo cambias, la próxima vez usa el nuevo.</div>
           </div>
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
@@ -652,20 +653,27 @@ function initComboSugerencias(inputId, listId, opciones) {
   input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 120));
 }
 
+/** Devuelve el HTML del avatar: la foto guardada si existe, si no las iniciales. */
+function _avatarHtml(fotoPerfil, initials) {
+  return fotoPerfil
+    ? `<img src="${fotoPerfil}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    : initials;
+}
+
 function applySessionToUI() {
   const sessionNombre = session.nombre   || 'Ciudadano';
   const sessionEmail  = session.email    || '';
   const sessionPhone  = session.telefono || '';
   const initials = sessionNombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 
-  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarAvatar').innerHTML = _avatarHtml(session.foto_perfil, initials);
   document.getElementById('sidebarName').textContent   = sessionNombre.split(' ').slice(0, 2).join(' ');
   document.getElementById('sidebarRole').textContent   = session.rol === 'admin' ? 'Administrador' : 'Ciudadano';
   if (session.rol === 'admin') {
     document.getElementById('sidebarRole').style.color = 'var(--orange-light)';
   }
 
-  document.getElementById('profileAvatar').textContent    = initials;
+  document.getElementById('profileAvatar').innerHTML      = _avatarHtml(session.foto_perfil, initials);
   document.getElementById('profileName').textContent      = sessionNombre;
   document.getElementById('profilePhone').innerHTML       = ICON_PHONE + ' ' + sessionPhone;
   document.getElementById('perfil-nombre').value          = sessionNombre;
@@ -1145,23 +1153,28 @@ function downloadActa(folio) {
 async function saveProfile() {
   const nombre    = document.getElementById('perfil-nombre').value.trim();
   const telefono  = document.getElementById('perfil-telefono').value.trim();
+  const email     = document.getElementById('perfil-email-field').value.trim();
   const direccion = document.getElementById('perfil-domicilio')?.value.trim() || '';
   const colonia   = document.getElementById('perfil-colonia')?.value || '';
 
   if (!nombre)   { showToast('❌ El nombre no puede quedar vacío', 'error'); return; }
   if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
+  if (!email)    { showToast('❌ El correo electrónico no puede quedar vacío', 'error'); return; }
+
+  const payload = { nombre, telefono, direccion, colonia, email };
+  if (window._pendingAvatarFoto) payload.foto_perfil = window._pendingAvatarFoto;
 
   try {
-    const updated = await apiUpdateProfile({ nombre, telefono, direccion, colonia });
+    const updated = await apiUpdateProfile(payload);
     session = { ...session, ...updated };
+    window._pendingAvatarFoto = null;
 
+    const ini = nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
     document.getElementById('sidebarName').textContent = nombre.split(' ').slice(0, 2).join(' ');
     document.getElementById('profileName').textContent = nombre;
     document.getElementById('profilePhone').innerHTML = ICON_PHONE + ' ' + telefono;
-    const ini = nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-    document.getElementById('sidebarAvatar').textContent = ini;
-    const av = document.getElementById('profileAvatar');
-    if (!av.querySelector('img')) av.textContent = ini;
+    document.getElementById('sidebarAvatar').innerHTML = _avatarHtml(updated.foto_perfil, ini);
+    document.getElementById('profileAvatar').innerHTML = _avatarHtml(updated.foto_perfil, ini);
 
     localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
     showToast('✅ Perfil actualizado correctamente', 'success');
@@ -1170,14 +1183,40 @@ async function saveProfile() {
   }
 }
 
+/* Antes: guardaba la foto tal cual (sin límite de tamaño ni redimensionar)
+   directo al DOM, y nunca la mandaba al servidor — no se guardaba de
+   verdad, y una foto grande de cámara (varios MB, miles de px) podía
+   colgar o tronar la pestaña, sobre todo en celular. Ahora valida tamaño,
+   la redimensiona con Canvas (igual que la foto de mascota) y la deja
+   pendiente para que "Guardar cambios" la mande junto con el resto del
+   perfil — un solo botón de guardado, nada se guarda solo al elegir el
+   archivo. */
 function changeAvatar(input) {
   const file = input.files[0]; if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ La foto no debe superar 5 MB', 'error'); return; }
+
   const reader = new FileReader();
   reader.onload = e => {
-    document.getElementById('profileAvatar').innerHTML =
-      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
-    document.getElementById('sidebarAvatar').innerHTML =
-      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 300;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.85);
+
+      window._pendingAvatarFoto = optimized;
+      document.getElementById('profileAvatar').innerHTML = _avatarHtml(optimized, '');
+      document.getElementById('sidebarAvatar').innerHTML = _avatarHtml(optimized, '');
+      showToast('📷 Foto lista — pulsa "Guardar cambios" para aplicarla', 'info');
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }

@@ -2,6 +2,38 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-01] — "Mi perfil" (con foto real) ahora existe también para Asistente y Admin/Superadmin; corregido el bug real de la foto de perfil del ciudadano
+
+### 🐛 Bug real encontrado: la foto de perfil del ciudadano nunca se guardó — y podía tronar la pestaña
+El usuario reportó que subir una foto en "Mi perfil" a veces cerraba la sesión o crasheaba. Investigando `changeAvatar()` en `dashboard.html` se encontró que **nunca existió backend para esto**: la función solo metía la imagen sin redimensionar directo al `innerHTML` del avatar (ni validaba tamaño, a diferencia de la foto de mascota que sí lo hace) y jamás la mandaba al servidor — no había ni columna en la base de datos para guardarla. Una foto de cámara sin redimensionar (varios MB, miles de píxeles) manejada así en el navegador, sobre todo en celular, es una causa muy plausible del crasheo reportado.
+
+**Corrección:**
+- Nueva columna `duenos.foto_perfil LONGTEXT` (mismo patrón que `mascotas.foto_url`).
+- `changeAvatar()` ahora valida tamaño (máx. 5 MB) y redimensiona con Canvas (máx. 300px, JPEG calidad .85) antes de usarla — igual que ya hacía la foto de mascota — y la deja pendiente hasta que se pulse "Guardar cambios" (no se guarda sola al elegir el archivo; un solo botón de guardado para todo el perfil).
+- `POST /api/auth?action=update-profile` ahora acepta y persiste `foto_perfil`.
+
+### 🐛 Bug real adicional (menor) encontrado de paso: domicilio/colonia "se olvidaban" al volver a iniciar sesión
+`requireAuth()` (usada por `GET /auth?action=me`, la que arma la sesión en cada carga de página) no traía `direccion`/`colonia` de la base de datos — solo se completaban en el objeto de sesión justo después de guardar cambios en esa misma pestaña, nunca en una carga nueva. Corregido: ya se incluyen en el `SELECT` de `requireAuth()` y en la respuesta de login.
+
+### 🆕 Correo electrónico ahora editable (antes solo de lectura, con validación real)
+El campo de correo en "Mi perfil" se veía pero no se podía cambiar. Decisión confirmada con el usuario: sí debe poder editarse. `update-profile` ahora valida formato (`FILTER_VALIDATE_EMAIL`) y que el nuevo correo no choque con otra cuenta ya existente (columna `UNIQUE`) antes de aceptarlo — como es el identificador de acceso, cambiar a un correo ya usado por otra cuenta se rechaza con un mensaje claro en vez de fallar a medias.
+
+### 🆕 "Mi perfil" extendido a Asistente y Admin/Superadmin (antes solo existía para Ciudadano)
+- **`admin.html`**: nueva sección "Mi perfil" (pestaña nueva en el sidebar + el bloque de usuario del sidebar, antes 100% estático con el texto fijo "Administrador", ahora es dinámico y clicable — muestra el nombre real, la foto si existe, y "Superadmin" en vez de "Panel admin" para esa única cuenta).
+- **`asistente.html`**: esta página no tiene sistema de pestañas (es un flujo de un solo paso, registrar mascota), así que "Mi perfil" se agregó como modal — mismo patrón ya usado ahí para "Registrar mascota", en vez de forzar una navegación por pestañas que no encaja con el resto de la página.
+- Mismos campos en las tres páginas (nombre, teléfono, correo, foto) — se dejaron fuera domicilio/colonia para admin/asistente a propósito: son cuentas de personal municipal, no residentes, y esos campos habrían requerido además incluir el buscador de colonias (`el-grullo-data.js`) que esas dos páginas no cargan.
+
+### ✅ Verificado de punta a punta (curl) para los tres roles
+Login + `update-profile` con nombre/teléfono/correo/foto para ciudadano, asistente y admin — los tres guardan y devuelven los datos correctos. Confirmado explícitamente que actualizar el perfil del superadmin **no** afecta su columna `es_superadmin` (sigue en 1 tras volver a iniciar sesión). Confirmado el rechazo de correo duplicado, correo con formato inválido, y que guardar el propio correo sin cambiarlo no dispara el error de "ya está en uso". Pendiente que el usuario confirme visualmente en el navegador (no hay forma de abrir uno real en este entorno).
+
+### 📂 Archivos modificados
+- `web/database/schema.sql` (columna `foto_perfil`).
+- `web/api/config/helpers.php` (`requireAuth()` incluye `direccion`, `colonia`, `foto_perfil`).
+- `web/api/auth.php` (login incluye los mismos campos; `update-profile` valida correo único y acepta `foto_perfil`).
+- `web/dashboard.html` (bug real corregido: `changeAvatar()`, `saveProfile()`, correo editable).
+- `web/admin.html` (nueva sección "Mi perfil", sidebar de usuario dinámico).
+- `web/asistente.html` (nuevo modal "Mi perfil").
+
 ## 📅 [2026-08-29] — Encabezado "chueco" en celular, falla silenciosa al cargar estadísticas, y placeholder viejo "342" en el mapa
 
 ### 🐛 El encabezado del panel (☰ + título + acciones) se veía descuadrado en celular

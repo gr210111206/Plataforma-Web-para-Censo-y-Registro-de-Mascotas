@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS duenos (
   email         VARCHAR(150)  DEFAULT NULL UNIQUE, -- NULL = ciudadano sin correo, registrado por un asistente
   direccion     VARCHAR(200)  DEFAULT NULL,
   colonia       VARCHAR(100)  DEFAULT NULL,
+  foto_perfil   LONGTEXT      DEFAULT NULL, -- foto de perfil en Base64, mismo patrón que mascotas.foto_url
   password_hash VARCHAR(255)  DEFAULT NULL,
   rol           ENUM('ciudadano','admin','asistente') NOT NULL DEFAULT 'ciudadano',
   es_superadmin TINYINT(1)   NOT NULL DEFAULT 0, -- solo se activa a mano en BD, ver CLAUDE.md; permite otorgar el rol admin desde el panel

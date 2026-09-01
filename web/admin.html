@@ -927,13 +927,16 @@
     <a class="sidebar-link" id="nav-config" onclick="showAdmin('config')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></svg></span> Configuración sitio
     </a>
+    <a class="sidebar-link" id="nav-perfil" onclick="showAdmin('perfil')">
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span> Mi perfil
+    </a>
 
     <div class="sidebar-bottom">
-      <div class="sidebar-user">
-        <div class="sidebar-avatar" style="background:#C96200;">AD</div>
+      <div class="sidebar-user" onclick="showAdmin('perfil')" style="cursor:pointer;">
+        <div class="sidebar-avatar" id="sidebarAvatar" style="background:#C96200;">AD</div>
         <div>
-          <div class="sidebar-user-name">Administrador</div>
-          <div class="sidebar-user-role" style="color:var(--orange-light);">Panel admin</div>
+          <div class="sidebar-user-name" id="sidebarUserName">Administrador</div>
+          <div class="sidebar-user-role" id="sidebarUserRole" style="color:var(--orange-light);">Panel admin</div>
         </div>
       </div>
       <a class="sidebar-link" style="margin-top:8px;" href="index.html">
@@ -2308,7 +2311,46 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 
     </div><!-- /sec-config -->
 
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: MI PERFIL                         -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-perfil" style="display:none;">
+      <div style="max-width:640px;">
+        <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
+          <div style="display:flex; align-items:center; gap:18px; margin-bottom:24px;">
+            <div style="position:relative;">
+              <div style="width:72px; height:72px; background:var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Outfit',sans-serif; font-weight:800; font-size:1.6rem; color:white; overflow:hidden;" id="profileAvatar">?</div>
+              <button onclick="document.getElementById('avatar-upload').click()"
+                style="position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; background:white; border:2px solid var(--orange); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.7rem; cursor:pointer;">
+                ✏️
+              </button>
+              <input type="file" id="avatar-upload" accept="image/*" style="display:none;" onchange="changeAvatar(this)" />
+            </div>
+            <div>
+              <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:1.1rem;" id="profileName">—</div>
+              <div style="font-size:.82rem; color:var(--gray-2);" id="profileRoleLabel">—</div>
+            </div>
+          </div>
 
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Nombre completo</label>
+              <input class="form-control" id="perfil-nombre" />
+            </div>
+            <div class="form-group">
+              <label>Teléfono *</label>
+              <input class="form-control" id="perfil-telefono" required />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label>Correo electrónico (Cuenta)</label>
+            <input class="form-control" type="email" id="perfil-email-field" />
+            <div class="form-hint">Es el correo con el que inicias sesión — si lo cambias, la próxima vez usa el nuevo.</div>
+          </div>
+          <button class="btn btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
+        </div>
+      </div>
+    </div>
 
   </div><!-- /dashboard-main -->
 </div>
@@ -2433,6 +2475,7 @@ const sections = {
   roles:       { title: 'Roles y Cuentas', sub: 'Todas las cuentas de Ciudadano y Asistente — busca, activa/desactiva, o crea cuentas nuevas' },
   articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
   config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
+  perfil:      { title: 'Mi perfil',                sub: 'Actualiza tus datos de contacto' },
 };
 
 function showAdmin(name) {
@@ -3742,12 +3785,100 @@ function esSuperAdmin(u) {
   return !!u && Number(u.es_superadmin) === 1;
 }
 
+/* ══════════════════════════════════════════════════ */
+/*  MI PERFIL — mismo patrón que dashboard.html (ciudadano),  */
+/*  aplicado a la cuenta de admin/superadmin en sesión.        */
+/* ══════════════════════════════════════════════════ */
+
+/** Devuelve el HTML del avatar: la foto guardada si existe, si no las iniciales. */
+function _avatarHtml(fotoPerfil, initials) {
+  return fotoPerfil
+    ? `<img src="${fotoPerfil}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    : initials;
+}
+
+function applyCurrentUserToUI() {
+  const nombre   = currentUser.nombre || 'Administrador';
+  const initials = nombre.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  const avatar   = _avatarHtml(currentUser.foto_perfil, initials);
+
+  document.getElementById('sidebarAvatar').innerHTML  = avatar;
+  document.getElementById('sidebarUserName').textContent = nombre.split(' ').slice(0, 2).join(' ');
+  document.getElementById('sidebarUserRole').textContent = esSuperAdmin(currentUser) ? 'Superadmin' : 'Panel admin';
+
+  document.getElementById('profileAvatar').innerHTML  = avatar;
+  document.getElementById('profileName').textContent  = nombre;
+  document.getElementById('profileRoleLabel').textContent = esSuperAdmin(currentUser) ? 'Superadmin' : 'Administrador';
+  document.getElementById('perfil-nombre').value      = nombre;
+  document.getElementById('perfil-telefono').value    = currentUser.telefono || '';
+  document.getElementById('perfil-email-field').value = currentUser.email || '';
+}
+
+async function saveProfile() {
+  const nombre   = document.getElementById('perfil-nombre').value.trim();
+  const telefono = document.getElementById('perfil-telefono').value.trim();
+  const email    = document.getElementById('perfil-email-field').value.trim();
+
+  if (!nombre)   { showToast('❌ El nombre no puede quedar vacío', 'error'); return; }
+  if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
+  if (!email)    { showToast('❌ El correo electrónico no puede quedar vacío', 'error'); return; }
+
+  const payload = { nombre, telefono, email };
+  if (window._pendingAvatarFoto) payload.foto_perfil = window._pendingAvatarFoto;
+
+  try {
+    const updated = await apiUpdateProfile(payload);
+    currentUser = { ...currentUser, ...updated };
+    window._pendingAvatarFoto = null;
+    applyCurrentUserToUI();
+    localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
+    showToast('✅ Perfil actualizado correctamente', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* Mismo bug que se corrigió en dashboard.html: antes esto no existía aquí
+   (el admin no tenía "Mi perfil"); se implementa ya con validación de
+   tamaño y redimensionado por Canvas desde el inicio, dejando la foto
+   pendiente hasta que se pulse "Guardar cambios". */
+function changeAvatar(input) {
+  const file = input.files[0]; if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ La foto no debe superar 5 MB', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 300;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.85);
+
+      window._pendingAvatarFoto = optimized;
+      document.getElementById('profileAvatar').innerHTML = _avatarHtml(optimized, '');
+      document.getElementById('sidebarAvatar').innerHTML = _avatarHtml(optimized, '');
+      showToast('📷 Foto lista — pulsa "Guardar cambios" para aplicarla', 'info');
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 async function initAdmin() {
   currentUser = await apiRequireSession(); // redirige a login.html si no hay sesión válida
   if (currentUser.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
   if (currentUser.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
   await primeConfigFromServer();
   applyAdminOwnAppearance();
+  applyCurrentUserToUI();
 
   const notaRoles = document.getElementById('roles-admin-note');
   if (notaRoles && esSuperAdmin(currentUser)) {
