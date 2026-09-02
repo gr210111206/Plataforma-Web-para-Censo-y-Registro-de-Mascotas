@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-01] — El admin ya puede asignarle correo y contraseña a un ciudadano sin correo (registrado por un asistente)
+
+### 🆕 Contexto
+Los ciudadanos registrados sin correo por un asistente (`buscar-o-crear`, ej. personas adultas mayores) no podían iniciar sesión — no tenían con qué. El usuario pidió una forma de que, si esa persona luego sí quiere una cuenta, un admin o superadmin pueda darle de alta un correo y contraseña sin depender de un desarrollador.
+
+### 🔧 Diseño
+Poder de **cualquier admin** (no exclusivo del superadmin, a diferencia de "Hacer administrador") — esto no otorga ningún privilegio nuevo, solo credenciales de acceso a una cuenta de ciudadano que ya existe, mismo nivel que ya tiene un admin para crear cuentas nuevas. Solo funciona si la cuenta **todavía no tiene correo** — no sirve para cambiarle el correo a alguien que ya puede iniciar sesión (eso ahora lo hace la propia persona desde "Mi perfil", ver entrada anterior), así ningún admin puede "robarse" una cuenta ya activa cambiándole las credenciales sin que esa persona se entere.
+
+- Nuevo endpoint `POST /api/usuarios?action=asignar-correo` (`requireAdmin()`): valida formato de correo, que no choque con otra cuenta, contraseña ≥8 caracteres, que el objetivo sea `rol='ciudadano'` y que su `email` sea `NULL` — `UPDATE` con ese mismo `WHERE` para ser seguro ante condiciones de carrera (TOCTOU), igual que ya se hizo con `promover-admin`.
+- En "Roles y Cuentas": nuevo botón "✉️ Agregar correo", visible solo en filas de ciudadano activo sin correo, con un modal para capturar el correo y la contraseña (con confirmación, mismo patrón que "+ Nueva cuenta").
+
+### ✅ Verificado (curl): 9 casos
+Éxito (y confirmado que la cuenta ya puede iniciar sesión con las credenciales nuevas), rechazo de: sesión no-admin, cuenta que ya tiene correo, cuenta que no es ciudadano (ej. asistente), correo duplicado, correo con formato inválido, contraseña corta.
+
+### 📂 Archivos modificados
+- `web/api/usuarios.php` (`?action=asignar-correo`).
+- `web/js/api-client.js` (`apiAsignarCorreo`).
+- `web/admin.html` (botón "✉️ Agregar correo", modal, handlers).
+
 ## 📅 [2026-09-01] — "Mi perfil" (con foto real) ahora existe también para Asistente y Admin/Superadmin; corregido el bug real de la foto de perfil del ciudadano
 
 ### 🐛 Bug real encontrado: la foto de perfil del ciudadano nunca se guardó — y podía tronar la pestaña

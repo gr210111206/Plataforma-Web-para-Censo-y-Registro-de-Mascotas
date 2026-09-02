@@ -6,6 +6,7 @@
  * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes juntos (solo admin)
  * PUT  /api/usuarios?id=X                   → Activar/desactivar una cuenta (solo admin)
  * POST /api/usuarios?action=crear-cuenta    → Crear cuenta de Ciudadano o Asistente (solo admin, nunca Administrador)
+ * POST /api/usuarios?action=asignar-correo  → Da correo/contraseña a un ciudadano sin correo (solo admin)
  * POST /api/usuarios?action=promover-admin  → Convierte una cuenta existente en admin (solo superadmin)
  * POST /api/usuarios?action=buscar-o-crear  → Buscar por teléfono o crear ciudadano sin correo (admin y asistente)
  */
@@ -124,6 +125,57 @@ if ($method === 'POST' && $action === 'crear-cuenta') {
         'telefono'=> $telefono,
         'rol'     => $rol,
         'message' => 'Cuenta creada correctamente.',
+    ]);
+}
+
+/* ── POST ?action=asignar-correo — el admin (cualquiera, no requiere
+   superadmin) le da correo y contraseña a una cuenta de CIUDADANO que
+   todavía no tiene (registrada sin correo por un asistente, ej. una
+   persona adulta mayor), para que pueda iniciar sesión por su cuenta.
+   Solo funciona si la cuenta TODAVÍA no tiene correo — no sirve para
+   cambiarle el correo a alguien que ya puede iniciar sesión (eso lo
+   hace la propia persona desde "Mi perfil"), así ningún admin puede
+   "robarse" una cuenta ya activa cambiándole las credenciales sin que
+   esa persona se entere. ── */
+if ($method === 'POST' && $action === 'asignar-correo') {
+    requireAdmin();
+    $db = getDB();
+
+    $body     = getBody();
+    $id       = (int)($body['id'] ?? 0);
+    $email    = strtolower(trim($body['email'] ?? ''));
+    $password = $body['password'] ?? '';
+
+    if ($id <= 0) jsonError('Falta el id de la cuenta.', 400);
+    if (empty($email)) jsonError('El correo electrónico es obligatorio.', 400);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('El correo electrónico no es válido.', 400);
+    if (empty($password) || strlen($password) < 8) {
+        jsonError('La contraseña debe tener al menos 8 caracteres.', 400);
+    }
+
+    $stmt = $db->prepare('SELECT id, nombre, email, rol FROM duenos WHERE id = ?');
+    $stmt->execute([$id]);
+    $cuenta = $stmt->fetch();
+    if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
+    if ($cuenta['rol'] !== 'ciudadano') jsonError('Solo se puede asignar correo a una cuenta de Ciudadano.', 400);
+    if ($cuenta['email'] !== null) jsonError('Esta cuenta ya tiene correo — solo la propia persona puede cambiarlo, desde "Mi perfil".', 400);
+
+    $chk = $db->prepare('SELECT id FROM duenos WHERE email = ?');
+    $chk->execute([$email]);
+    if ($chk->fetch()) jsonError('Ese correo electrónico ya está en uso por otra cuenta.', 400);
+
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    $upd  = $db->prepare("UPDATE duenos SET email = ?, password_hash = ? WHERE id = ? AND rol = 'ciudadano' AND email IS NULL");
+    $upd->execute([$email, $hash, $id]);
+    if ($upd->rowCount() === 0) {
+        jsonError('La cuenta cambió mientras se procesaba (puede que ya le hayan asignado correo). Intenta de nuevo.', 409);
+    }
+
+    jsonOk([
+        'id'      => $cuenta['id'],
+        'nombre'  => $cuenta['nombre'],
+        'email'   => $email,
+        'message' => 'Correo y contraseña asignados. Ya puede iniciar sesión con este correo.',
     ]);
 }
 

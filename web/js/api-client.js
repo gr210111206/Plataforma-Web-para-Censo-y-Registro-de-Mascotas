@@ -303,6 +303,19 @@ async function apiPromoverAAdmin(id) {
 }
 
 /**
+ * Le asigna correo y contraseña a un ciudadano que no tenía (registrado
+ * sin correo por un asistente), para que pueda iniciar sesión por su
+ * cuenta. Requiere sesión de admin (cualquiera, no solo superadmin).
+ * Solo funciona si la cuenta todavía no tiene correo.
+ */
+async function apiAsignarCorreo(id, email, password) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=asignar-correo`, {
+    method: 'POST',
+    body: JSON.stringify({ id, email, password }),
+  });
+}
+
+/**
  * Busca un ciudadano por teléfono; si no existe, lo crea SIN correo
  * (registro asistido). Requiere sesión de admin o asistente.
  * @returns {Promise<Object>} el ciudadano encontrado o recién creado,

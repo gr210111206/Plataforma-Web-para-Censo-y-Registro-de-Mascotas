@@ -1205,6 +1205,44 @@
       </div>
     </div>
 
+    <!-- ── Modal: Agregar correo a un ciudadano sin correo ── -->
+    <div class="modal-overlay" id="modal-asignar-correo">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Agregar correo y contraseña</h2>
+          <button class="modal-close" onclick="closeModal('modal-asignar-correo')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:.85rem; color:var(--gray-2); margin-bottom:16px;">
+            Para <strong id="ac-nombre">—</strong>, registrado sin correo por un asistente. Con esto podrá iniciar sesión por su cuenta.
+          </div>
+          <form id="form-asignar-correo" onsubmit="handleAsignarCorreo(event)">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label for="ac-email">Correo electrónico</label>
+                <input class="form-control" type="email" id="ac-email" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="ac-password">Contraseña</label>
+                  <input class="form-control" type="password" id="ac-password" minlength="8" required />
+                </div>
+                <div class="form-group">
+                  <label for="ac-password-confirm">Confirmar contraseña</label>
+                  <input class="form-control" type="password" id="ac-password-confirm" minlength="8" required />
+                </div>
+              </div>
+              <div style="font-size:.78rem; color:var(--gray-2);">Comparte esta contraseña directamente con la persona.</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" onclick="closeModal('modal-asignar-correo')">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════ -->
     <!-- SECCIÓN: NUEVO ARTÍCULO                    -->
     <!-- ══════════════════════════════════════════ -->
@@ -2935,6 +2973,9 @@ function renderRolesTable(data) {
           ${esSuperAdmin(currentUser) && u.activo == 1 && u.email
             ? `<button class="btn btn-ghost btn-sm" style="color:var(--amber);" onclick="promoverAAdmin(${u.id})">⭐ Hacer administrador</button>`
             : ''}
+          ${u.rol === 'ciudadano' && !u.email && u.activo == 1
+            ? `<button class="btn btn-ghost btn-sm" style="color:var(--blue);" onclick="abrirAsignarCorreo(${u.id})">✉️ Agregar correo</button>`
+            : ''}
           <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
             ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
           </button>
@@ -2967,6 +3008,40 @@ async function promoverAAdmin(id) {
     await apiPromoverAAdmin(id);
     showToast(`⭐ ${u.nombre} ahora es Administrador`, 'success');
     loadRolesTable(); // la fila desaparece: ya no es ciudadano/asistente
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* Le da correo y contraseña a un ciudadano que no tenía (lo registró un
+   asistente sin correo, ej. un adulto mayor) para que pueda entrar por
+   su cuenta. Cualquier admin puede hacerlo (no requiere ser superadmin
+   — a diferencia de "Hacer administrador", esto no da ningún privilegio
+   nuevo, solo credenciales de acceso a una cuenta que ya existe). */
+let _asignarCorreoId = null;
+function abrirAsignarCorreo(id) {
+  const u = allCuentas.find(x => x.id === id);
+  if (!u) return;
+  _asignarCorreoId = id;
+  document.getElementById('form-asignar-correo').reset();
+  document.getElementById('ac-nombre').textContent = u.nombre;
+  openModal('modal-asignar-correo');
+}
+
+async function handleAsignarCorreo(e) {
+  e.preventDefault();
+  const email    = document.getElementById('ac-email').value.trim();
+  const pass     = document.getElementById('ac-password').value;
+  const passConf = document.getElementById('ac-password-confirm').value;
+
+  if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
+  if (pass.length < 8)   { showToast('❌ La contraseña debe tener al menos 8 caracteres', 'error'); return; }
+
+  try {
+    await apiAsignarCorreo(_asignarCorreoId, email, pass);
+    closeModal('modal-asignar-correo');
+    showToast('✅ Correo y contraseña asignados — ya puede iniciar sesión', 'success');
+    loadRolesTable();
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
