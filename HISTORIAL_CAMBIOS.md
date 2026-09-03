@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-02] — Decisión: se mantiene Base64-en-BD para imágenes; limpiadas las 20,000 cuentas de prueba masivas
+
+### 🤔 Contexto
+Tras el análisis de `MANEJO_DE_IMAGENES.md` (entrada de abajo), el usuario preguntó cómo evitar problemas de espacio/límites del servidor en HostGator al desplegar, dado el volumen de prueba cargado (~20,000 cuentas/~30,000 mascotas). Se planteó explícitamente la alternativa de cambiar a archivos reales en el servidor en vez de Base64-en-BD, ya que era buen momento para hacerlo (casi no hay fotos reales todavía que migrar).
+
+### ✅ Decisión confirmada con el usuario: se mantiene Base64-en-BD
+No se cambia la arquitectura — para el volumen esperado de un municipio pequeño como El Grullo, sumado a las correcciones ya aplicadas (columnas `LONGTEXT`, redimensionado por Canvas en las 4 vías de subida) y las buenas prácticas de higiene de datos (no subir datos de prueba a producción, revisar tamaño de BD periódicamente), no debería acercarse a ningún límite real de un plan de hosting compartido. Cambiar a archivos en servidor implicaría rehacer la subida/muestra de imágenes en 5-6 archivos y gestionar permisos de carpetas en HostGator sin acceso SSH — costo no justificado a esta escala. **Si el volumen real crece mucho más de lo esperado en el futuro, esta es la alternativa a reconsiderar entonces, no ahora.**
+
+### 🧹 Limpiadas las 20,000 cuentas de prueba masivas de la base de datos local
+Con confirmación explícita del usuario, se borraron de la base de datos **local**: `DELETE FROM duenos WHERE email LIKE '%@test.local';` (20,000 filas — el `ON DELETE CASCADE` de `mascotas.dueno_id` se encargó de sus ~29,884 mascotas), seguido de `OPTIMIZE TABLE duenos, mascotas;` para que el tamaño en disco reflejara la limpieza real (InnoDB no libera el espacio del archivo automáticamente tras un `DELETE`). Resultado: 20,052 → 52 dueños, 29,895 → 11 mascotas, ~16 MB → 0.69 MB. Documentado en `CUENTAS_PRUEBA.md` (no se sube a git). Las 40 cuentas de prueba más chicas (`ciudadanoN@test.com`, etc., ya documentadas desde el 2026-08-21) **no se tocaron** — siguen pendientes de borrar antes de producción real.
+
+### 📂 Archivos modificados
+- Base de datos local (no versionada en git) — 20,000 dueños de prueba y sus mascotas eliminados.
+- `CUENTAS_PRUEBA.md` (no se sube a git) — actualizado para reflejar la limpieza.
+
 ## 📅 [2026-09-02] — Corregido el pendiente de `articulos.contenido` (TEXT → LONGTEXT) documentado el mismo día
 
 ### 🐛 El bug real que se documentó como pendiente en `MANEJO_DE_IMAGENES.md` ya se corrigió
