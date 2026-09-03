@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — `autocomplete="off"` no fue suficiente: Chrome lo seguía ignorando en las cajas de búsqueda
+
+### 🐛 El usuario confirmó que el arreglo anterior no resolvió el problema
+Después de agregar `autocomplete="off"` (entrada anterior de hoy) y confirmar que el servidor ya lo tenía (no era caché), el usuario reportó que Chrome seguía rellenando el buscador de "Datos" con el correo de la sesión. Esto es un comportamiento conocido de Chrome: su gestor de contraseñas puede **ignorar `autocomplete="off"`** en campos que detecta como "parecidos a un inicio de sesión" — es una decisión deliberada del navegador (para que los sitios no puedan desactivar el gestor de contraseñas a la fuerza), pero genera justo este falso positivo en cajas de búsqueda normales.
+
+### 🔧 Corrección más fuerte: `readonly` hasta que se toca el campo
+Técnica estándar para este problema exacto: el campo empieza como `readonly` (con `autocomplete="off"` de respaldo) y un `onfocus="this.removeAttribute('readonly')"` lo vuelve editable en el instante en que el usuario le da clic o llega con Tab — invisible para quien usa el sitio, pero como el campo "nace" de solo lectura, el navegador no lo considera candidato para autocompletar desde el principio (la decisión de qué campos ofrecer se toma con el estado inicial de la página, no se re-evalúa después de que JavaScript quita el `readonly`). Aplicado en las mismas 5 cajas de búsqueda de la entrada anterior.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/asistente.html` (`readonly` + `onfocus` en las 5 cajas de búsqueda).
+
 ## 📅 [2026-09-03] — El navegador autocompletaba el correo guardado en cajas de búsqueda (mismo tema de autocompletado de antes, ahora en campos de texto normales)
 
 ### 🐛 Reportado por el usuario con captura: el buscador de "Datos" (panel admin) se veía con el correo de su cuenta ya escrito

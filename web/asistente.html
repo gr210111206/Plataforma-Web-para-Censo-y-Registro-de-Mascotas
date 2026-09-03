@@ -70,7 +70,7 @@
 
         <div class="search-box" style="margin-bottom:14px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="buscarCiudadanoInput" placeholder="Nombre o teléfono..." oninput="buscarCiudadanos()" style="width:100%; padding-left:36px;" autocomplete="off" />
+          <input class="form-control" id="buscarCiudadanoInput" placeholder="Nombre o teléfono..." oninput="buscarCiudadanos()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
 
         <div id="resultadosBusqueda" style="display:flex; flex-direction:column; gap:8px;"></div>
