@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — El navegador autocompletaba el correo guardado en cajas de búsqueda (mismo tema de autocompletado de antes, ahora en campos de texto normales)
+
+### 🐛 Reportado por el usuario con captura: el buscador de "Datos" (panel admin) se veía con el correo de su cuenta ya escrito
+Mismo mecanismo explicado antes (autocompletado del navegador, no una fuga del servidor) pero esta vez en una caja de búsqueda normal (`miniSearch`, "Buscar mascota..."), no en un campo de contraseña. Ninguna de las 5 cajas de búsqueda del sitio tenía `autocomplete`, así que Chrome podía ofrecerse a rellenarlas con el correo guardado de la sesión — más probable aún en `userSearch`/`rolesSearch`, cuyo propio placeholder dice "...correo...", una pista extra para el navegador.
+
+### 🔧 Corrección: `autocomplete="off"` en las 5 cajas de búsqueda
+A diferencia de los campos de contraseña (donde `autocomplete="off"` ya no sirve de nada porque los navegadores modernos lo ignoran a propósito), en cajas de búsqueda normales sí se respeta — y es lo correcto, porque una búsqueda es una consulta momentánea, no un dato que valga la pena que el navegador recuerde y ofrezca de nuevo. Aplicado en `miniSearch` y `segSearch` ("Datos"/"Seguimiento"), `userSearch` y `rolesSearch` ("Usuarios"/"Roles y Cuentas") en `admin.html`, y `buscarCiudadanoInput` en `asistente.html`.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/asistente.html` (`autocomplete="off"` en las 5 cajas de búsqueda).
+
 ## 📅 [2026-09-03] — El botón "Descargar acta" de Acciones rápidas nunca pudo funcionar
 
 ### 🐛 Reportado por el usuario con captura: "No se encontró la mascota para generar el acta"

@@ -1039,7 +1039,7 @@
         <div class="right-col">
           <div class="search-box" style="width:100%;">
             <span class="search-icon">🔍</span>
-            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." oninput="filterMiniTable()" style="width:100%; padding-left:36px;" />
+            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." oninput="filterMiniTable()" style="width:100%; padding-left:36px;" autocomplete="off" />
           </div>
           <div class="padron-table-mini">
             <table>
@@ -1066,7 +1066,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="filterSeguimiento()" style="width:100%; padding-left:36px;" />
+          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="filterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" />
         </div>
         <select class="form-control" id="segFilterEspecie" onchange="filterSeguimiento()" style="width:140px;">
           <option value="">Especie...</option>
@@ -1092,7 +1092,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="usuariosState.page = 1; filterUsuarios();" style="width:100%; padding-left:36px;" />
+          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="usuariosState.page = 1; filterUsuarios();" style="width:100%; padding-left:36px;" autocomplete="off" />
         </div>
       </div>
 
@@ -1128,7 +1128,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="rolesState.page = 1; filterRoles();" style="width:100%; padding-left:36px;" />
+          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="rolesState.page = 1; filterRoles();" style="width:100%; padding-left:36px;" autocomplete="off" />
         </div>
         <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
       </div>
