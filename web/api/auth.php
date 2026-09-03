@@ -5,6 +5,8 @@
  * POST /api/auth.php?action=login    → Iniciar sesión (email + password)
  * POST /api/auth.php?action=logout   → Cierra la sesión
  * GET  /api/auth.php?action=me       → Datos del usuario autenticado
+ * POST /api/auth.php?action=update-profile   → Actualiza nombre/correo/teléfono/foto/etc. de la sesión actual
+ * POST /api/auth.php?action=change-password  → Cambia la contraseña de la sesión actual (pide la actual)
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -29,12 +31,14 @@ if ($method === 'POST' && $action === 'register') {
     if (empty($email)) {
         jsonError('El correo electrónico es obligatorio.', 400);
     }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        jsonError('El correo electrónico no es válido.', 400);
+    }
     if (empty($telefono)) {
         jsonError('El teléfono de contacto es obligatorio.', 400);
     }
-    if (empty($password) || strlen($password) < 8) {
-        jsonError('La contraseña debe tener al menos 8 caracteres.', 400);
-    }
+    $passErr = validarPassword($password);
+    if ($passErr) jsonError($passErr, 400);
 
     $db = getDB();
 
@@ -173,6 +177,34 @@ if ($method === 'POST' && $action === 'update-profile') {
     $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol FROM duenos WHERE id = ?');
     $updated->execute([$user['id']]);
     jsonOk($updated->fetch());
+}
+
+/* ── POST /api/auth.php?action=change-password ──────────── */
+if ($method === 'POST' && $action === 'change-password') {
+    $user = requireAuth();
+    $body = getBody();
+
+    $actual = $body['actual'] ?? '';
+    $nueva  = $body['nueva'] ?? '';
+
+    if (empty($actual)) jsonError('Escribe tu contraseña actual.', 400);
+    $passErr = validarPassword($nueva);
+    if ($passErr) jsonError($passErr, 400);
+
+    $db   = getDB();
+    $stmt = $db->prepare('SELECT password_hash FROM duenos WHERE id = ?');
+    $stmt->execute([$user['id']]);
+    $row = $stmt->fetch();
+    if (!$row || !$row['password_hash'] || !password_verify($actual, $row['password_hash'])) {
+        jsonError('La contraseña actual no es correcta.', 401);
+    }
+    if (password_verify($nueva, $row['password_hash'])) {
+        jsonError('La nueva contraseña debe ser distinta a la actual.', 400);
+    }
+
+    $hash = password_hash($nueva, PASSWORD_DEFAULT);
+    $db->prepare('UPDATE duenos SET password_hash = ? WHERE id = ?')->execute([$hash, $user['id']]);
+    jsonOk(['message' => 'Contraseña actualizada correctamente.']);
 }
 
 jsonError('Acción no reconocida.', 404);

@@ -258,6 +258,29 @@
           <div class="form-hint">Es el correo con el que inicias sesión — si lo cambias, la próxima vez usa el nuevo.</div>
         </div>
       </div>
+
+      <div style="border-top:1px solid var(--gray-4); margin:20px 0 16px; padding-top:16px;">
+        <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:14px;">🔒 Cambiar contraseña</div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="form-group">
+            <label>Contraseña actual</label>
+            <input class="form-control" type="password" id="pass-actual" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nueva contraseña</label>
+              <input class="form-control" type="password" id="pass-nueva" minlength="8"
+                     pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" />
+            </div>
+            <div class="form-group">
+              <label>Confirmar nueva contraseña</label>
+              <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" />
+            </div>
+          </div>
+          <div class="form-hint">Debe incluir al menos una letra y un número.</div>
+          <button type="button" class="btn btn-primary btn-sm" style="align-self:flex-start;" onclick="changePassword()">🔒 Actualizar contraseña</button>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-mi-perfil')">Cerrar</button>
@@ -349,6 +372,26 @@ async function saveProfile() {
     localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
     showToast('✅ Perfil actualizado correctamente', 'success');
     closeModal('modal-mi-perfil');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+async function changePassword() {
+  const actual  = document.getElementById('pass-actual').value;
+  const nueva   = document.getElementById('pass-nueva').value;
+  const confirm = document.getElementById('pass-nueva-confirm').value;
+
+  if (!actual) { showToast('❌ Escribe tu contraseña actual', 'error'); return; }
+  if (nueva !== confirm) { showToast('❌ Las contraseñas nuevas no coinciden', 'error'); return; }
+  if (nueva.length < 8) { showToast('❌ La nueva contraseña debe tener al menos 8 caracteres', 'error'); return; }
+
+  try {
+    await apiChangePassword(actual, nueva);
+    document.getElementById('pass-actual').value = '';
+    document.getElementById('pass-nueva').value = '';
+    document.getElementById('pass-nueva-confirm').value = '';
+    showToast('✅ Contraseña actualizada correctamente', 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

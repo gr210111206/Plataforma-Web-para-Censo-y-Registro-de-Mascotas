@@ -144,6 +144,17 @@ async function apiUpdateProfile(data) {
   });
 }
 
+/**
+ * Cambia la contraseña de la sesión actual. El servidor exige la
+ * contraseña actual correcta antes de aceptar la nueva.
+ */
+async function apiChangePassword(actual, nueva) {
+  return _fetch(`${API_BASE_URL}/auth?action=change-password`, {
+    method: 'POST',
+    body: JSON.stringify({ actual, nueva }),
+  });
+}
+
 async function apiRequireSession(rolRequerido = null) {
   try {
     const user = await apiGetMe();

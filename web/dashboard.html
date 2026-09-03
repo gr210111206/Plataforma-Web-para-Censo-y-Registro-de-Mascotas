@@ -389,6 +389,28 @@
           <button class="btn btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
         </div>
 
+        <!-- Cambiar contraseña -->
+        <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px;">
+          <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🔒 Cambiar contraseña</div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Contraseña actual</label>
+            <input class="form-control" type="password" id="pass-actual" />
+          </div>
+          <div class="form-row" style="margin-bottom:8px;">
+            <div class="form-group">
+              <label>Nueva contraseña</label>
+              <input class="form-control" type="password" id="pass-nueva" minlength="8"
+                     pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" />
+            </div>
+            <div class="form-group">
+              <label>Confirmar nueva contraseña</label>
+              <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" />
+            </div>
+          </div>
+          <div class="form-hint" style="margin-bottom:16px;">Debe incluir al menos una letra y un número.</div>
+          <button class="btn btn-primary" onclick="changePassword()">🔒 Actualizar contraseña</button>
+        </div>
+
         <!-- Historial -->
         <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
           <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg> Historial de actividad</div>
@@ -1178,6 +1200,26 @@ async function saveProfile() {
 
     localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
     showToast('✅ Perfil actualizado correctamente', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+async function changePassword() {
+  const actual  = document.getElementById('pass-actual').value;
+  const nueva   = document.getElementById('pass-nueva').value;
+  const confirm = document.getElementById('pass-nueva-confirm').value;
+
+  if (!actual) { showToast('❌ Escribe tu contraseña actual', 'error'); return; }
+  if (nueva !== confirm) { showToast('❌ Las contraseñas nuevas no coinciden', 'error'); return; }
+  if (nueva.length < 8) { showToast('❌ La nueva contraseña debe tener al menos 8 caracteres', 'error'); return; }
+
+  try {
+    await apiChangePassword(actual, nueva);
+    document.getElementById('pass-actual').value = '';
+    document.getElementById('pass-nueva').value = '';
+    document.getElementById('pass-nueva-confirm').value = '';
+    showToast('✅ Contraseña actualizada correctamente', 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

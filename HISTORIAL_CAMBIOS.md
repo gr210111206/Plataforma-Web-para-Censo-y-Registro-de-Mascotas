@@ -2,6 +2,37 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-02] — Contraseñas más seguras al registrarse, correo validado, y "Cambiar contraseña" en Mi perfil (las 3 páginas)
+
+### 🐛 Reportado por el usuario probando el registro en vivo
+Registró una cuenta con contraseña `123456789` (secuencia numérica) y el sistema la aceptó sin problema — la única regla existente era `strlen >= 8`, sin exigir nada más. De paso se confirmó que `?action=register` tampoco validaba que el correo tuviera formato de correo real.
+
+### 🔒 Nueva regla de contraseña, centralizada en un solo lugar
+Nueva función `validarPassword()` en `helpers.php`: mínimo 8 caracteres, con al menos una letra y un número (sin exigir símbolos, para no complicar de más a quien no es muy técnico). Se usa ahora en **los 4 lugares donde se define una contraseña** — antes cada uno tenía su propia copia de `strlen < 8`, ahora es una sola regla:
+- `POST /api/auth?action=register` (registro de ciudadano) — también se agregó `filter_var($email, FILTER_VALIDATE_EMAIL)`, que tampoco existía ahí.
+- `POST /api/usuarios?action=crear-cuenta` (admin crea asistente/ciudadano).
+- `POST /api/usuarios?action=asignar-correo` (admin le da correo a un ciudadano sin correo).
+- `POST /api/auth?action=change-password` (nuevo, ver abajo).
+
+`login.html` (formulario de registro) refleja la misma regla con `pattern` + texto de ayuda, para avisar antes de mandar la petición — la validación real sigue siendo la del servidor.
+
+### 🆕 "Cambiar contraseña" agregado a Mi perfil (ciudadano, asistente, admin/superadmin)
+No existía ninguna forma de cambiar la contraseña una vez creada la cuenta — ni para el ciudadano ni para nadie. Nuevo endpoint `POST /api/auth?action=change-password`: exige la contraseña actual correcta (`password_verify()`), la nueva debe pasar `validarPassword()` y ser distinta a la actual. Nueva sección "🔒 Cambiar contraseña" en las 3 implementaciones de Mi perfil (tarjeta aparte en `dashboard.html`/`admin.html`, dentro del mismo modal en `asistente.html`), con su propio botón — independiente de "Guardar cambios" del resto del perfil.
+
+### ✅ Verificado (curl): 9 casos
+Registro con contraseña débil (rechazado), correo inválido (rechazado), registro válido (éxito); `crear-cuenta` con contraseña débil (rechazado); `change-password` con contraseña actual incorrecta (401), nueva contraseña débil (400), nueva igual a la actual (400), cambio válido (200) — confirmado que el login con la contraseña nueva funciona. Cuenta de prueba usada para esto se borró al terminar.
+
+### 🤔 Sobre "recuperar contraseña" (olvidé mi contraseña) — no implementado todavía, a propósito
+El usuario preguntó si conviene implementarlo ya. Ver la respuesta completa en el chat — resumen: **no todavía**, porque requiere enviar correos reales (token de recuperación por email), y el dominio/hosting de producción no está completamente conectado aún (tema pendiente de sesiones anteriores). Ya estaba anotado como "más adelante" desde antes de esta sesión. Queda pendiente para cuando el correo del dominio esté funcionando de verdad.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php` (`validarPassword()`, nueva).
+- `web/api/auth.php` (`register` con validación de correo/contraseña; nueva acción `change-password`).
+- `web/api/usuarios.php` (`crear-cuenta` y `asignar-correo` usan `validarPassword()`).
+- `web/js/api-client.js` (`apiChangePassword`).
+- `web/login.html` (pista de contraseña en el formulario de registro).
+- `web/dashboard.html`, `web/admin.html`, `web/asistente.html` (sección "Cambiar contraseña" en Mi perfil).
+
 ## 📅 [2026-09-02] — Decisión: se mantiene Base64-en-BD para imágenes; limpiadas las 20,000 cuentas de prueba masivas
 
 ### 🤔 Contexto

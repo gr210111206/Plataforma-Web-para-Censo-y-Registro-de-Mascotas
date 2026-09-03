@@ -159,3 +159,22 @@ function clean(?string $val): ?string {
     if ($val === null) return null;
     return trim(htmlspecialchars($val, ENT_QUOTES, 'UTF-8'));
 }
+
+/* ── Validar contraseña ─────────────────────────── */
+/* Mínimo razonable para un padrón ciudadano: al menos 8 caracteres, con
+   al menos una letra y un número — bloquea casos como "123456789" (pura
+   secuencia numérica, lo que reportó un usuario real probando el
+   registro) sin exigir símbolos que compliquen de más a quien no es muy
+   técnico. Usada en todos los lugares donde se define una contraseña
+   (registro, crear-cuenta, asignar-correo, cambiar contraseña) para que
+   la regla sea una sola, no una copia distinta en cada endpoint.
+   Devuelve null si es válida, o el mensaje de error si no. */
+function validarPassword(string $password): ?string {
+    if (strlen($password) < 8) {
+        return 'La contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!preg_match('/[a-zA-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        return 'La contraseña debe incluir al menos una letra y un número.';
+    }
+    return null;
+}

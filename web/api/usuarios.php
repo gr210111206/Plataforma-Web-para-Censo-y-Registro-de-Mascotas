@@ -100,9 +100,8 @@ if ($method === 'POST' && $action === 'crear-cuenta') {
     if (empty($nombre))   jsonError('El nombre completo es obligatorio.', 400);
     if (empty($email))    jsonError('El correo electrónico es obligatorio.', 400);
     if (empty($telefono)) jsonError('El teléfono de contacto es obligatorio.', 400);
-    if (empty($password) || strlen($password) < 8) {
-        jsonError('La contraseña debe tener al menos 8 caracteres.', 400);
-    }
+    $passErr = validarPassword($password);
+    if ($passErr) jsonError($passErr, 400);
     if (!in_array($rol, ['ciudadano', 'asistente'], true)) {
         jsonError('Rol no válido. Solo se pueden crear cuentas de Ciudadano o Asistente.', 400);
     }
@@ -149,9 +148,8 @@ if ($method === 'POST' && $action === 'asignar-correo') {
     if ($id <= 0) jsonError('Falta el id de la cuenta.', 400);
     if (empty($email)) jsonError('El correo electrónico es obligatorio.', 400);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('El correo electrónico no es válido.', 400);
-    if (empty($password) || strlen($password) < 8) {
-        jsonError('La contraseña debe tener al menos 8 caracteres.', 400);
-    }
+    $passErr = validarPassword($password);
+    if ($passErr) jsonError($passErr, 400);
 
     $stmt = $db->prepare('SELECT id, nombre, email, rol FROM duenos WHERE id = ?');
     $stmt->execute([$id]);
