@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — Aclarado (no era bug del servidor) y corregido: el campo "Contraseña actual" se veía prellenado
+
+### 🐛 Reportado por el usuario con una captura: el campo "Contraseña actual" de "Cambiar contraseña" se veía con fondo azul y ya con puntos, como si la contraseña real ya estuviera ahí al abrir la página — parecía una fuga de seguridad.
+
+**Confirmado con el código (no de memoria) que no lo es:** se buscó cada aparición de `pass-actual` en las tres páginas y ninguna función escribe un valor real ahí — solo se lee para mandarlo al servidor al enviar el formulario, y se limpia (`= ''`) después de un cambio exitoso. El servidor tampoco manda nunca `password_hash` al cliente, en ningún endpoint. Lo que se veía es el **autocompletado del propio navegador** (el fondo azul/lavanda es la marca visual característica de Chrome al rellenar un campo con una contraseña que el usuario ya había guardado antes en ese navegador para este sitio) — no una fuga de datos del servidor.
+
+**Causa real, y por qué valía la pena corregirla igual:** ninguno de los 16 campos de tipo `password` del sitio tenía el atributo `autocomplete` correcto, así que el navegador tenía que **adivinar** cuál era "la actual" y cuál "la nueva" — que es exactamente el comportamiento ambiguo/confuso que preocupó al usuario. Se agregó el valor correcto en los 16 (login, registro, "Nueva cuenta", "Agregar correo", y "Cambiar contraseña" en las 3 páginas): `autocomplete="current-password"` para contraseña actual/login, `autocomplete="new-password"` para cualquier contraseña nueva que se está definiendo. Es la recomendación estándar (MDN/WHATWG) para este tipo de formularios — no se usó `autocomplete="off"` porque los navegadores modernos ya lo ignoran en campos de contraseña a propósito, y desactivar el uso de gestores de contraseñas es considerado una mala práctica de seguridad, no una buena.
+
+### 📂 Archivos modificados
+- `web/login.html`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html` (atributo `autocomplete` en los 16 campos de contraseña).
+
 ## 📅 [2026-09-02] — Contraseñas más seguras al registrarse, correo validado, y "Cambiar contraseña" en Mi perfil (las 3 páginas)
 
 ### 🐛 Reportado por el usuario probando el registro en vivo

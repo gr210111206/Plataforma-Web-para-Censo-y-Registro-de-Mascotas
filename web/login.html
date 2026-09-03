@@ -155,7 +155,7 @@
           <label for="login-password">Contraseña *</label>
           <div class="input-group">
             <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required />
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required autocomplete="current-password" />
           </div>
         </div>
 
@@ -210,7 +210,7 @@
           <div class="input-group">
             <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
             <input type="password" id="reg-user-password" class="form-control" placeholder="Mínimo 8 caracteres, con letras y números" required minlength="8"
-                   pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" />
+                   pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
           </div>
           <div class="form-hint">Debe incluir al menos una letra y un número — evita algo como "12345678".</div>
         </div>
@@ -219,7 +219,7 @@
           <label for="reg-user-password-confirm">Confirmar contraseña *</label>
           <div class="input-group">
             <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
-            <input type="password" id="reg-user-password-confirm" class="form-control" placeholder="Repite tu contraseña" required minlength="8" />
+            <input type="password" id="reg-user-password-confirm" class="form-control" placeholder="Repite tu contraseña" required minlength="8" autocomplete="new-password" />
           </div>
         </div>
 

@@ -1187,11 +1187,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="nu-password">Contraseña</label>
-                  <input class="form-control" type="password" id="nu-password" minlength="8" required />
+                  <input class="form-control" type="password" id="nu-password" minlength="8" required autocomplete="new-password" />
                 </div>
                 <div class="form-group">
                   <label for="nu-password-confirm">Confirmar contraseña</label>
-                  <input class="form-control" type="password" id="nu-password-confirm" minlength="8" required />
+                  <input class="form-control" type="password" id="nu-password-confirm" minlength="8" required autocomplete="new-password" />
                 </div>
               </div>
               <div style="font-size:.78rem; color:var(--gray-2);">Comparte esta contraseña directamente con la persona — no se le puede enviar por correo si es una cuenta de Asistente que tú mismo estás creando.</div>
@@ -1225,11 +1225,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="ac-password">Contraseña</label>
-                  <input class="form-control" type="password" id="ac-password" minlength="8" required />
+                  <input class="form-control" type="password" id="ac-password" minlength="8" required autocomplete="new-password" />
                 </div>
                 <div class="form-group">
                   <label for="ac-password-confirm">Confirmar contraseña</label>
-                  <input class="form-control" type="password" id="ac-password-confirm" minlength="8" required />
+                  <input class="form-control" type="password" id="ac-password-confirm" minlength="8" required autocomplete="new-password" />
                 </div>
               </div>
               <div style="font-size:.78rem; color:var(--gray-2);">Comparte esta contraseña directamente con la persona.</div>
@@ -2393,17 +2393,17 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🔒 Cambiar contraseña</div>
           <div class="form-group" style="margin-bottom:14px;">
             <label>Contraseña actual</label>
-            <input class="form-control" type="password" id="pass-actual" />
+            <input class="form-control" type="password" id="pass-actual" autocomplete="current-password" />
           </div>
           <div class="form-row" style="margin-bottom:8px;">
             <div class="form-group">
               <label>Nueva contraseña</label>
               <input class="form-control" type="password" id="pass-nueva" minlength="8"
-                     pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" />
+                     pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
             </div>
             <div class="form-group">
               <label>Confirmar nueva contraseña</label>
-              <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" />
+              <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" autocomplete="new-password" />
             </div>
           </div>
           <div class="form-hint" style="margin-bottom:16px;">Debe incluir al menos una letra y un número.</div>
