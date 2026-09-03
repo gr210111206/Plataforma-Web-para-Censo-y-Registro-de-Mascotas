@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — El archivo "del escudo" en realidad no era el escudo: corregido en las 9 partes del sitio donde se usaba, y favicon real agregado
+
+### 🐛 Bug real, grande, encontrado a partir de una pregunta del usuario
+El usuario pidió poner `Imagenes/Distintivo HAyto El Grullo CB.png` como ícono de una página. Al revisar esa imagen, resultó ser un **patrón geométrico de triángulos de colores sin relación con El Grullo** — no el escudo institucional. Buscando el nombre del archivo en el proyecto se encontró que **ya estaba en uso en 9 lugares de 7 archivos**: el navbar de `index.html`, el panel lateral de `login.html`, el sidebar de `dashboard.html`/`admin.html`/`asistente.html`, la ficha pública de mascota (`mascota.html`, 3 veces), y hasta el botón de acceso rápido "🏛️ Escudo" del selector de apariencia en `admin.html`. Es decir, **todo el sitio ha estado mostrando ese patrón de triángulos como si fuera el escudo del Ayuntamiento**, sin que nadie lo notara hasta ahora.
+
+Se encontraron los archivos correctos ya existentes en `web/Imagenes/`: `LOGO 1.png`/`LOGO 2.png` (a color, idénticos entre sí), `Logo negro.png` (versión en negro) y `Logo blanco.png` (versión en blanco, para fondos oscuros) — el emblema real del kiosco de El Grullo con "Gobierno Municipal 2024-2027 · La Ciudad de la Gente", coherente con el resto de la identidad del proyecto.
+
+### 🔧 Corrección: cada uso apunta ahora al archivo correcto según su fondo
+- Fondos oscuros/naranjas (sidebars de las 3 páginas con sesión, panel lateral de login, badge del encabezado de la ficha de mascota) → `Logo blanco.png`.
+- Fondos claros (navbar de portada, pie de la ficha de mascota ×2, botón preset de apariencia) → `LOGO 1.png`.
+- El archivo `Distintivo HAyto El Grullo CB.png` se dejó tal cual en la carpeta (no se borró, por si tiene otro uso no encontrado) pero ya no se referencia en ningún lado.
+
+### 🆕 Favicon real (antes era un emoji genérico)
+Las 6 páginas usaban un emoji (🐾 o 🔧 en el caso de `admin.html`) como ícono de pestaña del navegador, vía SVG embebido. Se generó `Imagenes/favicon-escudo.png` (256×256, fondo transparente) recortando solo el kiosco de `Logo negro.png` (sin el texto de abajo, que no cabría legible en un ícono tan chico) usando `System.Drawing` de .NET vía PowerShell — no hay librería de imágenes (GD) instalada en este PHP local. Aplicado como favicon en las 6 páginas.
+
+### ✅ Verificado
+Ningún archivo hace referencia ya al nombre viejo (`grep` sin resultados). Las 6 páginas y el favicon cargan con 200. Revisión visual de cada imagen (`LOGO 1.png`, `Logo negro.png`, el recorte final) antes de aplicarlas — no se asumió que se veían bien sin comprobarlo.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html`, `web/mascota.html` (favicon real; referencias del logo corregidas).
+- `web/Imagenes/favicon-escudo.png` (nuevo).
+
 ## 📅 [2026-09-03] — El mapa ya cubre las 38 colonias reales (antes solo 16, y 5 de esas ni eran reales); datos de demostración en cada una
 
 ### 🔍 Hallazgo: el catálogo de colonias del mapa no coincidía con el catálogo real investigado antes
