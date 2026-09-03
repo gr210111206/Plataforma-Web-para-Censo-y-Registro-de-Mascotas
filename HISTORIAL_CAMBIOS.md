@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — El botón "Descargar acta" de Acciones rápidas nunca pudo funcionar
+
+### 🐛 Reportado por el usuario con captura: "No se encontró la mascota para generar el acta"
+El botón "Descargar acta" de la barra de "Acciones rápidas" (distinto del botón "Acta" que ya trae cada tarjeta de mascota) llamaba a `downloadActa()` **sin pasarle ningún folio** — a diferencia de los otros 2 lugares del archivo que sí lo hacen. `downloadActa(folio)` busca `myPets.find(p => (p.id||p.folio) === folio)`; con `folio` en `undefined`, esa búsqueda nunca encuentra nada, sin importar cuántas mascotas tenga la cuenta. El botón estaba roto desde que se agregó, no era un problema de la cuenta del usuario.
+
+### 🔧 Corrección: resuelve solo cuando no hay ambigüedad
+Nueva `downloadActaRapida()`: con **0 mascotas**, avisa que registre una primero; con **exactamente 1** (el caso más común, y el del usuario que reportó esto), descarga esa directo sin pedir nada; con **2 o más**, no adivina cuál — llevar al usuario a la lista sería descargar el acta equivocada sin que se diera cuenta, así que en vez de eso lo manda a "Mis animales de compañía" con un aviso de que use el botón de la tarjeta específica.
+
+### 📂 Archivos modificados
+- `web/dashboard.html` (`downloadActaRapida()` nueva; el botón de Acciones rápidas ahora la llama a ella).
+
 ## 📅 [2026-09-03] — El archivo "del escudo" en realidad no era el escudo: corregido en las 9 partes del sitio donde se usaba, y favicon real agregado
 
 ### 🐛 Bug real, grande, encontrado a partir de una pregunta del usuario
