@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS campanas (
 CREATE TABLE IF NOT EXISTS articulos (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   titulo       VARCHAR(200) NOT NULL,
-  contenido    TEXT         NOT NULL,
+  contenido    LONGTEXT     NOT NULL, -- puede traer imágenes Base64 incrustadas (insertImageInEditor); TEXT (~64KB) se quedaba corto, mismo bug que ya se corrigió en mascotas.foto_url
   imagen_icono VARCHAR(10)  DEFAULT '📄',
   publicado    TINYINT(1)  NOT NULL DEFAULT 1,
   created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP

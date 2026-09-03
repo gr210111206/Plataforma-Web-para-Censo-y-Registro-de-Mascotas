@@ -3131,14 +3131,36 @@ function handleEditorKey(e) {
 }
 
 // ── Insert image into editor ──────────────────────
+// Antes se insertaba el archivo tal cual (sin redimensionar) — con
+// articulos.contenido en TEXT (~64KB), cualquier imagen real de más de
+// ~45KB fallaba al guardar el artículo. Ya se corrigió la columna a
+// LONGTEXT, pero además se redimensiona aquí (igual que mascota/perfil/
+// apariencia) para no seguir incrustando imágenes pesadas sin necesidad
+// — cada visita a la portada pública descarga ese HTML completo.
 function insertImageInEditor(input) {
   const file = input.files[0];
   if (!file) return;
   if (file.size > 2 * 1024 * 1024) { showToast('❌ Imagen máximo 2 MB', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
-    document.getElementById('wysiwygEditor').focus();
-    document.execCommand('insertHTML', false, `<img src="${e.target.result}" style="max-width:100%; border-radius:8px; margin:8px 0;" />`);
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 800;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.82);
+
+      document.getElementById('wysiwygEditor').focus();
+      document.execCommand('insertHTML', false, `<img src="${optimized}" style="max-width:100%; border-radius:8px; margin:8px 0;" />`);
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
   input.value = '';

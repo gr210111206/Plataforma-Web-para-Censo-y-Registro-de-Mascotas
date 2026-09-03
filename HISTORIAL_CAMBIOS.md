@@ -2,6 +2,39 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-02] — Corregido el pendiente de `articulos.contenido` (TEXT → LONGTEXT) documentado el mismo día
+
+### 🐛 El bug real que se documentó como pendiente en `MANEJO_DE_IMAGENES.md` ya se corrigió
+Al escribir ese documento se encontró que `articulos.contenido` seguía siendo `TEXT` (~64 KB) y que `insertImageInEditor()` insertaba la imagen sin redimensionar — mismo bug que ya se había corregido una vez para `mascotas.foto_url`. El usuario preguntó después por recomendaciones para evitar este tipo de problemas en HostGator, así que se corrigió de una vez:
+- `articulos.contenido` → `LONGTEXT`.
+- `insertImageInEditor()` ahora redimensiona con `<canvas>` (máx. 800px, JPEG .85) antes de insertar la imagen en el editor — igual que ya hacían mascota/perfil/apariencia.
+
+**Verificado:** se creó un artículo de prueba con 100,000 caracteres de contenido (por encima del límite viejo de ~64 KB) directo contra la API — guardó correctamente (antes habría fallado) — y se borró después de confirmar.
+
+### 📝 Documentado un lote de datos de prueba que nunca se había anotado
+Revisando cómo limpiar la base de datos antes de subir a HostGator, se encontró que las **20,000 cuentas** de prueba masivas (`cargaN@test.local`, cargadas el 2026-08-25 para probar el panel con volumen) nunca quedaron documentadas en `CUENTAS_PRUEBA.md` — solo el lote más chico de 40. Agregado ahí (archivo local, no se sube a git), con el comando exacto para borrarlas antes de producción real (`mascotas.dueno_id` tiene `ON DELETE CASCADE`, así que un solo `DELETE` sobre `duenos` basta).
+
+### 📂 Archivos modificados
+- `web/database/schema.sql` (`articulos.contenido` → `LONGTEXT`).
+- `web/admin.html` (`insertImageInEditor()` redimensiona con Canvas).
+- `CUENTAS_PRUEBA.md` (no se sube a git — documenta el lote de 20,000 cuentas de prueba).
+
+## 📅 [2026-09-02] — Nuevo documento `MANEJO_DE_IMAGENES.md`: cómo se comprimen y guardan todas las imágenes del sistema
+
+### 📄 Contexto
+El usuario preguntó dónde y cómo se guardan las imágenes del sitio (fotos de mascota, fotos de perfil, íconos/logos, imágenes de artículos) — investigado y respondido en el chat. Pidió después un documento aparte, detallado, para poder explicar este apartado ante su asesor/profesor (proyecto de residencia).
+
+### 📝 Nuevo archivo: `MANEJO_DE_IMAGENES.md`
+Documenta: el mecanismo común a las 4 vías de subida (FileReader → redimensionar con `<canvas>` → `toDataURL()` → guardar el Base64 resultante en una columna `LONGTEXT`, sin archivos separados en el servidor), tabla comparativa de cada tipo de imagen con su tamaño máximo/redimensionado exactos, la justificación arquitectónica (por qué Base64-en-BD y no una carpeta de `uploads/`, dadas las limitaciones de HostGator sin SSH), límites técnicos reales (columnas `TEXT` vs `LONGTEXT`, `upload_max_filesize`/`post_max_size` de PHP), y un caso de estudio con el bug real ya corregido de `mascotas.foto_url` (era `TEXT`, se corrigió a `LONGTEXT` el 2026-08-01).
+
+**Incluye, a propósito y con honestidad, un pendiente real encontrado al escribir el documento:** `articulos.contenido` sigue siendo `TEXT` y las imágenes insertadas en artículos (`insertImageInEditor()`) nunca se redimensionan — mismo bug que ya se corrigió una vez para mascotas, aquí se pasó por alto. No se corrigió en esta entrada (el usuario no lo pidió todavía) — documentado como pendiente para que la explicación sea honesta.
+
+### 🔒 Verificado antes de subir: sin datos sensibles, `.gitignore` intacto
+A petición explícita del usuario, se confirmó con `git status` que `CUENTAS_PRUEBA.md` y `web/api/config/database.php` (credenciales reales) siguen fuera del control de versiones antes de este commit, y se revisó que el documento nuevo no incluya ninguna contraseña, credencial ni dato real de usuarios — solo explicación técnica con ejemplos genéricos.
+
+### 📂 Archivos modificados
+- `MANEJO_DE_IMAGENES.md` (nuevo).
+
 ## 📅 [2026-09-01] — El admin ya puede asignarle correo y contraseña a un ciudadano sin correo (registrado por un asistente)
 
 ### 🆕 Contexto
