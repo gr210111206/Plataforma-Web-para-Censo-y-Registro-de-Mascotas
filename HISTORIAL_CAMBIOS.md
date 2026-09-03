@@ -2,6 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — El mapa se veía con un hueco vacío de un lado: confirmado que no faltaba ninguna colonia, corregida la distribución de coordenadas
+
+### 🔍 El usuario notó un área sin pines en el mapa y preguntó si faltaba registrar colonias
+Antes de tocar nada se verificó directo contra la base de datos: `SELECT COUNT(DISTINCT colonia)` sobre mascotas activas — **las 38 colonias reales siguen teniendo al menos una mascota registrada**, no faltaba ningún dato. El hueco visual era 100% por cómo se habían repartido las coordenadas aproximadas del catálogo del mapa (entrada del 2026-09-03 anterior): se fueron colocando de forma manual/ad-hoc y, por casualidad, dejaron más densidad de un lado del centro que del otro.
+
+### 🔧 Distribución circular pareja (sigue sin ser GPS real, ahora mejor repartida)
+Recalculadas las 40 coordenadas sin ubicación oficial (todas menos "El Grullo centro", que se queda en el centro exacto, y "Oriente 1ra./2da. Sección", que se dejaron con su sesgo hacia el este siguiendo el nombre) con ángulos exactamente parejos alrededor del centro (360° ÷ 40) y radio variado para que no se vea como un anillo perfecto artificial. Calculado con `awk` (PowerShell tuvo un bloqueo repetido e inexplicable — "Remove-Item... blocked" — en un script que no tenía ningún `Remove-Item`, así que se cambió de herramienta en vez de insistir). Aplicado en las dos copias del catálogo (`admin.html`, `index.html`).
+
+### ✅ Verificado
+Las dos páginas cargan bien, el catálogo tiene las 43 entradas esperadas (38 reales + los 5 nombres del primer intento que no coinciden con el catálogo investigado, sin tocar), y el objeto de JavaScript cierra correctamente.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/index.html` (coordenadas del catálogo `colonias` recalculadas).
+
 ## 📅 [2026-09-03] — `autocomplete="off"` no fue suficiente: Chrome lo seguía ignorando en las cajas de búsqueda
 
 ### 🐛 El usuario confirmó que el arreglo anterior no resolvió el problema
