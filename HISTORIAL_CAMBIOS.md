@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-03] — El mapa ya cubre las 38 colonias reales (antes solo 16, y 5 de esas ni eran reales); datos de demostración en cada una
+
+### 🔍 Hallazgo: el catálogo de colonias del mapa no coincidía con el catálogo real investigado antes
+El usuario pidió agregar ciudadanos y mascotas en cada colonia real de El Grullo, para poder confirmarlo visualmente en el mapa como administrador. Al revisar, se encontró que el catálogo de coordenadas del mapa (`colonias` en `admin.html` e `index.html`, 16 entradas) y el catálogo real de 38 colonias investigado el 2026-08-17 (`COLONIAS_EL_GRULLO` en `el-grullo-data.js`, con fuente: directorios públicos de códigos postales/callejeros) **no son el mismo catálogo** — ya se sabía que el del mapa era "más chico" (documentado desde entonces), pero no se sabía que **5 de esas 16 no coinciden con ninguna de las 38 colonias reales** (`Magisterial`, `Nueva creación`, `Los pinos`, `La cañada`, `San José`) — se dejaron tal cual (podrían ser reales y solo faltar en la investigación anterior, que su propio comentario admite "no es necesariamente exhaustiva").
+
+### 🗺️ Coordenadas agregadas para las 27 colonias reales que le faltaban al mapa
+Se investigó la ubicación general de El Grullo (búsqueda web, confirma las coordenadas del centro ya usadas: 19.8056, -104.2139) pero no hay geocodificación precisa disponible para colonias pequeñas de un municipio chico — así que las 27 coordenadas nuevas son **ubicaciones aproximadas alrededor del centro** (mismo criterio que ya se usó, aparentemente, para las 16 originales, que también están todas apretadas en un radio chico sin ser coordenadas agrimensadas), no coordenadas GPS reales. "Oriente 1ra./2da. Sección" sí se recorrieron hacia el este siguiendo el nombre. Aplicado en las dos copias del catálogo (`admin.html` e `index.html`, que lo duplican igual que otros componentes chicos del proyecto). **Documentado así de manera transparente** — sirve para confirmar que el mecanismo del mapa funciona con las 38 colonias, no para navegación GPS real.
+
+### 🧑‍🤝‍🧑 38 ciudadanos de demostración, uno por colonia real, con 1-2 mascotas cada uno
+57 mascotas en total, folios reales consecutivos, nombres/domicilios con formato realista (nombres y calles reales de El Grullo). Documentado en `CUENTAS_PRUEBA.md` (no se sube a git) con el correo/contraseña usados y el comando para borrarlos antes de producción.
+
+### ✅ Verificado
+Los 38 nombres de colonia de `GET /api/stats` (`por_colonia`, lo que realmente alimenta el mapa) se cruzaron uno por uno contra el catálogo de coordenadas actualizado — las 38 tienen ahora un pin correspondiente, ninguna cae en el "sin coincidencia" (que usaría el centro del pueblo como respaldo). Confirmado login con una de las cuentas nuevas, y que los acentos se guardan/devuelven correctos vía la API (lo que se veía como `�` en la consola era solo la codificación de la terminal de Windows, no un problema real de datos).
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/index.html` (27 coordenadas nuevas en el catálogo `colonias` del mapa).
+- Base de datos local (no versionada en git) — 38 ciudadanos y 57 mascotas de demostración.
+- `CUENTAS_PRUEBA.md` (no se sube a git) — documenta el lote nuevo.
+
 ## 📅 [2026-09-03] — Aclarado (no era bug del servidor) y corregido: el campo "Contraseña actual" se veía prellenado
 
 ### 🐛 Reportado por el usuario con una captura: el campo "Contraseña actual" de "Cambiar contraseña" se veía con fondo azul y ya con puntos, como si la contraseña real ya estuviera ahí al abrir la página — parecía una fuga de seguridad.
