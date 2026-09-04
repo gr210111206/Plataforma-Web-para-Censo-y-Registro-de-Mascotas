@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-04] — Panel admin "Seguimiento": las tarjetas de mascota tenían 3 controles que no funcionaban de verdad
+
+### 🐛 El usuario reportó (con capturas) tres bugs en la sección Seguimiento del panel admin
+1. Un botón "+" flotante (`.fab-btn`, posicionado en absoluto sobre la tarjeta) se encimaba visualmente con el botón "Ver acta".
+2. El botón "✏️" de esa tarjeta no editaba nada — nunca estuvo conectado a ninguna función real.
+3. "Ver acta" tampoco generaba nada — solo mostraba un toast falso (`showToast('📄 Acta ... generada')`), sin PDF real.
+4. Las mascotas con foto subida no la mostraban en la tarjeta — `renderSeguimiento()` siempre pintaba el emoji de la especie sin revisar `pet.foto_url`.
+
+El usuario pidió explícitamente que el administrador **sí pueda editar de verdad** los datos de la mascota (no solo el estatus, que ya funcionaba).
+
+### 🔧 Cambios
+- **Foto**: `renderSeguimiento()` ahora muestra `<img src="${pet.foto_url}">` cuando existe, con el emoji de especie solo como respaldo.
+- **Botones**: se quitó el FAB "+" falso (y su regla CSS `.fab-btn`, sin más usos en el archivo) y el toast falso de "Ver acta". La tarjeta ahora tiene 3 botones reales en fila: 🔄 Cambiar estatus (ya existía), ✏️ Editar y 📄 Ver acta.
+- **Editar (`editarMascotaAdmin()` + modal `#modal-editar-mascota`)**: nuevo modal en `admin.html` con los mismos campos que el modal de edición de `dashboard.html` (nombre, especie, raza, edad, sexo, color, vacunado, esterilizado y foto con redimensionado por Canvas, máx. 5 MB). El backend **no necesitó ningún cambio**: el `PUT /api/mascotas?id=` ya aceptaba ediciones de admin sobre cualquier mascota (`mascotas.php`), y `apiActualizarMascota()` ya existía en `api-client.js` — el bug era 100% de frontend, la función simplemente no se había escrito nunca.
+- **Ver acta (`downloadActaAdmin()`)**: PDF real con jsPDF, portado de `downloadActa()` de `dashboard.html` pero usando `allPets` (no `myPets`) y los datos de dueño que ya vienen en cada mascota (`pet.persona`, `pet.telefono`) en vez de mezclar con la sesión del propio admin. Se agregó el `<script>` de jsPDF (CDN, `defer`) a `admin.html`, que no lo tenía cargado.
+
+### ✅ Verificado
+Página carga (200). Login como admin + `PUT /api/mascotas?id=M-GRU-000000070` en vivo contra la mascota real "maximiliano" del reporte — edición aceptada y reflejada en la respuesta; dato de prueba revertido a su valor original después de confirmar.
+
+### 📂 Archivos modificados
+- `web/admin.html` (`renderSeguimiento()`, nuevo modal `#modal-editar-mascota`, `editarMascotaAdmin()`, `previewFotoEditarMascota()`, `guardarEdicionMascota()`, `downloadActaAdmin()`, script de jsPDF, CSS `.fab-btn` eliminado).
+
 ## 📅 [2026-09-04] — Nuevo formato de folio: `M-GRU-XXXXXXXXX` (9 dígitos) en vez de `REMAC-GRU-XXXXX` (5)
 
 ### 🤔 Contexto y decisiones confirmadas con el usuario
