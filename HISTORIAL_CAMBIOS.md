@@ -2,6 +2,29 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-04] — Nuevo formato de folio: `M-GRU-XXXXXXXXX` (9 dígitos) en vez de `REMAC-GRU-XXXXX` (5)
+
+### 🤔 Contexto y decisiones confirmadas con el usuario
+El usuario pidió simplificar el folio — quitar el prefijo "REMAC" (dejar solo "M" de Municipal) y ampliar de 5 a 9 dígitos. Antes de tocar nada se investigaron los 10 archivos donde aparecía el formato viejo, y se confirmaron dos decisiones con impacto real (el folio es la llave primaria de cada mascota, no solo una etiqueta):
+1. **Renombrar las 70 mascotas ya existentes** al nuevo formato (no solo aplicarlo a partir de ahora) — decisión explícita del usuario, aunque implica que cualquier QR/acta ya generada con el folio viejo dejaría de apuntar correctamente.
+2. **El contador del nuevo formato reinicia en 1** (`M-GRU-000000001`), no continúa desde el ~29,962 que traía el contador viejo (inflado por los datos de prueba masivos ya borrados).
+
+### 🔧 Cambios
+- `generarFolioREMAC()` (`helpers.php`): mismo mecanismo (transacción sobre `folio_counter`), prefijo `M-GRU-` y `str_pad` a 9 dígitos en vez de 5.
+- **Migración de las 70 mascotas existentes**: script PHP (fuera del proyecto, en el scratchpad de la sesión) que las recorre en orden cronológico de registro y les asigna `M-GRU-000000001` .. `M-GRU-000000070`, actualizando también `link_publico` y `ficha` para que sigan coincidiendo con el nuevo `id`. Se confirmó antes de correrlo que ninguna otra tabla tiene una llave foránea hacia `mascotas.id`. El contador quedó en 70, así que el siguiente folio nuevo es `M-GRU-000000071` (probado en vivo).
+- Actualizados los textos que mencionan el formato como ejemplo: `login.html`, `index.html` (banner y FAQ), el textarea por defecto de "Contenidos de portada" en `admin.html`, el valor de respaldo en `dashboard.html`, y los comentarios JSDoc de `api-client.js`.
+- `schema.sql`/`seed.sql` actualizados para que una instalación nueva desde cero ya nazca con el formato correcto.
+- `js/mock-data.js` (código simulado de antes de conectar el backend real) **no se tocó a propósito** — no lo carga ninguna página, confirmado con búsqueda de `<script src="mock-data.js">` en todo el proyecto.
+
+### ✅ Verificado
+Antes del commit: 0 mascotas con formato viejo, 70 con el nuevo, en orden correcto; consulta pública de una mascota migrada (`Max`, ahora `M-GRU-000000001`) funciona igual que antes; se registró una mascota de prueba real vía la API y salió `M-GRU-000000071` exactamente como se esperaba (se borró después y se regresó el contador a 70).
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php` (`generarFolioREMAC()`).
+- `web/database/schema.sql`, `web/database/seed.sql`.
+- `web/login.html`, `web/index.html`, `web/admin.html`, `web/dashboard.html`, `web/js/api-client.js` (referencias al formato como texto/ejemplo).
+- Base de datos local (no versionada en git) — 70 mascotas renombradas, `folio_counter` en 70.
+
 ## 📅 [2026-09-03] — El mapa se veía con un hueco vacío de un lado: confirmado que no faltaba ninguna colonia, corregida la distribución de coordenadas
 
 ### 🔍 El usuario notó un área sin pines en el mapa y preguntó si faltaba registrar colonias

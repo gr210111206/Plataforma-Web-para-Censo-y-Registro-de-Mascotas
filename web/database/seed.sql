@@ -22,12 +22,12 @@ UPDATE folio_counter SET ultimo = 6;
 
 -- ── Mascotas ─────────────────────────────────────
 INSERT INTO mascotas (id, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares, vacunado, esterilizado, estatus, dueno_id, fecha_registro, link_publico, ficha) VALUES
-('REMAC-GRU-00001','Max',      'perro','Labrador Retriever','3','3 años', 'macho', 'Dorado',            'Mancha blanca en el pecho',        1,0,'Alta',2,'2026-01-15','mascota.html?id=REMAC-GRU-00001','REMAC-GRU-00001.pdf'),
-('REMAC-GRU-00002','Luna',     'gato', 'Siamés',           '2','2 años', 'hembra','Blanco y gris',      'Ojos azules, cola corta',          1,1,'Alta',3,'2026-02-03','mascota.html?id=REMAC-GRU-00002','REMAC-GRU-00002.pdf'),
-('REMAC-GRU-00003','Rocky',    'perro','Pastor alemán',    '5','5 años', 'macho', 'Negro y café',       'Cicatriz en oreja izquierda',      0,0,'Alta',4,'2026-02-20','mascota.html?id=REMAC-GRU-00003','REMAC-GRU-00003.pdf'),
-('REMAC-GRU-00004','Solovino', 'perro','Mestizo',          '5','5 años', 'macho', 'Amarillo con blanco','Ninguna en especial',              1,0,'Alta',5,'2026-05-11','mascota.html?id=REMAC-GRU-00004','REMAC-GRU-00004.pdf'),
-('REMAC-GRU-00005','Toby',     'perro','Chihuahua',        '1','1 año',  'macho', 'Café',               'Manchas en la espalda',            1,0,'Alta',6,'2026-03-22','mascota.html?id=REMAC-GRU-00005','REMAC-GRU-00005.pdf'),
-('REMAC-GRU-00006','Canela',   'perro','Mestizo',          '7','7 años', 'hembra','Canela',             'Pata trasera derecha más corta',   0,1,'Baja',7,'2026-04-05','mascota.html?id=REMAC-GRU-00006','REMAC-GRU-00006.pdf');
+('M-GRU-000000001','Max',      'perro','Labrador Retriever','3','3 años', 'macho', 'Dorado',            'Mancha blanca en el pecho',        1,0,'Alta',2,'2026-01-15','mascota.html?id=M-GRU-000000001','M-GRU-000000001.pdf'),
+('M-GRU-000000002','Luna',     'gato', 'Siamés',           '2','2 años', 'hembra','Blanco y gris',      'Ojos azules, cola corta',          1,1,'Alta',3,'2026-02-03','mascota.html?id=M-GRU-000000002','M-GRU-000000002.pdf'),
+('M-GRU-000000003','Rocky',    'perro','Pastor alemán',    '5','5 años', 'macho', 'Negro y café',       'Cicatriz en oreja izquierda',      0,0,'Alta',4,'2026-02-20','mascota.html?id=M-GRU-000000003','M-GRU-000000003.pdf'),
+('M-GRU-000000004','Solovino', 'perro','Mestizo',          '5','5 años', 'macho', 'Amarillo con blanco','Ninguna en especial',              1,0,'Alta',5,'2026-05-11','mascota.html?id=M-GRU-000000004','M-GRU-000000004.pdf'),
+('M-GRU-000000005','Toby',     'perro','Chihuahua',        '1','1 año',  'macho', 'Café',               'Manchas en la espalda',            1,0,'Alta',6,'2026-03-22','mascota.html?id=M-GRU-000000005','M-GRU-000000005.pdf'),
+('M-GRU-000000006','Canela',   'perro','Mestizo',          '7','7 años', 'hembra','Canela',             'Pata trasera derecha más corta',   0,1,'Baja',7,'2026-04-05','mascota.html?id=M-GRU-000000006','M-GRU-000000006.pdf');
 
 -- ── Campañas ─────────────────────────────────────
 INSERT INTO campanas (titulo, descripcion, fecha_inicio, fecha_fin, icono, banner_color, publicado) VALUES

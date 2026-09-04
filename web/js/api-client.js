@@ -193,7 +193,7 @@ async function apiGetTodasMascotas(filtros = {}) {
 
 /**
  * Ver una mascota por su ID REMAC (PÚBLICO — para el QR).
- * @param {string} id  Ej: "REMAC-GRU-00004"
+ * @param {string} id  Ej: "M-GRU-000000004"
  */
 async function apiGetMascota(id) {
   return _fetch(`${API_BASE_URL}/mascotas?id=${encodeURIComponent(id)}`);
@@ -212,7 +212,7 @@ async function apiRegistrarMascota(data) {
 
 /**
  * Actualizar datos de una mascota.
- * @param {string} id    Folio REMAC-GRU-XXXXX
+ * @param {string} id    Folio M-GRU-XXXXXXXXX
  * @param {Object} data  Campos a actualizar
  */
 async function apiActualizarMascota(id, data) {
@@ -224,7 +224,7 @@ async function apiActualizarMascota(id, data) {
 
 /**
  * Dar de baja una mascota (soft delete — estatus = 'Baja').
- * @param {string} id  Folio REMAC-GRU-XXXXX
+ * @param {string} id  Folio M-GRU-XXXXXXXXX
  */
 async function apiDarDeBajaMascota(id) {
   return _fetch(`${API_BASE_URL}/mascotas?id=${encodeURIComponent(id)}`, {

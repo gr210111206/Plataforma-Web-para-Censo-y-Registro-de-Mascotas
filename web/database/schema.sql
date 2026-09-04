@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS duenos (
 
 -- ── Tabla de mascotas ────────────────────────────
 CREATE TABLE IF NOT EXISTS mascotas (
-  id               VARCHAR(20)  NOT NULL PRIMARY KEY,   -- REMAC-GRU-XXXXX
+  id               VARCHAR(20)  NOT NULL PRIMARY KEY,   -- M-GRU-XXXXXXXXX
   nombre           VARCHAR(100) NOT NULL,
   especie          ENUM('perro','gato') NOT NULL,
   raza             VARCHAR(100) DEFAULT NULL,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS articulos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ══════════════════════════════════════════════════
--- Contador global para folios REMAC-GRU
+-- Contador global para folios M-GRU
 -- ══════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS folio_counter (
   id      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

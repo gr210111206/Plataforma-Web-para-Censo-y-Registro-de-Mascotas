@@ -139,7 +139,7 @@ function requireRole(array $roles): array {
     return $user;
 }
 
-/* ── Generador de folio REMAC-GRU-XXXXX ─────────── */
+/* ── Generador de folio M-GRU-XXXXXXXXX ─────────── */
 function generarFolioREMAC(): string {
     $db = getDB();
     $db->beginTransaction();
@@ -147,7 +147,7 @@ function generarFolioREMAC(): string {
         $db->exec('UPDATE folio_counter SET ultimo = ultimo + 1');
         $num = $db->query('SELECT ultimo FROM folio_counter LIMIT 1')->fetchColumn();
         $db->commit();
-        return 'REMAC-GRU-' . str_pad((string)$num, 5, '0', STR_PAD_LEFT);
+        return 'M-GRU-' . str_pad((string)$num, 9, '0', STR_PAD_LEFT);
     } catch (Throwable $e) {
         $db->rollBack();
         throw $e;
