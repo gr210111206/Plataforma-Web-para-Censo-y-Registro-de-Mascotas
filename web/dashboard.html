@@ -193,10 +193,12 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
 <div class="dashboard-layout">
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
   <!-- ── Sidebar ── -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" aria-label="Menú principal">
     <div class="sidebar-logo">
       <img src="Imagenes/Logo blanco.png" alt="H. Ayuntamiento de El Grullo" class="navbar-brand-img" style="height:38px;" />
       <div>
@@ -206,18 +208,18 @@
     </div>
 
     <div class="sidebar-section">Principal</div>
-    <a class="sidebar-link active" id="nav-mis-mascotas" onclick="showSection('mis-mascotas', this)">
+    <a class="sidebar-link active" id="nav-mis-mascotas" role="button" tabindex="0" onclick="showSection('mis-mascotas', this)">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></span> Mis mascotas
     </a>
-    <a class="sidebar-link" id="nav-campanas" onclick="showSection('campanas', this)">
+    <a class="sidebar-link" id="nav-campanas" role="button" tabindex="0" onclick="showSection('campanas', this)">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /><path d="M8 6v8" /></svg></span> Campañas
     </a>
-    <a class="sidebar-link" id="nav-articulos" onclick="showSection('articulos', this)">
+    <a class="sidebar-link" id="nav-articulos" role="button" tabindex="0" onclick="showSection('articulos', this)">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5" /><path d="M18 14h-8" /><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg></span> Artículos / Tips
     </a>
 
     <div class="sidebar-section" style="margin-top:8px;">Mi cuenta</div>
-    <a class="sidebar-link" id="nav-mi-perfil" onclick="showSection('mi-perfil', this)">
+    <a class="sidebar-link" id="nav-mi-perfil" role="button" tabindex="0" onclick="showSection('mi-perfil', this)">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span> Mi perfil
     </a>
     <a class="sidebar-link" href="index.html">
@@ -225,7 +227,7 @@
     </a>
 
     <div class="sidebar-bottom">
-      <div class="sidebar-user" onclick="showSection('mi-perfil', document.getElementById('nav-mi-perfil'))" style="cursor:pointer;">
+      <div class="sidebar-user" role="button" tabindex="0" onclick="showSection('mi-perfil', document.getElementById('nav-mi-perfil'))" style="cursor:pointer;">
         <div class="sidebar-avatar" id="sidebarAvatar">?</div>
         <div>
           <div class="sidebar-user-name" id="sidebarName">Cargando...</div>
@@ -239,7 +241,7 @@
   </aside>
 
   <!-- ── Main ── -->
-  <div class="dashboard-main">
+  <div class="dashboard-main" id="main-content" role="main">
 
     <!-- Header -->
     <div class="dashboard-header">
@@ -356,29 +358,29 @@
 
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
-              <label>Nombre completo</label>
+              <label for="perfil-nombre">Nombre completo</label>
               <input class="form-control" id="perfil-nombre" />
             </div>
             <div class="form-group">
-              <label>Teléfono *</label>
+              <label for="perfil-telefono">Teléfono *</label>
               <input class="form-control" id="perfil-telefono" required />
             </div>
           </div>
           <div class="form-group" style="margin-bottom:16px;">
-            <label>Correo electrónico (Cuenta)</label>
+            <label for="perfil-email-field">Correo electrónico (Cuenta)</label>
             <input class="form-control" type="email" id="perfil-email-field" />
             <div class="form-hint">Es el correo con el que inicias sesión — si lo cambias, la próxima vez usa el nuevo.</div>
           </div>
           <div class="form-row" style="margin-bottom:20px;">
             <div class="form-group">
-              <label>Domicilio</label>
+              <label for="perfil-domicilio">Domicilio</label>
               <div class="combo" id="combo-domicilio">
                 <input class="form-control" id="perfil-domicilio" placeholder="Ej. Calle Morelos #45" autocomplete="off" />
                 <div class="combo-list" id="combo-domicilio-list"></div>
               </div>
             </div>
             <div class="form-group">
-              <label>Colonia</label>
+              <label for="perfil-colonia-input">Colonia</label>
               <div class="combo" id="combo-colonia">
                 <input class="form-control" id="perfil-colonia-input" placeholder="Busca tu colonia…" autocomplete="off" />
                 <input type="hidden" id="perfil-colonia" />
@@ -393,17 +395,17 @@
         <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px;">
           <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🔒 Cambiar contraseña</div>
           <div class="form-group" style="margin-bottom:14px;">
-            <label>Contraseña actual</label>
+            <label for="pass-actual">Contraseña actual</label>
             <input class="form-control" type="password" id="pass-actual" autocomplete="current-password" />
           </div>
           <div class="form-row" style="margin-bottom:8px;">
             <div class="form-group">
-              <label>Nueva contraseña</label>
+              <label for="pass-nueva">Nueva contraseña</label>
               <input class="form-control" type="password" id="pass-nueva" minlength="8"
                      pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
             </div>
             <div class="form-group">
-              <label>Confirmar nueva contraseña</label>
+              <label for="pass-nueva-confirm">Confirmar nueva contraseña</label>
               <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" autocomplete="new-password" />
             </div>
           </div>
@@ -456,7 +458,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title" id="modal-mascota-titulo">Registrar nueva mascota</h2>
-      <button class="modal-close" onclick="closeModal('modal-nueva-mascota')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-nueva-mascota')" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-body">
       <form id="form-mascota" onsubmit="handleNewPet(event)">
@@ -546,7 +548,7 @@
   <div class="modal">
     <div class="modal-header">
       <h2 class="modal-title" id="detalle-titulo">Detalle de mascota</h2>
-      <button class="modal-close" onclick="closeModal('modal-detalle')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-detalle')" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-body" id="detalle-body">
       <!-- Rendered by JS -->
@@ -678,7 +680,7 @@ function initComboSugerencias(inputId, listId, opciones) {
 /** Devuelve el HTML del avatar: la foto guardada si existe, si no las iniciales. */
 function _avatarHtml(fotoPerfil, initials) {
   return fotoPerfil
-    ? `<img src="${fotoPerfil}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    ? `<img src="${fotoPerfil}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
     : initials;
 }
 
@@ -783,6 +785,16 @@ function toggleSidebar(force) {
   sidebar.classList.toggle('open', open);
   backdrop.classList.toggle('open', open);
 }
+
+// Accesibilidad: los enlaces/controles del menú (role="button", sin href
+// propio) no responden a Enter/Espacio por defecto como sí lo hace un
+// <button> real — se delega aquí en vez de cablear cada uno por separado.
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]') && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+    e.target.click();
+  }
+});
 
 /* ══════════════════════════════════════════════════ */
 /*  RENDER PETS                                       */
@@ -901,7 +913,7 @@ function verDetalle(i) {
   document.getElementById('detalle-editar-btn').onclick = () => { closeModal('modal-detalle'); editarMascota(i); };
 
   document.getElementById('detalle-body').innerHTML = `
-    ${(pet.foto_url && pet.foto_url.length > 10) ? `<img src="${pet.foto_url}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
+    ${(pet.foto_url && pet.foto_url.length > 10) ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
       ${field('ID / Folio',    folio)}
       ${field('ANIMAL',        pet.nombre)}
@@ -946,7 +958,7 @@ function verQR(i) {
       <div class="modal" style="max-width:340px; text-align:center;">
         <div class="modal-header">
           <h2 class="modal-title" id="qr-titulo">Código QR</h2>
-          <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('open')">✕</button>
+          <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('open')" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
           <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
@@ -995,7 +1007,7 @@ function printQR() {
   win.document.write(`
     <html><head><title>QR - Mascota REMAC</title></head>
     <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Arial;gap:12px;">
-      <img src="${canvas.toDataURL()}" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
+      <img src="${canvas.toDataURL()}" alt="Código QR" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
       <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('🔲 QR — ','')}</div>
       <div style="font-size:12px;color:#888;">Padrón Municipal REMAC · H. Ayuntamiento El Grullo</div>
     </body></html>`);
@@ -1051,7 +1063,7 @@ function editarMascota(i) {
 
   const photoEl = document.getElementById('photoPreviewIcon');
   photoEl.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
-    ? `<img src="${pet.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
+    ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
     : ICON_CAMERA;
 
   document.getElementById('modal-mascota-titulo').textContent = `Editar a ${pet.nombre}`;
@@ -1310,7 +1322,7 @@ function previewPhoto(input) {
 
       window._pendingFoto = optimized;
       document.getElementById('photoPreviewIcon').innerHTML =
-        `<img src="${optimized}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
+        `<img src="${optimized}" alt="Vista previa de la foto" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`;
     };
     img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
     img.src = e.target.result;
@@ -1370,7 +1382,7 @@ async function applyAppearance() {
       if (logoVal.type === 'none') el.style.display = 'none';
       else el.innerHTML = logoVal.type === 'emoji'
         ? logoVal.value
-        : `<img src="${logoVal.value}" style="width:100%;height:100%;object-fit:contain;" />`;
+        : `<img src="${logoVal.value}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`;
     }
   }
 }

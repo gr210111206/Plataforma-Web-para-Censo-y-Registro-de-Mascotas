@@ -2,6 +2,41 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-08] — Fase 3 (parte 0): smoke test de la API
+
+`scripts/smoke_test.sh` (nuevo) — script de verificación rápida contra un servidor real: login por rol, endpoints públicos sin sesión, permisos correctos por rol (quién puede/no puede cada acción), y un ciclo CRUD completo de mascota (crear, consultar por token público, confirmar que el folio solo no alcanza, editar, dar de baja). No corre solo ni es parte del despliegue — es para correrlo a mano después de tocar el backend, antes de subir a producción, y agarrar regresiones como las que ya pasaron esta sesión (ver las dos correcciones de bugs de esta misma fecha más abajo). 24 verificaciones, las 24 pasan contra el estado actual.
+
+### 📂 Archivos modificados
+- `scripts/smoke_test.sh` (nuevo).
+
+## 📅 [2026-09-08] — Fase 3 (parte 2): pase de accesibilidad en las 6 páginas
+
+### 🤔 Contexto
+Última parte de la Fase 3 de la hoja de ruta. Se investigó primero con un barrido completo de las 6 páginas (index, login, dashboard, admin, asistente, mascota) antes de tocar nada, para arreglar lo de más impacto real en vez de un cambio superficial.
+
+### 🐛 El hallazgo más importante: el menú lateral no se podía usar solo con teclado
+Los enlaces del menú (`<a class="sidebar-link" onclick="...">`) en `admin.html`, `dashboard.html` y `asistente.html` **no tenían `href`** — y un navegador solo agrega un `<a>` al orden de tabulación (Tab) y lo activa con Enter/Espacio cuando SÍ tiene `href`. En la práctica, alguien navegando sin mouse no podía llegar a ninguna sección del panel más allá de la primera. 15 enlaces en total (8 en admin, 4 en dashboard, 3 en asistente) — se corrigieron con `role="button" tabindex="0"` + un manejador de teclado centralizado (Enter/Espacio) en cada archivo. El mismo problema existía en el botón "hamburguesa" de `index.html` (ni siquiera era un botón, un `<div>` sin ningún rol).
+
+### 🔧 Resto de correcciones
+- **Botones de solo ícono sin nombre accesible** (17 en total): los 10 botones "✕" de cerrar modal en las 6 páginas, y 6 botones 🗑️/✏️/👁️ en admin.html que solo tenían emoji (o emoji + `title`, que no basta) — todos con `aria-label` ahora.
+- **Saltar al contenido**: enlace nuevo (oculto hasta que se enfoca con Tab) en las 5 páginas con menú/navegación repetitivo, más una región `role="main"` para que apunte a algo real.
+- **Imágenes sin `alt`**: ~27 en total (fotos de mascota/perfil, vistas previas de banners/íconos, código QR) — todas dinámicas, insertadas por JavaScript al momento de renderizar.
+- **Buscadores sin nombre accesible**: 8 cajas de búsqueda/filtro en admin.html y asistente.html (antes solo tenían `placeholder`, que no es lo mismo que una etiqueta) — `aria-label` agregado.
+- **Etiquetas de formulario sin `for`**: la sección "Mi perfil" (nombre, teléfono, correo, domicilio, colonia, contraseña) en las 3 páginas con panel — corregido en las 3.
+
+### 📌 Deliberadamente fuera de esta pasada
+El editor de "Contenidos de portada / Apariencia" en `admin.html` tiene ~40 etiquetas más sin `for` — es la pantalla de menor uso (solo el admin, y no seguido) y de mayor volumen mecánico de todo el hallazgo; se decidió no gastar el resto de esta pasada ahí. Tampoco se hizo una auditoría de contraste de color (necesita revisión visual, no solo de código). Ambos quedan identificados para una pasada futura si se pide.
+
+### ✅ Verificado
+Las 6 páginas cargan (200) después de cada tanda de cambios. Revisión manual del HTML/JS resultante en cada archivo (sin navegador disponible en este entorno para probar Tab/lector de pantalla de verdad — ver nota abajo).
+
+### ⚠️ Nota honesta sobre el alcance de esta verificación
+No se probó con un navegador real ni con un lector de pantalla (NVDA/VoiceOver) — este entorno no tiene uno disponible. Lo que sí se verificó: las páginas cargan sin error, y cada cambio se revisó línea por línea contra el patrón ya usado en el resto del proyecto. Antes de dar esto por completamente cerrado, vale la pena que alguien navegue el panel admin solo con Tab/Enter (sin mouse) al menos una vez.
+
+### 📂 Archivos modificados
+- `web/css/styles.css` (clase `.skip-link`).
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html`.
+
 ## 📅 [2026-09-08] — Fase 3 (parte 1): "Avisos" y "Campañas" eran dos mecanismos desconectados — ahora es uno solo
 
 ### 🐛 El problema real (más grave de lo que parecía)

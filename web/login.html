@@ -79,6 +79,8 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
 <div class="auth-page">
   <!-- ── Aside ── -->
   <aside class="auth-aside">
@@ -123,7 +125,7 @@
   </aside>
 
   <!-- ── Main ── -->
-  <main class="auth-main">
+  <main class="auth-main" id="main-content">
     <div class="auth-form-wrap">
       <a href="index.html" style="display:inline-flex; align-items:center; gap:6px; font-size:.85rem; color:var(--gray-2); margin-bottom:32px; transition:var(--transition);"
          onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray-2)'">
@@ -246,7 +248,7 @@
   <div class="modal" style="max-width:640px;">
     <div class="modal-header">
       <h2 class="modal-title">Aviso de Privacidad</h2>
-      <button class="modal-close" onclick="closeModal('modal-privacidad')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-privacidad')" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-body" style="font-size:.88rem; color:var(--gray-1); line-height:1.6;">
       <p><strong>1. Identidad y domicilio del responsable</strong><br/>

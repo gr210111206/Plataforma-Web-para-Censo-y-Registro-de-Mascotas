@@ -13,6 +13,8 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
 <!-- ── Navbar ── -->
 <header class="navbar">
   <div class="container">
@@ -39,7 +41,7 @@
       <div class="navbar-actions">
         <a href="login.html" class="btn btn-ghost btn-sm" id="nav-login-btn">Iniciar sesión</a>
         <a href="login.html#registro" class="btn btn-primary btn-sm">Registrar<span class="navbar-btn-full"> mascota</span></a>
-        <div class="navbar-hamburger" id="hamburger" onclick="toggleNav()">
+        <div class="navbar-hamburger" id="hamburger" role="button" tabindex="0" aria-label="Abrir menú" aria-expanded="false" onclick="toggleNav()">
           <span></span><span></span><span></span>
         </div>
       </div>
@@ -47,6 +49,7 @@
   </div>
 </header>
 
+<main id="main-content">
 <!-- ── Hero ── -->
 <section class="hero" id="inicio">
   <div class="hero-grid"></div>
@@ -349,6 +352,8 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 </section>
 
 <!-- ── Footer (dinámico — editable desde panel admin) ── -->
+</main>
+
 <footer class="footer" id="siteFooter">
   <div class="container">
     <div class="footer-grid">
@@ -561,8 +566,19 @@ function animateCounters() {
 /* ── Navbar Mobile ── */
 function toggleNav() {
   const nav = document.getElementById('navMenu');
-  nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+  const abierto = nav.style.display !== 'flex';
+  nav.style.display = abierto ? 'flex' : 'none';
+  document.getElementById('hamburger').setAttribute('aria-expanded', String(abierto));
 }
+
+// Accesibilidad: el hamburger (role="button", es un <div>) no responde a
+// Enter/Espacio por defecto como sí lo hace un <button> real.
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]') && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+    e.target.click();
+  }
+});
 
 /* ── Smooth Scroll ── */
 document.querySelectorAll('a[href^="#"]').forEach(a => {

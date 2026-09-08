@@ -879,10 +879,12 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
 <div class="dashboard-layout">
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
   <!-- ── Sidebar ── -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" aria-label="Menú principal">
     <div class="sidebar-logo">
       <div class="sidebar-logo-icon" id="admin-sidebar-logo">
         <img src="Imagenes/Logo blanco.png" alt="H. Ayuntamiento de El Grullo" />
@@ -894,29 +896,29 @@
     </div>
 
     <div class="sidebar-section">Menú principal</div>
-    <a class="sidebar-link active" id="nav-datos" onclick="showAdmin('datos')">
+    <a class="sidebar-link active" id="nav-datos" role="button" tabindex="0" onclick="showAdmin('datos')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg></span> Datos
     </a>
-    <a class="sidebar-link" id="nav-seguimiento" onclick="showAdmin('seguimiento')">
+    <a class="sidebar-link" id="nav-seguimiento" role="button" tabindex="0" onclick="showAdmin('seguimiento')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg></span> Seguimiento
       <span class="sidebar-badge" id="seguimiento-badge">0</span>
     </a>
-    <a class="sidebar-link" id="nav-usuarios" onclick="showAdmin('usuarios')">
+    <a class="sidebar-link" id="nav-usuarios" role="button" tabindex="0" onclick="showAdmin('usuarios')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg></span> Usuarios
     </a>
-    <a class="sidebar-link" id="nav-roles" onclick="showAdmin('roles')">
+    <a class="sidebar-link" id="nav-roles" role="button" tabindex="0" onclick="showAdmin('roles')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span> Roles
     </a>
-    <a class="sidebar-link" id="nav-bitacora" onclick="showAdmin('bitacora')">
+    <a class="sidebar-link" id="nav-bitacora" role="button" tabindex="0" onclick="showAdmin('bitacora')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg></span> Bitácora
     </a>
-    <a class="sidebar-link" id="nav-articulo" onclick="showAdmin('articulo')">
+    <a class="sidebar-link" id="nav-articulo" role="button" tabindex="0" onclick="showAdmin('articulo')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5" /><path d="M18 14h-8" /><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg></span> Nuevo artículo
     </a>
-    <a class="sidebar-link" id="nav-config" onclick="showAdmin('config')">
+    <a class="sidebar-link" id="nav-config" role="button" tabindex="0" onclick="showAdmin('config')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></svg></span> Configuración sitio
     </a>
-    <a class="sidebar-link" id="nav-perfil" onclick="showAdmin('perfil')">
+    <a class="sidebar-link" id="nav-perfil" role="button" tabindex="0" onclick="showAdmin('perfil')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span> Mi perfil
     </a>
 
@@ -938,7 +940,7 @@
   </aside>
 
   <!-- ── Main ── -->
-  <div class="dashboard-main">
+  <div class="dashboard-main" id="main-content" role="main">
 
     <!-- Header -->
     <div class="dashboard-header">
@@ -1028,7 +1030,7 @@
         <div class="right-col">
           <div class="search-box" style="width:100%;">
             <span class="search-icon">🔍</span>
-            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." oninput="filterMiniTable()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." aria-label="Buscar mascota" oninput="filterMiniTable()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
           </div>
           <div class="padron-table-mini">
             <table>
@@ -1055,14 +1057,14 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="debouncedFilterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." aria-label="Buscar mascota" oninput="debouncedFilterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
-        <select class="form-control" id="segFilterEspecie" onchange="filterSeguimiento()" style="width:140px;">
+        <select class="form-control" id="segFilterEspecie" aria-label="Filtrar por especie" onchange="filterSeguimiento()" style="width:140px;">
           <option value="">Especie...</option>
           <option value="perro">🐕 Perro</option>
           <option value="gato">🐈 Gato</option>
         </select>
-        <select class="form-control" id="segFilterEstatus" onchange="filterSeguimiento()" style="width:150px;">
+        <select class="form-control" id="segFilterEstatus" aria-label="Filtrar por estatus" onchange="filterSeguimiento()" style="width:150px;">
           <option value="">Estatus...</option>
           <option value="Alta">Alta</option>
           <option value="Baja">Baja</option>
@@ -1082,7 +1084,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="debouncedFilterUsuarios()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." aria-label="Buscar cuenta ciudadana" oninput="debouncedFilterUsuarios()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
       </div>
 
@@ -1118,7 +1120,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="debouncedFilterRoles()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." aria-label="Buscar cuenta" oninput="debouncedFilterRoles()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
         <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
       </div>
@@ -1174,7 +1176,7 @@
       <div class="modal">
         <div class="modal-header">
           <h2 class="modal-title">Nueva cuenta</h2>
-          <button class="modal-close" onclick="closeModal('modal-nuevo-usuario')">✕</button>
+          <button class="modal-close" onclick="closeModal('modal-nuevo-usuario')" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body">
           <form id="form-nuevo-usuario" onsubmit="handleNuevoUsuario(event)">
@@ -1226,7 +1228,7 @@
       <div class="modal">
         <div class="modal-header">
           <h2 class="modal-title">Agregar correo y contraseña</h2>
-          <button class="modal-close" onclick="closeModal('modal-asignar-correo')">✕</button>
+          <button class="modal-close" onclick="closeModal('modal-asignar-correo')" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body">
           <div style="font-size:.85rem; color:var(--gray-2); margin-bottom:16px;">
@@ -1264,7 +1266,7 @@
       <div class="modal">
         <div class="modal-header">
           <h2 class="modal-title" id="editar-mascota-titulo">Editar mascota</h2>
-          <button class="modal-close" onclick="closeModal('modal-editar-mascota')">✕</button>
+          <button class="modal-close" onclick="closeModal('modal-editar-mascota')" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body">
           <form id="form-editar-mascota" onsubmit="guardarEdicionMascota(event)">
@@ -2459,16 +2461,16 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
-              <label>Nombre completo</label>
+              <label for="perfil-nombre">Nombre completo</label>
               <input class="form-control" id="perfil-nombre" />
             </div>
             <div class="form-group">
-              <label>Teléfono *</label>
+              <label for="perfil-telefono">Teléfono *</label>
               <input class="form-control" id="perfil-telefono" required />
             </div>
           </div>
           <div class="form-group" style="margin-bottom:20px;">
-            <label>Correo electrónico (Cuenta)</label>
+            <label for="perfil-email-field">Correo electrónico (Cuenta)</label>
             <input class="form-control" type="email" id="perfil-email-field" />
             <div class="form-hint">Es el correo con el que inicias sesión — si lo cambias, la próxima vez usa el nuevo.</div>
           </div>
@@ -2479,17 +2481,17 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
         <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-top:20px;">
           <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🔒 Cambiar contraseña</div>
           <div class="form-group" style="margin-bottom:14px;">
-            <label>Contraseña actual</label>
+            <label for="pass-actual">Contraseña actual</label>
             <input class="form-control" type="password" id="pass-actual" autocomplete="current-password" />
           </div>
           <div class="form-row" style="margin-bottom:8px;">
             <div class="form-group">
-              <label>Nueva contraseña</label>
+              <label for="pass-nueva">Nueva contraseña</label>
               <input class="form-control" type="password" id="pass-nueva" minlength="8"
                      pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
             </div>
             <div class="form-group">
-              <label>Confirmar nueva contraseña</label>
+              <label for="pass-nueva-confirm">Confirmar nueva contraseña</label>
               <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" autocomplete="new-password" />
             </div>
           </div>
@@ -2685,6 +2687,16 @@ function toggleSidebar(force) {
   backdrop.classList.toggle('open', open);
 }
 
+// Accesibilidad: los enlaces del menú (role="button", sin href propio) no
+// responden a Enter/Espacio por defecto como sí lo hace un <button> real
+// — se delega aquí en vez de cablear cada uno por separado.
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]') && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
 /* ══════════════════════════════════════════════════ */
 /*  MAP (Leaflet + OpenStreetMap)                     */
 /* ══════════════════════════════════════════════════ */
@@ -2830,7 +2842,7 @@ function renderMiniTable(data) {
           : '<span class="badge badge-red" style="font-size:.68rem;">❌ No</span>'}
       </td>
       <td>
-        <button class="seguimiento-btn" onclick="event.stopPropagation(); goToSeguimiento('${pet.nombre}')" title="Ver seguimiento">👁️</button>
+        <button class="seguimiento-btn" onclick="event.stopPropagation(); goToSeguimiento('${pet.nombre}')" title="Ver seguimiento" aria-label="Ver seguimiento de ${pet.nombre}">👁️</button>
       </td>
     </tr>`).join('');
 }
@@ -2880,7 +2892,7 @@ function renderSeguimiento(data, total) {
     // Antes siempre mostraba el emoji de la especie, aunque la mascota
     // tuviera una foto real subida — nunca se revisaba pet.foto_url.
     const fotoHtml = pet.foto_url
-      ? `<img src="${pet.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:calc(var(--radius) - 2px);" />`
+      ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:calc(var(--radius) - 2px);" />`
       : icon;
     const statusColor = { Alta: 'var(--green)', Baja: 'var(--gray-2)' }[pet.estatus] || 'var(--green)';
     const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : '?');
@@ -2995,7 +3007,7 @@ function editarMascotaAdmin(id) {
 
   const preview = document.getElementById('em-foto-preview');
   preview.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
-    ? `<img src="${pet.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
+    ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
     : `<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg>`;
 
   document.getElementById('editar-mascota-titulo').textContent = `Editar a ${pet.nombre}`;
@@ -3022,7 +3034,7 @@ function previewFotoEditarMascota(input) {
       const optimized = canvas.toDataURL('image/jpeg', 0.85);
 
       pendingFotoEditarMascota = optimized;
-      document.getElementById('em-foto-preview').innerHTML = `<img src="${optimized}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`;
+      document.getElementById('em-foto-preview').innerHTML = `<img src="${optimized}" alt="Vista previa de la foto" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`;
       showToast('📷 Foto lista — pulsa "Guardar cambios" para aplicarla', 'info');
     };
     img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
@@ -3508,7 +3520,7 @@ function insertImageInEditor(input) {
       const optimized = canvas.toDataURL('image/jpeg', 0.82);
 
       document.getElementById('wysiwygEditor').focus();
-      document.execCommand('insertHTML', false, `<img src="${optimized}" style="max-width:100%; border-radius:8px; margin:8px 0;" />`);
+      document.execCommand('insertHTML', false, `<img src="${optimized}" alt="Imagen" style="max-width:100%; border-radius:8px; margin:8px 0;" />`);
     };
     img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
     img.src = e.target.result;
@@ -3623,7 +3635,7 @@ function renderAdminArtList() {
       <div class="article-excerpt">${a.contenido.substring(0, 80)}...</div>
       <div style="display:flex; gap:6px; margin-top:10px;">
         <button class="btn btn-ghost btn-sm" onclick="editarArticulo(${a.id})">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarArticulo(${a.id})">🗑️</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarArticulo(${a.id})" aria-label="Eliminar artículo">🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -3707,7 +3719,7 @@ function previewMunImg(input, targetId) {
   const reader = new FileReader();
   reader.onload = e => {
     const el = document.getElementById(targetId);
-    el.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;" />`;
+    el.innerHTML = `<img src="${e.target.result}" alt="Vista previa" style="width:100%;height:100%;object-fit:contain;" />`;
   };
   reader.readAsDataURL(file);
 }
@@ -3716,7 +3728,7 @@ function applyEscudoUrl() {
   const url = document.getElementById('escudo-url').value.trim();
   if (!url) return;
   document.getElementById('escudo-preview').innerHTML =
-    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'" />`;
+    `<img src="${url}" alt="Escudo municipal" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'" />`;
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -3909,8 +3921,8 @@ function previewOgImg(input) {
   reader.onload = e => {
     const thumb = document.getElementById('og-img-preview');
     const big   = document.getElementById('og-preview-img');
-    if (thumb) thumb.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
-    if (big)   big.innerHTML   = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+    if (thumb) thumb.innerHTML = `<img src="${e.target.result}" alt="Vista previa de la imagen para redes sociales" style="width:100%;height:100%;object-fit:cover;" />`;
+    if (big)   big.innerHTML   = `<img src="${e.target.result}" alt="Vista previa de la imagen para redes sociales" style="width:100%;height:100%;object-fit:cover;" />`;
   };
   reader.readAsDataURL(file);
 }
@@ -3918,7 +3930,7 @@ function previewOgImg(input) {
 function previewOgImgUrl() {
   const url = document.getElementById('seo-og-img').value.trim();
   const big = document.getElementById('og-preview-img');
-  if (big && url) big.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='❌ URL inválida'" />`;
+  if (big && url) big.innerHTML = `<img src="${url}" alt="Vista previa de la imagen para redes sociales" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='❌ URL inválida'" />`;
 }
 
 function saveSEO() {
@@ -4005,7 +4017,7 @@ function renderAvisos() {
       <div style="font-size:.78rem; color:var(--gray-2); margin-bottom:8px;">${(a.descripcion || '').substring(0,80)}</div>
       <div style="display:flex; gap:6px;">
         <button class="btn btn-ghost btn-sm" onclick="editAviso(${a.id})" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteAviso(${a.id})" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAviso(${a.id})" style="font-size:.72rem; padding:4px 10px;" aria-label="Eliminar aviso">🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -4017,7 +4029,7 @@ function editAviso(id) {
   document.getElementById('aviso-desc').value = a.descripcion || '';
   document.getElementById('aviso-inicio').value = a.fecha_inicio || '';
   document.getElementById('aviso-fin').value = a.fecha_fin || '';
-  document.getElementById('aviso-prev').innerHTML = a.imagen ? `<img src="${a.imagen}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />` : '';
+  document.getElementById('aviso-prev').innerHTML = a.imagen ? `<img src="${a.imagen}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />` : '';
   document.getElementById('avisoSaveBtn').textContent = '💾 Guardar cambios';
   document.getElementById('avisoCancelBtn').style.display = 'inline-flex';
   document.getElementById('aviso-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4076,7 +4088,7 @@ function renderEventos() {
         <div style="font-weight:700; font-size:.88rem;">${e.titulo}</div>
         <div style="font-size:.75rem; color:var(--gray-2);">📍 ${e.lugar || '—'} · ⏰ ${e.hora || '—'}</div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); persistEventos(); showToast('🗑️ Evento eliminado','success')" style="padding:4px 8px;">🗑️</button>
+      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); persistEventos(); showToast('🗑️ Evento eliminado','success')" style="padding:4px 8px;" aria-label="Eliminar evento">🗑️</button>
     </div>`).join('');
 }
 function persistEventos() {
@@ -4102,8 +4114,8 @@ function renderFaqTable() {
       <td style="max-width:160px;">${f.pregunta}</td>
       <td style="max-width:200px; color:var(--gray-1);">${f.respuesta.substring(0, 60)}...</td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm" onclick="editFaq(${i})" style="padding:4px 8px;" title="Editar">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFaq(${i})" style="padding:4px 8px;" title="Eliminar">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="editFaq(${i})" style="padding:4px 8px;" title="Editar" aria-label="Editar pregunta frecuente">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFaq(${i})" style="padding:4px 8px;" title="Eliminar" aria-label="Eliminar pregunta frecuente">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -4204,7 +4216,7 @@ function previewBanner(input, prevId) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       const optimized = canvas.toDataURL('image/jpeg', 0.85);
-      el.innerHTML = `<img src="${optimized}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
+      el.innerHTML = `<img src="${optimized}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
     };
     img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
     img.src = e.target.result;
@@ -4264,7 +4276,7 @@ function esSuperAdmin(u) {
 /** Devuelve el HTML del avatar: la foto guardada si existe, si no las iniciales. */
 function _avatarHtml(fotoPerfil, initials) {
   return fotoPerfil
-    ? `<img src="${fotoPerfil}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    ? `<img src="${fotoPerfil}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
     : initials;
 }
 
@@ -4811,14 +4823,14 @@ function updateIconPreviewUrl(id) {
   if (!url) return;
   appearanceState[id] = { type: 'gif', value: url };
   document.getElementById(`prev-${id}`).innerHTML =
-    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
+    `<img src="${url}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
 }
 
 // ── Select a preset official municipal logo ───────
 function selectPresetImage(id, url) {
   appearanceState[id] = { type: 'image', value: url };
   document.getElementById(`prev-${id}`).innerHTML =
-    `<img src="${url}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+    `<img src="${url}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
   const name = url.split('/').pop();
   document.getElementById(`drop-${id}`).innerHTML =
     `<div>✅ Seleccionado: ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar o subir otra</div>`;
@@ -4860,7 +4872,7 @@ function handleIconFile(input, id) {
       appearanceState[id] = { type: 'image', value: optimizedSrc, name: file.name };
 
       const prev = document.getElementById(`prev-${id}`);
-      if (prev) prev.innerHTML = `<img src="${optimizedSrc}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+      if (prev) prev.innerHTML = `<img src="${optimizedSrc}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
 
       const drop = document.getElementById(`drop-${id}`);
       if (drop) drop.innerHTML = `<div>✅ ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Imagen lista para guardar y publicar</div>`;
@@ -4869,7 +4881,7 @@ function handleIconFile(input, id) {
     img.onerror = () => {
       appearanceState[id] = { type: 'image', value: rawSrc, name: file.name };
       const prev = document.getElementById(`prev-${id}`);
-      if (prev) prev.innerHTML = `<img src="${rawSrc}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+      if (prev) prev.innerHTML = `<img src="${rawSrc}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
     };
 
     img.src = rawSrc;
@@ -4952,7 +4964,7 @@ function loadAppearance() {
           el.classList.toggle('selected', el.textContent === val.value);
         });
       } else {
-        prev.innerHTML = `<img src="${val.value}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
+        prev.innerHTML = `<img src="${val.value}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='❌'"/>`;
         if (val.type === 'gif') {
           const input = document.getElementById(`gif-url-${id}`);
           if (input) input.value = val.value;
