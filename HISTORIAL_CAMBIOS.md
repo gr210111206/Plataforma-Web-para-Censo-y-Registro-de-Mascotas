@@ -2,6 +2,33 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-08] — Fase 3 (parte 1): "Avisos" y "Campañas" eran dos mecanismos desconectados — ahora es uno solo
+
+### 🐛 El problema real (más grave de lo que parecía)
+El panel admin tenía una pestaña "Avisos y promociones" que parecía funcionar (mostraba toast de éxito al guardar), pero en realidad escribía a `site_config` (`padron_avisos`), completamente aparte de la tabla real `campanas`. Como `initAdmin()` siempre vuelve a leer `avisoData` desde `campanas` en cada carga del panel, **cualquier aviso creado o editado se perdía la siguiente vez que el admin abría el panel** — el toast de éxito era falso. Mientras tanto, la tabla `campanas` (con datos reales desde `seed.sql`) no tenía ningún endpoint para crear/editar/eliminar — quedaba congelada para siempre. En el sitio público, ambos mecanismos se pintaban juntos en el mismo bloque (`renderCampaigns()` + `renderAvisos()`, mismo contenedor `campaignsContainer` — el propio encabezado de esa sección ya decía "Avisos y campañas"), confirmando que siempre fueron pensados como una sola cosa.
+
+### 🔧 La corrección: un solo mecanismo, la tabla real
+- `campanas` ganó una columna `imagen` (Base64, opcional) para no perder la función de banner con foto que ya tenía "avisos".
+- `POST`/`PUT`/`DELETE /api/campanas` nuevos (antes solo existía `GET`) — mismo patrón que ya usaba `articulos`.
+- El editor "Avisos y promociones" del panel ahora llama a esos endpoints reales en vez de guardar en `site_config`. Se eliminaron `persistAvisos()`/`loadAvisosFromServer()` y la clave `padron_avisos` de todas partes (admin.html, index.html) — ya no existe ningún lugar donde un cambio se pueda perder.
+- `renderCampaigns()` (portada pública) ahora es una sola función que maneja tanto ícono+color como imagen de fondo — se eliminó `renderAvisos()`, que hacía lo mismo con datos de otro lado.
+- El subir banner (`previewBanner()`) ahora redimensiona con Canvas antes de guardar (máx. 1200px, calidad .85) — antes no tenía ningún límite ni optimización, a diferencia de las fotos de mascota/perfil que sí.
+
+### 🐛 Bug encontrado y corregido en el camino
+Al probar el endpoint nuevo, `POST /api/campanas` tronaba con "Error interno del servidor" siempre que no se mandaba `fecha_inicio`/`fecha_fin` — `$body['fecha_inicio'] ?: null` accede la llave ANTES de aplicar `?:`, y PHP 8 convierte ese aviso de "llave indefinida" en una excepción real (por el manejador global de errores). Corregido con `empty($body[...]) ? null : $body[...]`, que sí es seguro con llaves ausentes.
+
+### ✅ Verificado
+Todo contra la API local: crear/editar/eliminar una campaña de prueba (apareció y desapareció del listado público en cada paso), un ciudadano intentando crear una campaña → rechazado (403), imagen válida aceptada. `php -l` limpio; `index.html` y `admin.html` cargan (200). Dato de prueba borrado después.
+
+### 📂 Archivos modificados
+- `web/database/schema.sql` (`campanas.imagen`).
+- `web/api/contenido.php` (POST/PUT/DELETE de campañas).
+- `web/api/.htaccess` (comentario actualizado).
+- `web/js/api-client.js` (`apiCrearCampana`, `apiActualizarCampana`, `apiEliminarCampana`).
+- `web/admin.html` (editor de avisos reescrito, `previewBanner()` con Canvas).
+- `web/index.html` (`renderCampaigns()` unificado, `renderAvisos()` eliminado).
+- Base de datos local (no versionada en git): columna `imagen` aplicada.
+
 ## 📅 [2026-09-08] — Corrección: la Bitácora (Fase 2) nunca cargaba desde el panel real
 
 ### 🐛 El bug

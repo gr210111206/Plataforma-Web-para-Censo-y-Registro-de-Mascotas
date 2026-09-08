@@ -426,12 +426,21 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 <script src="js/tema.js"></script>
 <script>
 /* ── Render Campaigns ── */
+// Si la campaña/aviso trae imagen se usa como fondo del banner; si no,
+// cae al ícono + color. Antes "avisos" era un mecanismo aparte guardado
+// en site_config, desconectado de esta misma tabla campanas — los dos
+// se mostraban en este mismo grid pero con datos distintos (ver
+// HISTORIAL_CAMBIOS.md, 2026-09-08).
 function renderCampaigns(campaigns) {
   const container = document.getElementById('campaignsContainer');
-  container.innerHTML = campaigns.map(c => `
+  container.innerHTML = campaigns.map(c => {
+    const bg = c.imagen
+      ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('${c.imagen}'); background-size:cover; background-position:center;`
+      : `background:${c.banner_color || '#F27A00'};`;
+    return `
     <div class="campaign-card">
-      <div class="campaign-banner" style="background:${c.banner_color};">
-        <div class="campaign-icon">${c.icono}</div>
+      <div class="campaign-banner" style="${bg}">
+        ${c.imagen ? '' : `<div class="campaign-icon">${c.icono}</div>`}
         <div class="campaign-banner-text">
           <div class="campaign-banner-tag">Campaña activa</div>
           <div class="campaign-banner-title">${c.titulo}</div>
@@ -440,43 +449,13 @@ function renderCampaigns(campaigns) {
       <div class="campaign-body">
         <p class="campaign-desc">${c.descripcion}</p>
         <div class="campaign-footer">
-          <span class="campaign-date"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg> ${formatDate(c.fecha_inicio)}${c.fecha_fin ? ` — ${formatDate(c.fecha_fin)}` : ''}</span>
+          <span class="campaign-date"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg> ${c.fecha_inicio ? formatDate(c.fecha_inicio) + (c.fecha_fin ? ` — ${formatDate(c.fecha_fin)}` : '') : ''}</span>
           <a href="login.html" class="btn btn-primary btn-sm">Ver más →</a>
         </div>
       </div>
     </div>
-  `).join('');
-}
-
-/* ── Render Avisos (publicados desde el admin) — se agregan al mismo
-   grid que las campañas, ya que el encabezado de la sección dice
-   "Avisos y campañas". Si el aviso trae imagen se usa como fondo del
-   banner; si no, cae al ícono + color como las campañas. ── */
-function renderAvisos(avisos) {
-  const container = document.getElementById('campaignsContainer');
-  if (!avisos || avisos.length === 0) return;
-  const html = avisos.filter(a => a.publicado !== false).map(a => {
-    const bg = a.imagen
-      ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('${a.imagen}'); background-size:cover; background-position:center;`
-      : `background:${a.banner_color || '#F27A00'};`;
-    return `
-    <div class="campaign-card">
-      <div class="campaign-banner" style="${bg}">
-        ${a.imagen ? '' : `<div class="campaign-icon">${a.icono || '📢'}</div>`}
-        <div class="campaign-banner-text">
-          <div class="campaign-banner-tag">Aviso</div>
-          <div class="campaign-banner-title">${a.titulo}</div>
-        </div>
-      </div>
-      <div class="campaign-body">
-        <p class="campaign-desc">${a.descripcion || ''}</p>
-        <div class="campaign-footer">
-          <span class="campaign-date">${a.fecha_inicio ? formatDate(a.fecha_inicio) + (a.fecha_fin ? ` — ${formatDate(a.fecha_fin)}` : '') : ''}</span>
-        </div>
-      </div>
-    </div>`;
+  `;
   }).join('');
-  container.insertAdjacentHTML('afterbegin', html);
 }
 
 /* ── Render Eventos próximos (publicados desde el admin) ── */
@@ -822,7 +801,7 @@ async function initMap() {
 async function primeConfigFromServer() {
   try {
     const all = await apiGetSiteConfig();
-    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_avisos', 'padron_eventos'].forEach(key => {
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_eventos'].forEach(key => {
       if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
     });
   } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
@@ -896,10 +875,6 @@ async function initIndex() {
   try {
     renderCampaigns(await apiGetCampanas());
   } catch (e) { /* sección queda vacía si falla */ }
-  try {
-    const avisosRaw = localStorage.getItem('padron_avisos');
-    if (avisosRaw) renderAvisos(JSON.parse(avisosRaw));
-  } catch (e) { /* sin avisos publicados */ }
   try {
     const eventosRaw = localStorage.getItem('padron_eventos');
     renderEvents(eventosRaw ? JSON.parse(eventosRaw) : []);

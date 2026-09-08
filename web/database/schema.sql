@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS campanas (
   fecha_fin    DATE         DEFAULT NULL,
   icono        VARCHAR(10)  DEFAULT '📋',
   banner_color VARCHAR(20)  DEFAULT '#F27A00',
+  imagen       LONGTEXT     DEFAULT NULL, -- banner en Base64 (opcional); si hay imagen se usa de fondo en vez de icono+banner_color
   publicado    TINYINT(1)  NOT NULL DEFAULT 1,
   created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

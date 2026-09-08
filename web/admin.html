@@ -3947,11 +3947,16 @@ function resetSEO() {
 }
 
 /* ══════════════════════════════════════════════════ */
-/*  AVISOS                                            */
+/*  AVISOS — en realidad son la tabla campanas: mismo   */
+/*  concepto (título/descripción/fechas/banner), ya se  */
+/*  mostraban juntos en el sitio público. Antes "avisos" */
+/*  vivía aparte en site_config, desconectado de la      */
+/*  tabla real — los cambios se perdían en cada recarga  */
+/*  del panel (ver HISTORIAL_CAMBIOS.md, 2026-09-08).    */
 /* ══════════════════════════════════════════════════ */
 let editingAvisoId = null;
 
-function saveAviso() {
+async function saveAviso() {
   const titulo = document.getElementById('aviso-titulo').value.trim();
   const desc   = document.getElementById('aviso-desc').value.trim();
   if (!titulo) { showToast('⚠️ El título es obligatorio', 'error'); return; }
@@ -3959,31 +3964,38 @@ function saveAviso() {
   const datos  = {
     titulo, descripcion: desc, publicado: true,
     banner_color: '#F27A00', icono: '📢',
-    imagen: imgEl ? imgEl.src : (editingAvisoId !== null ? avisoData[editingAvisoId].imagen : null),
-    fecha_inicio: document.getElementById('aviso-inicio').value || '',
-    fecha_fin: document.getElementById('aviso-fin').value || '',
+    fecha_inicio: document.getElementById('aviso-inicio').value || null,
+    fecha_fin: document.getElementById('aviso-fin').value || null,
   };
-  if (editingAvisoId !== null) {
-    avisoData[editingAvisoId] = { ...avisoData[editingAvisoId], ...datos };
-    editingAvisoId = null;
-    document.getElementById('avisoSaveBtn').textContent = '📢 Publicar aviso';
-    document.getElementById('avisoCancelBtn').style.display = 'none';
-    showToast('✅ Aviso actualizado correctamente', 'success');
-  } else {
-    avisoData.push({ id: Date.now(), ...datos });
-    showToast('✅ Aviso publicado correctamente', 'success');
+  if (imgEl) datos.imagen = imgEl.src;
+
+  try {
+    if (editingAvisoId !== null) {
+      const updated = await apiActualizarCampana(editingAvisoId, datos);
+      const idx = avisoData.findIndex(a => a.id === editingAvisoId);
+      if (idx !== -1) avisoData[idx] = updated;
+      editingAvisoId = null;
+      document.getElementById('avisoSaveBtn').textContent = '📢 Publicar aviso';
+      document.getElementById('avisoCancelBtn').style.display = 'none';
+      showToast('✅ Aviso actualizado correctamente', 'success');
+    } else {
+      const created = await apiCrearCampana(datos);
+      avisoData.push(created);
+      showToast('✅ Aviso publicado correctamente', 'success');
+    }
+    renderAvisos();
+    document.getElementById('aviso-titulo').value = '';
+    document.getElementById('aviso-desc').value = '';
+    document.getElementById('aviso-inicio').value = '';
+    document.getElementById('aviso-fin').value = '';
+    document.getElementById('aviso-prev').innerHTML = '';
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
   }
-  renderAvisos();
-  persistAvisos();
-  document.getElementById('aviso-titulo').value = '';
-  document.getElementById('aviso-desc').value = '';
-  document.getElementById('aviso-inicio').value = '';
-  document.getElementById('aviso-fin').value = '';
-  document.getElementById('aviso-prev').innerHTML = '';
 }
 function renderAvisos() {
   const list = document.getElementById('avisosList');
-  list.innerHTML = avisoData.map((a, i) => `
+  list.innerHTML = avisoData.map(a => `
     <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius); padding:14px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <span>${a.icono || '📢'}</span>
@@ -3992,14 +4004,15 @@ function renderAvisos() {
       </div>
       <div style="font-size:.78rem; color:var(--gray-2); margin-bottom:8px;">${(a.descripcion || '').substring(0,80)}</div>
       <div style="display:flex; gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="editAviso(${i})" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteAviso(${i})" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
+        <button class="btn btn-ghost btn-sm" onclick="editAviso(${a.id})" style="font-size:.72rem; padding:4px 10px;">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAviso(${a.id})" style="font-size:.72rem; padding:4px 10px;">🗑️</button>
       </div>
     </div>`).join('');
 }
-function editAviso(i) {
-  editingAvisoId = i;
-  const a = avisoData[i];
+function editAviso(id) {
+  const a = avisoData.find(x => x.id === id);
+  if (!a) return;
+  editingAvisoId = id;
   document.getElementById('aviso-titulo').value = a.titulo;
   document.getElementById('aviso-desc').value = a.descripcion || '';
   document.getElementById('aviso-inicio').value = a.fecha_inicio || '';
@@ -4019,25 +4032,15 @@ function cancelEditAviso() {
   document.getElementById('avisoSaveBtn').textContent = '📢 Publicar aviso';
   document.getElementById('avisoCancelBtn').style.display = 'none';
 }
-function deleteAviso(i) {
-  avisoData.splice(i, 1);
-  renderAvisos();
-  persistAvisos();
-  showToast('🗑️ Aviso eliminado', 'success');
-}
-// Guarda avisoData completo en localStorage y lo sincroniza con el
-// servidor, para que el banner público (index.html) refleje lo último.
-function persistAvisos() {
-  localStorage.setItem('padron_avisos', JSON.stringify(avisoData));
-  pushConfigToServer('padron_avisos', avisoData);
-}
-function loadAvisosFromServer() {
-  const raw = localStorage.getItem('padron_avisos');
-  if (!raw) return;
+async function deleteAviso(id) {
   try {
-    const saved = JSON.parse(raw);
-    if (Array.isArray(saved)) { avisoData = saved; renderAvisos(); }
-  } catch (e) { /* ignore */ }
+    await apiEliminarCampana(id);
+    avisoData = avisoData.filter(a => a.id !== id);
+    renderAvisos();
+    showToast('🗑️ Aviso eliminado', 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════ */
@@ -4182,9 +4185,29 @@ function previewBanner(input, prevId) {
   const file = input.files ? input.files[0] : null;
   const el   = typeof input === 'string' ? null : document.getElementById(prevId);
   if (!file || !el) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('❌ La imagen no debe superar 5 MB', 'error'); return; }
+
   const reader = new FileReader();
   reader.onload = e => {
-    el.innerHTML = `<img src="${e.target.result}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
+    // Redimensiona en el navegador antes de guardar (mismo patrón que
+    // fotos de mascota/perfil) — antes esto guardaba la foto tal cual,
+    // sin límite, directo a site_config como JSON sin ningún tope.
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 1200;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const optimized = canvas.toDataURL('image/jpeg', 0.85);
+      el.innerHTML = `<img src="${optimized}" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
+    };
+    img.onerror = () => showToast('❌ No se pudo procesar la imagen', 'error');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -4959,7 +4982,6 @@ const SERVER_CONFIG_KEYS = [
   'padron_municipio_config',
   'padron_reglamento',
   'padron_faq',
-  'padron_avisos',
   'padron_eventos',
   'padron_tema_config',
 ];
@@ -4991,7 +5013,6 @@ async function primeConfigFromServer() {
   loadSiteContentConfig();
   loadReglamento();
   loadFaqFromServer();
-  loadAvisosFromServer();
   loadEventosFromServer();
   loadTemaFromServer();
   aplicarTemaVisual();

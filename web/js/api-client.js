@@ -254,6 +254,21 @@ async function apiGetCampanas() {
   return _fetch(`${API_BASE_URL}/campanas`);
 }
 
+/** Crea una campaña/aviso. Requiere sesión de admin. */
+async function apiCrearCampana(data) {
+  return _fetch(`${API_BASE_URL}/campanas`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** Actualiza una campaña/aviso existente. Requiere sesión de admin. */
+async function apiActualizarCampana(id, data) {
+  return _fetch(`${API_BASE_URL}/campanas?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+/** Elimina una campaña/aviso. Requiere sesión de admin. */
+async function apiEliminarCampana(id) {
+  return _fetch(`${API_BASE_URL}/campanas?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 async function apiGetArticulos() {
   return _fetch(`${API_BASE_URL}/articulos`);
 }
