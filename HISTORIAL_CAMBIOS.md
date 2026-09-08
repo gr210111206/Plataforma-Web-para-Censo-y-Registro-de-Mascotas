@@ -18,6 +18,9 @@ El usuario pidió un análisis completo del proyecto (seguridad, rendimiento, ar
 ### ✅ Verificado
 Todo probado en vivo contra la API local (curl), no solo revisado en código: registro con payload XSS quedó escapado en BD; lookup público por `?token=` funciona y por `?id=` (folio) ya no expone nada sin sesión; 5 intentos fallidos + reintento con contraseña correcta → bloqueado (429), y se libera solo tras expirar `bloqueado_hasta`; `foto_url` no-imagen y con MIME no permitido → rechazado, JPEG válido → aceptado; las 70 mascotas migradas tienen `token_publico`/`link_publico` nuevos. Datos de prueba (cuentas y mascota de esta verificación) borrados después; `folio_counter` devuelto a 70. `php -l` limpio en los 4 archivos PHP tocados; las 4 páginas HTML tocadas cargan (200).
 
+### 🔧 Ajuste adicional (mismo día, mismo bug de fondo)
+Al diagnosticar el desfase de zona horaria del punto 4, se encontró que `requireAuth()` (`helpers.php`) tenía el mismo patrón de riesgo para la expiración de sesión a los 30 días (`TOKEN_EXPIRY`): comparaba `token_creado_en` con `time()`/`strtotime()` de PHP. Con una ventana de 30 días el desfase de unas horas casi no se nota, pero es el mismo bug — se corrigió con el mismo criterio (comparación 100% dentro de MySQL). Verificado con un token de prueba forzado a 31 días de antigüedad: la sesión se reporta expirada correctamente.
+
 ### 📌 Pendiente (no es parte de esta fase)
 - Rotar en HostGator la contraseña real de la base de datos (ver punto 1).
 - Confirmar que la contraseña real de `admin@remac.elgrullo.mx` en producción ya no es la de `seed.sql` (`Admin1234`).

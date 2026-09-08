@@ -96,20 +96,31 @@ function requireAuth(): array {
     $token = getAuthToken();
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
+    // El "¿ya expiró?" se calcula DENTRO de MySQL (mismo motivo que el
+    // bloqueo de login en auth.php): comparar token_creado_en con
+    // time()/strtotime() de PHP depende de que PHP y MySQL coincidan en
+    // zona horaria, y en este mismo proyecto no coinciden (PHP quedó en
+    // Europe/Berlin, MySQL en la del sistema). Con TOKEN_EXPIRY de 30
+    // días un desfase de unas horas casi no se nota, pero es el mismo
+    // bug de fondo — se corrige aquí también en vez de dejarlo latente.
     $db   = getDB();
-    $stmt = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin, token_creado_en FROM duenos WHERE token_sesion = ? AND activo = 1');
-    $stmt->execute([$token]);
+    $stmt = $db->prepare('
+        SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin,
+               (token_creado_en IS NOT NULL AND token_creado_en < DATE_SUB(NOW(), INTERVAL ? SECOND)) AS token_expirado
+        FROM duenos WHERE token_sesion = ? AND activo = 1
+    ');
+    $stmt->execute([TOKEN_EXPIRY, $token]);
     $user = $stmt->fetch();
 
     if (!$user) jsonError('Token inválido o expirado.', 401);
 
-    if ($user['token_creado_en'] && (time() - strtotime($user['token_creado_en'])) > TOKEN_EXPIRY) {
+    if ($user['token_expirado']) {
         $db->prepare('UPDATE duenos SET token_sesion = NULL, token_creado_en = NULL WHERE id = ?')->execute([$user['id']]);
         jsonError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
     }
 
     $user['es_superadmin'] = (int) $user['es_superadmin']; // normaliza a 0|1 (PDO puede devolver string)
-    unset($user['token_creado_en']);
+    unset($user['token_expirado']);
     return $user;
 }
 
