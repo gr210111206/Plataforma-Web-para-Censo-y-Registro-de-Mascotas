@@ -28,6 +28,9 @@ RewriteRule ^mascotas$ mascotas.php [QSA,L]
 # GET /api/stats → stats.php
 RewriteRule ^stats$ stats.php [QSA,L]
 
+# GET /api/bitacora → bitacora.php (solo admin)
+RewriteRule ^bitacora$ bitacora.php [QSA,L]
+
 # GET /api/campanas → contenido.php (público)
 # GET/POST/PUT/DELETE /api/articulos → contenido.php (lectura pública, escritura solo admin)
 RewriteRule ^campanas$  contenido.php?resource=campanas  [QSA,L]

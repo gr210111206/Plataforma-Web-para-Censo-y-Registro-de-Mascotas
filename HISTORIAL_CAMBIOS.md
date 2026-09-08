@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-08] — Corrección: la Bitácora (Fase 2) nunca cargaba desde el panel real
+
+### 🐛 El bug
+El endpoint nuevo `web/api/bitacora.php` (Fase 2, 2026-09-07) se probó por línea de comandos pidiendo el archivo directo (`bitacora.php`), lo cual siempre funciona — pero el panel de verdad lo llama sin la extensión (`/api/bitacora`, igual que `/api/stats` o `/api/mascotas`), y a ese patrón le faltaba su regla de reescritura en `web/api/.htaccess`. Resultado: `apiGetBitacora()` recibía un 404 real en vez de JSON, y la pestaña "Bitácora" nunca cargaba nada — un hueco en cómo se verificó esa fase, no se abrió el panel de verdad en el navegador.
+
+### 🔧 Corrección
+Agregada la regla que faltaba (`RewriteRule ^bitacora$ bitacora.php`), mismo patrón que ya usan `stats`/`mascotas`/`usuarios`. Verificado pidiendo exactamente la URL sin extensión que usa el frontend.
+
+### 📂 Archivos modificados
+- `web/api/.htaccess`.
+
 ## 📅 [2026-09-08] — Fase 2 de la hoja de ruta: gobernanza institucional
 
 ### 🤔 Contexto
