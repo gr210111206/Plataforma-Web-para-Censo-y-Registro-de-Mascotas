@@ -50,8 +50,14 @@ if ($method === 'GET') {
     $where  = [];
     $params = [];
 
-    // Ciudadano: solo ve las suyas
-    if ($user['rol'] !== 'admin') {
+    // Ciudadano: solo ve las que son suyas. Asistente: solo las que ÉL
+    // registró (quedan a nombre del ciudadano, no del asistente — sin este
+    // filtro por registrado_por, un asistente nunca podía ver ni buscar
+    // ninguna mascota, ni siquiera las que acababa de dar de alta).
+    if ($user['rol'] === 'asistente') {
+        $where[]  = 'm.registrado_por = ?';
+        $params[] = $user['id'];
+    } elseif ($user['rol'] !== 'admin') {
         $where[]  = 'm.dueno_id = ?';
         $params[] = $user['id'];
     }
@@ -140,9 +146,9 @@ if ($method === 'POST') {
     $stmt = $db->prepare('
         INSERT INTO mascotas
           (id, token_publico, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares,
-           foto_url, vacunado, esterilizado, estatus, dueno_id, fecha_registro, link_publico, ficha)
+           foto_url, vacunado, esterilizado, estatus, dueno_id, registrado_por, fecha_registro, link_publico, ficha)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
 
     $fecha = !empty($body['fecha_registro']) ? $body['fecha_registro'] : date('Y-m-d');
@@ -163,6 +169,7 @@ if ($method === 'POST') {
         (int)($body['esterilizado']?? 0),
         clean($body['estatus'] ?? 'Alta'),
         $duenoId,
+        $user['id'],
         $fecha,
         "mascota.html?token=$tokenPublico",
         "$folio.pdf",
@@ -183,7 +190,7 @@ if ($method === 'PUT' && $id) {
     $db   = getDB();
 
     // Verificar que la mascota le pertenece (o es admin)
-    $stmt = $db->prepare('SELECT dueno_id FROM mascotas WHERE id = ?');
+    $stmt = $db->prepare('SELECT nombre, dueno_id FROM mascotas WHERE id = ?');
     $stmt->execute([$id]);
     $pet = $stmt->fetch();
 
@@ -191,6 +198,9 @@ if ($method === 'PUT' && $id) {
     if ($user['rol'] !== 'admin' && $pet['dueno_id'] != $user['id']) {
         jsonError('No tienes permiso para editar esta mascota.', 403);
     }
+    // Un admin editando la mascota de alguien más (no la suya) queda en
+    // bitácora — un ciudadano editando la propia es uso normal, no gobierno.
+    $esEdicionAjena = $user['rol'] === 'admin' && $pet['dueno_id'] != $user['id'];
 
     if (array_key_exists('foto_url', $body)) {
         $fotoErr = validarFotoBase64($body['foto_url']);
@@ -217,6 +227,10 @@ if ($method === 'PUT' && $id) {
     $db->prepare('UPDATE mascotas SET ' . implode(', ', $campos) . ' WHERE id = ?')
        ->execute($params);
 
+    if ($esEdicionAjena) {
+        registrarBitacora($user, 'mascota_editada_por_admin', "{$pet['nombre']} (folio $id)");
+    }
+
     $updated = $db->prepare('SELECT m.*, d.nombre AS persona, d.telefono, d.colonia FROM mascotas m JOIN duenos d ON m.dueno_id = d.id WHERE m.id = ?');
     $updated->execute([$id]);
     jsonOk($updated->fetch());
@@ -229,7 +243,7 @@ if ($method === 'DELETE' && $id) {
     $user = requireAuth();
     $db   = getDB();
 
-    $stmt = $db->prepare('SELECT dueno_id FROM mascotas WHERE id = ?');
+    $stmt = $db->prepare('SELECT nombre, dueno_id FROM mascotas WHERE id = ?');
     $stmt->execute([$id]);
     $pet = $stmt->fetch();
 
@@ -240,6 +254,9 @@ if ($method === 'DELETE' && $id) {
 
     $db->prepare("UPDATE mascotas SET estatus = 'Baja' WHERE id = ?")
        ->execute([$id]);
+
+    $porCuenta = $user['rol'] === 'admin' && $pet['dueno_id'] != $user['id'] ? ' (por admin)' : '';
+    registrarBitacora($user, 'mascota_baja', "{$pet['nombre']} (folio $id)$porCuenta");
 
     jsonOk(['message' => "Mascota $id dada de baja correctamente."]);
 }

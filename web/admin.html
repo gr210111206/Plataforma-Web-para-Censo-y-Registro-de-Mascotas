@@ -907,6 +907,9 @@
     <a class="sidebar-link" id="nav-roles" onclick="showAdmin('roles')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span> Roles
     </a>
+    <a class="sidebar-link" id="nav-bitacora" onclick="showAdmin('bitacora')">
+      <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg></span> Bitácora
+    </a>
     <a class="sidebar-link" id="nav-articulo" onclick="showAdmin('articulo')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18h-5" /><path d="M18 14h-8" /><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg></span> Nuevo artículo
     </a>
@@ -1137,6 +1140,32 @@
           </table>
         </div>
         <div class="data-table-footer" id="rolesPager"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SECCIÓN: BITÁCORA DE AUDITORÍA             -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="dashboard-content" id="sec-bitacora" style="display:none;">
+      <div style="background:var(--orange-pale); border:1px solid rgba(var(--orange-rgb),.3); border-radius:var(--radius); padding:14px 18px; font-size:.85rem; color:var(--gray-1); margin-bottom:20px;">
+        Registro de acciones de gobierno del sistema: cambios de rol, cuentas activadas/desactivadas, y mascotas dadas de baja o editadas por un administrador a nombre de otra persona. No incluye el uso normal del sistema por ciudadanos (iniciar sesión, registrarse, editar su propia mascota).
+      </div>
+
+      <div class="data-table-card">
+        <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Quién</th>
+                <th>Acción</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="bitacoraTableBody"></tbody>
+          </table>
+        </div>
+        <div class="data-table-footer" id="bitacoraPager"></div>
       </div>
     </div>
 
@@ -2618,6 +2647,7 @@ const sections = {
   seguimiento: { title: 'Seguimiento de Mascotas', sub: 'Busca y gestiona el registro individual de cada mascota' },
   usuarios:    { title: 'Cuentas Ciudadanas',      sub: 'Consulta y gestiona las cuentas registradas de los ciudadanos' },
   roles:       { title: 'Roles y Cuentas', sub: 'Todas las cuentas de Ciudadano y Asistente — busca, activa/desactiva, o crea cuentas nuevas' },
+  bitacora:    { title: 'Bitácora',                 sub: 'Registro de quién hizo cambios de rol, activó/desactivó cuentas, o dio de baja/editó una mascota ajena' },
   articulo:    { title: 'Nuevo Artículo',           sub: 'Crea y gestiona los tips de salud animal para ciudadanos' },
   config:      { title: 'Configuración del Sitio',  sub: 'Administra el contenido público del portal' },
   perfil:      { title: 'Mi perfil',                sub: 'Actualiza tus datos de contacto' },
@@ -2638,6 +2668,7 @@ function showAdmin(name) {
   if (name === 'seguimiento') loadSeguimiento();
   if (name === 'roles') loadRolesTable();
   if (name === 'usuarios') loadUsuariosTable();
+  if (name === 'bitacora') loadBitacora();
 
   toggleSidebar(false);
 }
@@ -3350,6 +3381,49 @@ async function handleNuevoUsuario(e) {
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
+}
+
+/* ══════════════════════════════════════════════════ */
+/*  BITÁCORA DE AUDITORÍA                             */
+/* ══════════════════════════════════════════════════ */
+const bitacoraState = { page: 1 };
+
+const ACCION_LABELS = {
+  rol_promovido_admin:       '⭐ Rol promovido a Administrador',
+  cuenta_activada:           '✅ Cuenta activada',
+  cuenta_desactivada:        '🚫 Cuenta desactivada',
+  mascota_baja:              '🐾 Mascota dada de baja',
+  mascota_editada_por_admin: '✏️ Mascota editada por admin',
+};
+
+async function loadBitacora() {
+  try {
+    const { rows, total } = await apiGetBitacora({ page: bitacoraState.page, pageSize: PAGE_SIZE });
+    renderBitacoraTable(rows, total);
+  } catch (err) {
+    showToast(`❌ No se pudo cargar la bitácora: ${err.message}`, 'error');
+  }
+}
+
+function goToBitacoraPage(page) {
+  bitacoraState.page = page;
+  loadBitacora();
+}
+
+function renderBitacoraTable(data, total) {
+  const tbody = document.getElementById('bitacoraTableBody');
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; text-align:center; color:var(--gray-2);">Todavía no hay nada registrado en la bitácora.</td></tr>`;
+  } else {
+    tbody.innerHTML = data.map(b => `
+      <tr>
+        <td style="font-size:.78rem; color:var(--gray-2); white-space:nowrap;">${b.created_at}</td>
+        <td style="font-weight:600;">${b.usuario_nombre}</td>
+        <td style="font-size:.85rem;">${ACCION_LABELS[b.accion] || b.accion}</td>
+        <td style="font-size:.82rem; color:var(--gray-1);">${b.detalle || '—'}</td>
+      </tr>`).join('');
+  }
+  renderPagerFooter('bitacoraPager', bitacoraState, total, 'goToBitacoraPage');
 }
 
 /* ══════════════════════════════════════════════════ */

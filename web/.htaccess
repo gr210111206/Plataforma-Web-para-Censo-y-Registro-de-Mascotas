@@ -12,3 +12,9 @@ Options -Indexes
 # RewriteEngine On
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+#
+# HSTS: le dice al navegador que en las próximas visitas vaya DIRECTO a
+# https:// sin pasar por http:// primero. Actívalo junto con el redirect
+# de arriba (no antes) — si lo activas sin HTTPS funcionando, el navegador
+# igual intentará forzar https:// y el sitio quedaría inaccesible.
+# Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"

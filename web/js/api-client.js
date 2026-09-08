@@ -342,6 +342,16 @@ async function apiBuscarOCrearCiudadano(data) {
 }
 
 /* ══════════════════════════════════════════════
+   BITÁCORA (auditoría — solo admin)
+   ══════════════════════════════════════════════ */
+
+/** Lista paginada de la bitácora de auditoría. Requiere sesión de admin. */
+async function apiGetBitacora(filtros = {}) {
+  const params = new URLSearchParams(filtros);
+  return _fetch(`${API_BASE_URL}/bitacora?${params}`);
+}
+
+/* ══════════════════════════════════════════════
    CONFIGURACIÓN DEL SITIO (apariencia, portada, municipio, contactos)
    Guardada en el servidor para que TODOS los visitantes vean los
    mismos cambios hechos desde el panel admin (no solo el propio

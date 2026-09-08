@@ -150,6 +150,23 @@ function requireRole(array $roles): array {
     return $user;
 }
 
+/* ── Bitácora de auditoría ───────────────────────── */
+/* Solo para acciones de gobierno (cambios de rol, activar/desactivar
+   cuentas, dar de baja o editar una mascota ajena) — nunca para el uso
+   normal del sistema por un ciudadano. Si el registro de bitácora fallara
+   por lo que sea, NO debe tumbar la acción real (ya se hizo el cambio de
+   verdad) — por eso el try/catch aquí adentro en vez de dejar que la
+   excepción suba. */
+function registrarBitacora(array $user, string $accion, ?string $detalle = null): void {
+    try {
+        $db = getDB();
+        $db->prepare('INSERT INTO bitacora (usuario_id, usuario_nombre, accion, detalle) VALUES (?, ?, ?, ?)')
+           ->execute([$user['id'], $user['nombre'], $accion, $detalle]);
+    } catch (Throwable $e) {
+        error_log('No se pudo registrar en bitácora: ' . $e->getMessage());
+    }
+}
+
 /* ── Generador de folio M-GRU-XXXXXXXXX ─────────── */
 function generarFolioREMAC(): string {
     $db = getDB();

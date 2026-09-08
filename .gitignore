@@ -26,3 +26,7 @@ vendor/
 
 # Paquetes de despliegue locales (pueden contener database.php con credenciales reales adentro)
 *.zip
+
+# Respaldos de la base de datos (scripts/backup_db.php) — nunca a git
+backups_remac/
+*.sql.gz

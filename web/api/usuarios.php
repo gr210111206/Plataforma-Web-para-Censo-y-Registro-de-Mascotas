@@ -92,18 +92,22 @@ if ($method === 'GET') {
 
 /* ── PUT — activar / desactivar cuenta (solo admin) ── */
 if ($method === 'PUT' && $id) {
-    requireAdmin();
+    $yo = requireAdmin();
     $db = getDB();
 
     $body = getBody();
     if (!array_key_exists('activo', $body)) jsonError('Falta el campo "activo".', 400);
 
-    $stmt = $db->prepare('SELECT id FROM duenos WHERE id = ? AND rol IN ("ciudadano", "asistente")');
+    $stmt = $db->prepare('SELECT id, nombre, rol FROM duenos WHERE id = ? AND rol IN ("ciudadano", "asistente")');
     $stmt->execute([$id]);
-    if (!$stmt->fetch()) jsonError('Cuenta no encontrada.', 404);
+    $cuenta = $stmt->fetch();
+    if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
 
     $activo = (int)(bool)$body['activo'];
     $db->prepare('UPDATE duenos SET activo = ?, token_sesion = NULL WHERE id = ?')->execute([$activo, $id]);
+
+    registrarBitacora($yo, $activo ? 'cuenta_activada' : 'cuenta_desactivada',
+        "{$cuenta['nombre']} (id {$cuenta['id']}, {$cuenta['rol']})");
 
     $updated = $db->prepare('SELECT id, nombre, email, telefono, activo FROM duenos WHERE id = ?');
     $updated->execute([$id]);
@@ -252,6 +256,11 @@ if ($method === 'POST' && $action === 'promover-admin') {
     if ($upd->rowCount() === 0) {
         jsonError('La cuenta cambió mientras se procesaba. Intenta de nuevo.', 409);
     }
+
+    // El cambio de rol más sensible del sistema — siempre queda registrado
+    // quién lo hizo, a quién, y desde qué rol venía.
+    registrarBitacora($yo, 'rol_promovido_admin',
+        "{$cuenta['nombre']} (id {$cuenta['id']}) — antes: {$cuenta['rol']}");
 
     jsonOk([
         'id'      => $cuenta['id'],

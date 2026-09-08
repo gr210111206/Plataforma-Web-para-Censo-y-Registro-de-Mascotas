@@ -2,6 +2,37 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-08] — Fase 2 de la hoja de ruta: gobernanza institucional
+
+### 🤔 Contexto
+Continuación de la auditoría del 2026-09-07 (Fases 0 y 1). Esta fase busca que el Ayuntamiento pueda confiar en el sistema como institución: que quede registro de quién hizo qué, que exista un respaldo real de los datos, y que el rol asistente funcione como se pensó.
+
+### 🔧 Cambios
+1. **Respaldo automático de la base de datos** — `scripts/backup_db.php` (nueva carpeta, **fuera** de `web/` a propósito: un respaldo accesible por URL sería el mismo riesgo que ya causó la fuga de `web.zip` el 2026-09-07). Corre `mysqldump` (contraseña por variable de entorno, no visible en la lista de procesos), comprime a `.gz`, y conserva solo los últimos 14 respaldos. Pensado para un Cron Job de HostGator una vez que el hosting esté conectado — **eso queda pendiente del usuario**, no se puede configurar desde aquí.
+2. **Bitácora de auditoría** — tabla nueva `bitacora` + función `registrarBitacora()`. Registra solo acciones de gobierno: promover una cuenta a admin, activar/desactivar cuentas, dar de baja una mascota, o que un admin edite la mascota de otra persona. **No** registra el uso normal del sistema (login, autoregistro, un ciudadano editando lo suyo) — eso sería ruido, no rendición de cuentas. Nueva pestaña "Bitácora" en el panel admin (solo lectura, paginada con el mismo patrón de la Fase 1).
+3. **Rol asistente: ya puede ver lo que registra.** Nueva columna `mascotas.registrado_por` (quién dio de alta el registro, distinto de `dueno_id` — el ciudadano a quien pertenece la mascota). Antes un asistente no tenía NINGUNA forma de ver ni buscar las mascotas que él mismo había registrado (ni la API las filtraba correctamente, ni `asistente.html` tenía una sección para eso). Ahora `GET /api/mascotas` filtra por `registrado_por` cuando quien pregunta es un asistente, y se agregó "Mascotas registradas" (modal con búsqueda + botón de acta) en `asistente.html`.
+4. **HTTPS/HSTS preparado, no activado.** Se agregó el header HSTS (comentado) junto al redirect a HTTPS que ya estaba preparado desde antes — los dos se activan juntos, cuando el certificado SSL esté confirmado funcionando en el dominio real (sigue pendiente la conexión del dominio en HostGator).
+5. **`CLAUDE.md` corregido**: ya no dice que existen tablas `vacunas`/`avisos` (nunca existieron en `schema.sql` — la vacunación es solo `mascotas.vacunado`, y los avisos se guardan en `site_config`).
+
+### ✅ Verificado
+Respaldo generado y **restaurado de verdad** en una base de datos separada (`remac_restore_test`) — conteos de filas idénticos en las 3 tablas comparadas contra el original, luego borrada. Bitácora probada en vivo: activar/desactivar cuenta, promover a admin, y admin editando una mascota ajena — las 3 quedaron registradas con el detalle correcto; un ciudadano editando su propia mascota (ya probado en fases anteriores) sigue sin generar entradas, como se esperaba. Asistente de prueba: veía 0 mascotas antes de registrar una, exactamente 1 (la que registró) después — confirmando que ya no ve de más ni de menos. `php -l` limpio en los 5 archivos PHP tocados/creados; `admin.html` y `asistente.html` cargan (200). Datos y cuentas de prueba de esta verificación, borrados después.
+
+### 📌 Pendiente (no es parte de esta fase)
+Configurar el Cron Job real en HostGator (punto 1) y activar HTTPS/HSTS (punto 4) — ambos bloqueados por la conexión de dominio/hosting que sigue pendiente del usuario. Fase 3 de la hoja de ruta (recuperación de contraseña, panel de avisos conectado a `campanas`, accesibilidad, etc.).
+
+### 📂 Archivos modificados
+- `scripts/backup_db.php` (nuevo).
+- `web/database/schema.sql` (`bitacora`, `mascotas.registrado_por`).
+- `web/api/config/helpers.php` (`registrarBitacora()`).
+- `web/api/bitacora.php` (nuevo).
+- `web/api/mascotas.php`, `web/api/usuarios.php` (llamadas a `registrarBitacora()`, filtro por `registrado_por`).
+- `web/js/api-client.js` (`apiGetBitacora()`).
+- `web/admin.html` (pestaña Bitácora), `web/asistente.html` (modal "Mascotas registradas").
+- `web/.htaccess` (HSTS preparado, comentado).
+- `.gitignore` (`backups_remac/`, `*.sql.gz`).
+- `CLAUDE.md`.
+- Base de datos local (no versionada en git): columna y tabla nuevas aplicadas.
+
 ## 📅 [2026-09-07] — Fase 1 de la hoja de ruta: paginación real en el panel admin (rendimiento)
 
 ### 🤔 Contexto

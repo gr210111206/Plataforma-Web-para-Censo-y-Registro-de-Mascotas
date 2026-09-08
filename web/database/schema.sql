@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS mascotas (
   esterilizado     TINYINT(1)   NOT NULL DEFAULT 0,
   estatus          ENUM('Alta','Baja') NOT NULL DEFAULT 'Alta',
   dueno_id         INT UNSIGNED NOT NULL,
+  registrado_por   INT UNSIGNED DEFAULT NULL, -- quién LA REGISTRÓ (admin/asistente/el propio dueño) — distinto de dueno_id cuando un asistente registra a nombre de un ciudadano; así el asistente puede ver/buscar lo que él mismo dio de alta
   fecha_registro   DATE         DEFAULT NULL,
   link_publico     VARCHAR(255) DEFAULT NULL,
   ficha            VARCHAR(100) DEFAULT NULL,
@@ -62,7 +63,8 @@ CREATE TABLE IF NOT EXISTS mascotas (
   FOREIGN KEY fk_dueno (dueno_id) REFERENCES duenos(id) ON DELETE CASCADE,
   INDEX idx_especie (especie),
   INDEX idx_estatus (estatus),
-  INDEX idx_dueno   (dueno_id)
+  INDEX idx_dueno   (dueno_id),
+  INDEX idx_registrado_por (registrado_por)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de campañas ────────────────────────────
@@ -97,6 +99,23 @@ CREATE TABLE IF NOT EXISTS folio_counter (
 ) ENGINE=InnoDB;
 
 INSERT INTO folio_counter (ultimo) VALUES (0);
+
+-- ══════════════════════════════════════════════════
+-- Bitácora de auditoría — quién hizo qué, para acciones de gobierno
+-- (cambios de rol, activar/desactivar cuentas, dar de baja o editar una
+-- mascota que no es la propia). NO registra el uso normal del sistema
+-- por ciudadanos (login, autoregistro, editar su propia mascota) — eso
+-- sería ruido, no rendición de cuentas institucional.
+-- ══════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS bitacora (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  usuario_id     INT UNSIGNED DEFAULT NULL,
+  usuario_nombre VARCHAR(150) NOT NULL, -- copia del nombre al momento del registro (se sigue leyendo igual aunque la cuenta cambie después)
+  accion         VARCHAR(50)  NOT NULL,
+  detalle        VARCHAR(255) DEFAULT NULL,
+  created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Configuración del sitio (apariencia, portada, municipio, contactos) ──
 -- Guardada por el panel admin y leída por las páginas públicas, para que

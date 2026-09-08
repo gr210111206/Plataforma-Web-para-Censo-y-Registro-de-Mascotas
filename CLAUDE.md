@@ -27,7 +27,7 @@ La plataforma está diseñada con una arquitectura ligera, rápida y modular sin
    - Gestión de sesiones con cookies seguras y HTTP headers.
 
 3. **Base de Datos MySQL (`web/database/`):**
-   - **Esquema (`schema.sql`):** Tablas principales (`duenos`, `mascotas`, `vacunas`, `campanas`, `avisos`).
+   - **Esquema (`schema.sql`):** Tablas principales (`duenos`, `mascotas`, `campanas`, `articulos`, `bitacora`, `site_config`, `folio_counter`). ⚠️ No existen tablas `vacunas` ni `avisos` como tal: la vacunación es solo el booleano `mascotas.vacunado`, y los "avisos" del panel se guardan como JSON dentro de `site_config` (llave `padron_avisos`) — no en una tabla propia.
    - **Datos Semilla (`seed.sql`):** Registros iniciales de prueba y cuenta administrativa.
 
 ---
