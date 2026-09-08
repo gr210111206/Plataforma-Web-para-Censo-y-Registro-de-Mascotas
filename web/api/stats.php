@@ -47,6 +47,17 @@ $porColonia = $db->query('
     ORDER BY total DESC
 ')->fetchAll();
 
+// Top razas (para la mini-gráfica de barras del panel admin). Antes esto se
+// calculaba en el navegador recorriendo TODAS las mascotas (allPets) solo
+// para sacar este conteo — ya no hace falta traer ni una fila para esto.
+$porRaza = $db->query('
+    SELECT COALESCE(NULLIF(TRIM(raza), \'\'), \'Sin especificar\') AS raza, COUNT(*) AS total
+    FROM mascotas
+    GROUP BY raza
+    ORDER BY total DESC
+    LIMIT 6
+')->fetchAll();
+
 jsonOk([
     'total_mascotas'      => (int) $totales['total_mascotas'],
     'total_duenos'        => (int) $totalDuenos,
@@ -62,4 +73,5 @@ jsonOk([
     ],
     'registros_este_mes'  => (int) $estesMes,
     'por_colonia'         => $porColonia,
+    'por_raza'            => $porRaza,
 ]);

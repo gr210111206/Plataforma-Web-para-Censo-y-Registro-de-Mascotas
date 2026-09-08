@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS duenos (
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
-  INDEX idx_rol   (rol)
+  INDEX idx_rol   (rol),
+  INDEX idx_token_sesion (token_sesion), -- se consulta en CADA request autenticado (requireAuth)
+  INDEX idx_colonia (colonia)            -- filtrado en mascotas.php y agrupado en stats.php
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de mascotas ────────────────────────────

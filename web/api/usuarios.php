@@ -50,14 +50,42 @@ if ($method === 'GET') {
         $params  = array_merge($params, [$q, $q, $q]);
     }
 
-    $sql = '
-        SELECT d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.rol, d.activo, d.created_at,
-               (SELECT COUNT(*) FROM mascotas m WHERE m.dueno_id = d.id) AS total_mascotas
-        FROM duenos d
-        WHERE ' . implode(' AND ', $where) . '
-        ORDER BY d.created_at DESC
+    // Orden: lista blanca de columnas — nunca se interpola el sort del
+    // cliente directo en el SQL, igual de "seguro por diseño" que el resto
+    // de este archivo (ver promover-admin más abajo).
+    $sortColumnas = [
+        'nombre' => 'd.nombre', 'colonia' => 'd.colonia', 'total_mascotas' => 'total_mascotas',
+        'created_at' => 'd.created_at', 'activo' => 'd.activo', 'rol' => 'd.rol',
+    ];
+    $sortCol = $sortColumnas[$_GET['sort'] ?? ''] ?? 'd.created_at';
+    $sortDir = (($_GET['dir'] ?? '') === 'asc') ? 'ASC' : 'DESC';
+
+    $selectCols = '
+        d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.rol, d.activo, d.created_at,
+        (SELECT COUNT(*) FROM mascotas m WHERE m.dueno_id = d.id) AS total_mascotas
     ';
-    $stmt = $db->prepare($sql);
+    $baseSql = 'FROM duenos d WHERE ' . implode(' AND ', $where);
+
+    // Paginación real: solo si se pide explícitamente (?page=) — mismo
+    // criterio que mascotas.php. Antes esto siempre traía TODAS las cuentas
+    // que hicieran match, y el panel las paginaba/ordenaba en el navegador
+    // ya con todo descargado (con miles de cuentas, eso fue justo lo que
+    // congeló el panel — ver HISTORIAL_CAMBIOS.md, 2026-08-25).
+    if (!empty($_GET['page'])) {
+        $countStmt = $db->prepare('SELECT COUNT(*) ' . $baseSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $page     = max(1, (int)$_GET['page']);
+        $pageSize = min(100, max(1, (int)($_GET['pageSize'] ?? 25)));
+        $offset   = ($page - 1) * $pageSize;
+
+        $stmt = $db->prepare("SELECT $selectCols $baseSql ORDER BY $sortCol $sortDir LIMIT $pageSize OFFSET $offset");
+        $stmt->execute($params);
+        jsonOk(['rows' => $stmt->fetchAll(), 'total' => $total]);
+    }
+
+    $stmt = $db->prepare("SELECT $selectCols $baseSql ORDER BY $sortCol $sortDir");
     $stmt->execute($params);
     jsonOk($stmt->fetchAll());
 }

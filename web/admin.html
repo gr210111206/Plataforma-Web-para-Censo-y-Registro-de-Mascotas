@@ -1052,7 +1052,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="filterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="segSearch" placeholder="Buscar otra mascota..." oninput="debouncedFilterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
         <select class="form-control" id="segFilterEspecie" onchange="filterSeguimiento()" style="width:140px;">
           <option value="">Especie...</option>
@@ -1069,6 +1069,7 @@
       <div class="seguimiento-layout" id="seguimientoGrid">
         <!-- Cards rendered by JS -->
       </div>
+      <div class="data-table-footer" id="seguimientoPager"></div>
     </div>
 
     <!-- ══════════════════════════════════════════ -->
@@ -1078,7 +1079,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="usuariosState.page = 1; filterUsuarios();" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="userSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="debouncedFilterUsuarios()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
       </div>
 
@@ -1114,7 +1115,7 @@
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
           <span class="search-icon">🔍</span>
-          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="rolesState.page = 1; filterRoles();" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+          <input class="form-control" id="rolesSearch" placeholder="Buscar por nombre, correo o teléfono..." oninput="debouncedFilterRoles()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
         <button class="btn btn-primary btn-sm" onclick="abrirNuevoUsuario()">+ Nueva cuenta</button>
       </div>
@@ -2495,22 +2496,6 @@ let stats   = {};
 /* ══════════════════════════════════════════════════ */
 const PAGE_SIZE = 25;
 
-function sortRows(data, key, dir) {
-  if (!key) return data;
-  return [...data].sort((a, b) => {
-    let va = a[key], vb = b[key];
-    if (typeof va === 'number' || typeof vb === 'number') {
-      va = Number(va) || 0; vb = Number(vb) || 0;
-    } else {
-      va = (va ?? '').toString().toLowerCase();
-      vb = (vb ?? '').toString().toLowerCase();
-    }
-    if (va < vb) return -1 * dir;
-    if (va > vb) return  1 * dir;
-    return 0;
-  });
-}
-
 function updateSortIndicators(theadSelector, state) {
   document.querySelectorAll(`${theadSelector} th[data-sort]`).forEach(th => {
     const key = th.dataset.sort;
@@ -2534,6 +2519,14 @@ function renderPagerFooter(footerId, state, total, onChangeFn) {
       <span style="align-self:center; color:var(--gray-2);">Página ${state.page} de ${totalPages}</span>
       <button class="btn btn-ghost btn-sm" ${state.page >= totalPages ? 'disabled' : ''} onclick="${onChangeFn}(${state.page + 1})">Siguiente ›</button>
     </span>`;
+}
+
+/* Espera a que la persona deje de escribir antes de mandar la búsqueda al
+   servidor — la búsqueda pasó de filtrar un arreglo ya en memoria (gratis)
+   a pedirle una página nueva a la API en cada letra (ya no es gratis). */
+function debounce(fn, wait) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
 }
 
 function compactNum(n) {
@@ -2642,11 +2635,9 @@ function showAdmin(name) {
   document.getElementById('adminSub').textContent   = info.sub   || '';
 
   if (name === 'datos' && !window._mapInit) initMap();
-  if (name === 'seguimiento' && !window._seguimientoInit) {
-    renderSeguimiento(allPets);
-    window._seguimientoInit = true;
-  }
+  if (name === 'seguimiento') loadSeguimiento();
   if (name === 'roles') loadRolesTable();
+  if (name === 'usuarios') loadUsuariosTable();
 
   toggleSidebar(false);
 }
@@ -2737,8 +2728,10 @@ function initMap() {
 /*  MINI BAR CHART                                    */
 /* ══════════════════════════════════════════════════ */
 function renderVacunacionPie() {
-  const total = allPets.length;
-  const vacunados = allPets.filter(p => p.vacunado).length;
+  // Antes se calculaba recorriendo TODAS las mascotas (allPets) en el
+  // navegador solo para sacar 2 números — stats.php ya los trae listos.
+  const total = stats.total_mascotas || 0;
+  const vacunados = stats.vacunados || 0;
   const pct = total > 0 ? Math.round((vacunados / total) * 100) : 0;
   const deg = Math.round((pct / 100) * 360);
 
@@ -2756,17 +2749,11 @@ function renderVacunacionPie() {
 }
 
 function renderMiniBar() {
-  // Distribución real por raza, calculada a partir de allPets (ya cargado del servidor).
+  // Distribución por raza: ya viene calculada de stats.php (por_raza) — antes
+  // se recorrían TODAS las mascotas (allPets) en el navegador solo para esto.
   const PALETTE = ['#F27A00', '#FF9A2E', '#C96200', '#FF9800', '#FFB74D', '#BDBDBD'];
-  const counts = {};
-  allPets.forEach(p => {
-    const raza = (p.raza || '').trim() || 'Sin especificar';
-    counts[raza] = (counts[raza] || 0) + 1;
-  });
-  const bars = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([label, val], i) => ({ label, val, color: PALETTE[i % PALETTE.length] }));
+  const bars = (stats.por_raza || [])
+    .map((r, i) => ({ label: r.raza, val: Number(r.total), color: PALETTE[i % PALETTE.length] }));
 
   const container = document.getElementById('miniBarChart');
   if (bars.length === 0) { container.innerHTML = '<div style="padding:12px; color:var(--gray-2); font-size:.82rem;">Aún no hay mascotas registradas.</div>'; return; }
@@ -2828,9 +2815,10 @@ function filterMiniTable() {
 }
 
 function goToSeguimiento(nombre) {
-  showAdmin('seguimiento');
   document.getElementById('segSearch').value = nombre;
-  filterSeguimiento();
+  seguimientoState.q = nombre;
+  seguimientoState.page = 1;
+  showAdmin('seguimiento'); // ya dispara loadSeguimiento() con el filtro puesto
 }
 
 function filtrarPorEstatus(estatus) {
@@ -2841,27 +2829,22 @@ function filtrarPorEstatus(estatus) {
 /* ══════════════════════════════════════════════════ */
 /*  SEGUIMIENTO                                       */
 /* ══════════════════════════════════════════════════ */
-function renderSeguimiento(data) {
+function renderSeguimiento(data, total) {
   const grid = document.getElementById('seguimientoGrid');
   if (data.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; background:white; border:2px dashed var(--gray-4); border-radius:var(--radius-lg);">
       <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
       <div style="font-size:.95rem; color:var(--gray-2);">No se encontraron mascotas con ese criterio</div>
     </div>`;
+    renderPagerFooter('seguimientoPager', seguimientoState, total, 'goToSeguimientoPage');
     return;
   }
 
-  // Con miles de resultados, dibujar todas las tarjetas de una vez traba el
-  // navegador — se limita y se pide acotar con la búsqueda/filtros.
-  const LIMITE = 60;
-  const truncado = data.length > LIMITE;
-  const avisoHtml = truncado
-    ? `<div style="grid-column:1/-1; text-align:center; padding:14px; background:var(--orange-pale); border-radius:var(--radius); font-size:.85rem; color:var(--gray-1);">
-        Mostrando ${LIMITE} de ${data.length} resultados — usa la búsqueda o los filtros para ver mascotas específicas.
-      </div>`
-    : '';
-
-  grid.innerHTML = avisoHtml + data.slice(0, LIMITE).map((pet, i) => {
+  // El servidor ya solo manda una página (seguimientoState.pageSize filas) —
+  // antes se traían TODAS las mascotas de un jalón y se recortaba aquí en el
+  // navegador, lo que fue justo lo que congeló el panel con volumen real
+  // (ver HISTORIAL_CAMBIOS.md, 2026-08-25).
+  grid.innerHTML = data.map((pet, i) => {
     const icon = pet.especie === 'gato' ? '🐈' : '🐕';
     // Antes siempre mostraba el emoji de la especie, aunque la mascota
     // tuviera una foto real subida — nunca se revisaba pet.foto_url.
@@ -2910,27 +2893,47 @@ function renderSeguimiento(data) {
       </div>
     </div>`;
   }).join('');
+
+  renderPagerFooter('seguimientoPager', seguimientoState, total, 'goToSeguimientoPage');
+}
+
+const seguimientoState = { page: 1, pageSize: PAGE_SIZE, q: '', especie: '', estatus: '' };
+
+async function loadSeguimiento() {
+  const params = { page: seguimientoState.page, pageSize: seguimientoState.pageSize };
+  if (seguimientoState.q)       params.q       = seguimientoState.q;
+  if (seguimientoState.especie) params.especie = seguimientoState.especie;
+  if (seguimientoState.estatus) params.estatus = seguimientoState.estatus;
+  try {
+    const { rows, total } = await apiGetTodasMascotas(params);
+    allPets = rows; // la página actual — la usan changeEstatus/editar/acta
+    renderSeguimiento(rows, total);
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 function filterSeguimiento() {
-  const q = document.getElementById('segSearch').value.toLowerCase();
-  const especie = document.getElementById('segFilterEspecie').value;
-  const estatus = document.getElementById('segFilterEstatus').value;
-  let data = [...allPets];
-  if (q) data = data.filter(m => m.nombre.toLowerCase().includes(q) || m.persona?.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
-  if (especie) data = data.filter(m => m.especie === especie);
-  if (estatus) data = data.filter(m => m.estatus === estatus);
-  renderSeguimiento(data);
+  seguimientoState.q       = document.getElementById('segSearch').value.trim();
+  seguimientoState.especie = document.getElementById('segFilterEspecie').value;
+  seguimientoState.estatus = document.getElementById('segFilterEstatus').value;
+  seguimientoState.page    = 1;
+  loadSeguimiento();
+}
+const debouncedFilterSeguimiento = debounce(filterSeguimiento, 350);
+
+function goToSeguimientoPage(page) {
+  seguimientoState.page = page;
+  loadSeguimiento();
 }
 
 async function changeEstatus(id) {
-  const pet  = allPets.find(m => m.id === id);
+  const pet = allPets.find(m => m.id === id);
   if (!pet) return;
   const next = pet.estatus === 'Alta' ? 'Baja' : 'Alta';
   try {
-    const updated = await apiActualizarMascota(id, { estatus: next });
-    Object.assign(pet, updated);
-    filterSeguimiento();
+    await apiActualizarMascota(id, { estatus: next });
+    loadSeguimiento();
     showToast(`🔄 Estatus cambiado a: ${next}`, 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
@@ -3101,19 +3104,29 @@ function downloadActaAdmin(id) {
 /*  CUENTAS CIUDADANAS                                */
 /* ══════════════════════════════════════════════════ */
 let allUsuarios = [];
-
 const usuariosState = { sortKey: null, sortDir: 1, page: 1 };
 
-function renderUsuariosTable(data) {
+async function loadUsuariosTable() {
+  const params = { page: usuariosState.page, pageSize: PAGE_SIZE };
+  const q = document.getElementById('userSearch').value.trim();
+  if (q) params.q = q;
+  if (usuariosState.sortKey) { params.sort = usuariosState.sortKey; params.dir = usuariosState.sortDir === 1 ? 'asc' : 'desc'; }
+  try {
+    const { rows, total } = await apiGetUsuarios(params);
+    allUsuarios = rows;
+    renderUsuariosTable(rows, total);
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar las cuentas: ${err.message}`, 'error');
+  }
+}
+
+function renderUsuariosTable(data, total) {
   const tbody = document.getElementById('usuariosTableBody');
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  usuariosState.page = Math.min(Math.max(1, usuariosState.page), totalPages);
-  const pageData = data.slice((usuariosState.page - 1) * PAGE_SIZE, usuariosState.page * PAGE_SIZE);
 
   if (data.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="padding:30px; text-align:center; color:var(--gray-2);">No se encontraron cuentas.</td></tr>`;
   } else {
-    tbody.innerHTML = pageData.map(u => `
+    tbody.innerHTML = data.map(u => `
       <tr>
         <td style="font-weight:600;">${u.nombre}</td>
         <td style="font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
@@ -3134,38 +3147,31 @@ function renderUsuariosTable(data) {
   }
 
   updateSortIndicators('#sec-usuarios', usuariosState);
-  renderPagerFooter('usuariosPager', usuariosState, data.length, 'goToUsuariosPage');
+  renderPagerFooter('usuariosPager', usuariosState, total, 'goToUsuariosPage');
 }
 
 function sortUsuarios(key) {
   if (usuariosState.sortKey === key) usuariosState.sortDir *= -1;
   else { usuariosState.sortKey = key; usuariosState.sortDir = 1; }
   usuariosState.page = 1;
-  filterUsuarios();
+  loadUsuariosTable();
 }
 
 function goToUsuariosPage(page) {
   usuariosState.page = page;
-  filterUsuarios();
+  loadUsuariosTable();
 }
 
 function filterUsuarios() {
-  const q = document.getElementById('userSearch').value.toLowerCase();
-  let data = !q ? allUsuarios : allUsuarios.filter(u =>
-    u.nombre.toLowerCase().includes(q) ||
-    (u.email || '').toLowerCase().includes(q) ||
-    (u.telefono || '').includes(q)
-  );
-  data = sortRows(data, usuariosState.sortKey, usuariosState.sortDir);
-  renderUsuariosTable(data);
+  usuariosState.page = 1;
+  loadUsuariosTable();
 }
+const debouncedFilterUsuarios = debounce(filterUsuarios, 350);
 
 async function toggleUsuarioActivo(id, estaActivo) {
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
-    const u = allUsuarios.find(x => x.id === id);
-    if (u) u.activo = estaActivo ? 0 : 1;
-    filterUsuarios();
+    loadUsuariosTable();
     showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
@@ -3191,52 +3197,47 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 /*  ROLES — todas las cuentas (Ciudadano + Asistente)  */
 /* ══════════════════════════════════════════════════ */
 let allCuentas = [];
+const rolesState = { sortKey: null, sortDir: 1, page: 1 };
 
 async function loadRolesTable() {
+  const params = { rol: 'todos', page: rolesState.page, pageSize: PAGE_SIZE };
+  const q = document.getElementById('rolesSearch').value.trim();
+  if (q) params.q = q;
+  if (rolesState.sortKey) { params.sort = rolesState.sortKey; params.dir = rolesState.sortDir === 1 ? 'asc' : 'desc'; }
   try {
-    allCuentas = await apiGetUsuarios({ rol: 'todos' });
-    filterRoles();
+    const { rows, total } = await apiGetUsuarios(params);
+    allCuentas = rows;
+    renderRolesTable(rows, total, !q);
   } catch (err) {
     showToast(`❌ No se pudieron cargar las cuentas: ${err.message}`, 'error');
   }
 }
 
-const rolesState = { sortKey: null, sortDir: 1, page: 1 };
-
 function filterRoles() {
-  const q = document.getElementById('rolesSearch').value.toLowerCase();
-  let data = !q ? allCuentas : allCuentas.filter(u =>
-    u.nombre.toLowerCase().includes(q) ||
-    (u.email || '').toLowerCase().includes(q) ||
-    (u.telefono || '').includes(q)
-  );
-  data = sortRows(data, rolesState.sortKey, rolesState.sortDir);
-  renderRolesTable(data);
+  rolesState.page = 1;
+  loadRolesTable();
 }
+const debouncedFilterRoles = debounce(filterRoles, 350);
 
 function sortRoles(key) {
   if (rolesState.sortKey === key) rolesState.sortDir *= -1;
   else { rolesState.sortKey = key; rolesState.sortDir = 1; }
   rolesState.page = 1;
-  filterRoles();
+  loadRolesTable();
 }
 
 function goToRolesPage(page) {
   rolesState.page = page;
-  filterRoles();
+  loadRolesTable();
 }
 
-function renderRolesTable(data) {
+function renderRolesTable(data, total, sinFiltro) {
   const tbody = document.getElementById('rolesTableBody');
-  const lista = data || allCuentas;
-  const totalPages = Math.max(1, Math.ceil(lista.length / PAGE_SIZE));
-  rolesState.page = Math.min(Math.max(1, rolesState.page), totalPages);
-  const pageData = lista.slice((rolesState.page - 1) * PAGE_SIZE, rolesState.page * PAGE_SIZE);
 
-  if (lista.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">${allCuentas.length === 0 ? 'Todavía no hay cuentas. Crea la primera con "+ Nueva cuenta".' : 'No se encontraron cuentas.'}</td></tr>`;
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px; text-align:center; color:var(--gray-2);">${(total === 0 && sinFiltro) ? 'Todavía no hay cuentas. Crea la primera con "+ Nueva cuenta".' : 'No se encontraron cuentas.'}</td></tr>`;
   } else {
-    tbody.innerHTML = pageData.map(u => `
+    tbody.innerHTML = data.map(u => `
       <tr>
         <td style="font-weight:600;">${u.nombre}</td>
         <td style="font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
@@ -3262,15 +3263,13 @@ function renderRolesTable(data) {
   }
 
   updateSortIndicators('#sec-roles', rolesState);
-  renderPagerFooter('rolesPager', rolesState, lista.length, 'goToRolesPage');
+  renderPagerFooter('rolesPager', rolesState, total, 'goToRolesPage');
 }
 
 async function toggleCuentaActiva(id, estaActivo) {
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
-    const u = allCuentas.find(x => x.id === id);
-    if (u) u.activo = estaActivo ? 0 : 1;
-    filterRoles();
+    loadRolesTable();
     showToast(estaActivo ? '🚫 Cuenta desactivada' : '✅ Cuenta reactivada', 'success');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
@@ -4283,12 +4282,6 @@ async function initAdmin() {
   }
 
   try {
-    allPets = await apiGetTodasMascotas();
-  } catch (err) {
-    showToast(`❌ No se pudieron cargar las mascotas: ${err.message}`, 'error');
-    allPets = [];
-  }
-  try {
     stats = await apiGetStats();
   } catch (err) {
     showToast(`❌ No se pudieron cargar las estadísticas: ${err.message}`, 'error');
@@ -4300,29 +4293,36 @@ async function initAdmin() {
   try {
     adminArticulos = await apiGetArticulos();
   } catch (err) { adminArticulos = []; }
-  try {
-    allUsuarios = await apiGetUsuarios();
-  } catch (err) { allUsuarios = []; }
 
   const badge = document.getElementById('seguimiento-badge');
-  if (badge) badge.textContent = allPets.length;
+  if (badge) badge.textContent = stats.total_mascotas ?? 0;
 
   const mapCountEl = document.getElementById('mapCount');
-  if (mapCountEl) mapCountEl.textContent = allPets.length;
+  if (mapCountEl) mapCountEl.textContent = stats.total_mascotas ?? 0;
 
   renderVacunacionPie();
   renderKpiRow();
-
-  renderMiniTable(allPets.slice(0, 10));
   renderMiniBar();
-  // "Seguimiento" (tarjetas detalladas) se renderiza solo cuando el admin
-  // abre esa pestaña (ver showAdmin) — con miles de mascotas, construirlas
-  // todas de entrada aquí bloqueaba el navegador antes de poder ver "Datos".
+
+  // Solo las 10 más recientes para la mini-tabla de "Datos" — antes se
+  // traían TODAS las mascotas (con foto en Base64 incluida) nada más para
+  // sacar estas 10, en cada carga del panel. "Seguimiento" (tarjetas
+  // detalladas) y "Usuarios"/"Roles y Cuentas" ya cargan solo cuando el
+  // admin abre esa pestaña (ver showAdmin), cada una con su propia página
+  // — con miles de registros, traer todo de entrada fue lo que congeló el
+  // panel antes (ver HISTORIAL_CAMBIOS.md, 2026-08-25).
+  try {
+    const { rows } = await apiGetTodasMascotas({ page: 1, pageSize: 10 });
+    renderMiniTable(rows);
+  } catch (err) {
+    showToast(`❌ No se pudieron cargar las mascotas recientes: ${err.message}`, 'error');
+    renderMiniTable([]);
+  }
+
   renderAdminArtList();
   renderAvisos();
   renderEventos();
   renderFaqTable();
-  renderUsuariosTable(allUsuarios);
 
   // Init map after DOM is ready
   setTimeout(() => { initMap(); }, 300);

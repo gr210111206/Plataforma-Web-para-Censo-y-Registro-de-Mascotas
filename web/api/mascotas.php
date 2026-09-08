@@ -75,14 +75,33 @@ if ($method === 'GET') {
         $params   = array_merge($params, [$q, $q, $q, $q]);
     }
 
-    $sql = '
-        SELECT m.*, d.nombre AS persona, d.telefono, d.colonia
+    $baseSql = '
         FROM mascotas m
         JOIN duenos d ON m.dueno_id = d.id'
-        . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
-        . ' ORDER BY m.created_at DESC';
+        . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
 
-    $stmt = $db->prepare($sql);
+    // Paginación real: solo si se pide explícitamente (?page=). Así un
+    // ciudadano consultando sus propias mascotas (siempre pocas) sigue
+    // recibiendo el arreglo plano de siempre — dashboard.html/asistente.html
+    // no necesitan cambiar nada. Antes esto siempre traía TODAS las filas
+    // (con foto en Base64 incluida) sin importar cuántas hubiera; con
+    // volumen real eso fue lo que congeló el panel admin (ver
+    // HISTORIAL_CAMBIOS.md, 2026-08-25).
+    if (!empty($_GET['page'])) {
+        $countStmt = $db->prepare('SELECT COUNT(*) ' . $baseSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $page     = max(1, (int)$_GET['page']);
+        $pageSize = min(100, max(1, (int)($_GET['pageSize'] ?? 25)));
+        $offset   = ($page - 1) * $pageSize;
+
+        $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.colonia $baseSql ORDER BY m.created_at DESC LIMIT $pageSize OFFSET $offset");
+        $stmt->execute($params);
+        jsonOk(['rows' => $stmt->fetchAll(), 'total' => $total]);
+    }
+
+    $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.colonia $baseSql ORDER BY m.created_at DESC");
     $stmt->execute($params);
     jsonOk($stmt->fetchAll());
 }

@@ -2,6 +2,34 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-07] — Fase 1 de la hoja de ruta: paginación real en el panel admin (rendimiento)
+
+### 🤔 Contexto
+Continuación de la auditoría del 2026-09-07 (Fase 0). El panel admin traía **todas** las mascotas y **todas** las cuentas en cada carga (con fotos en Base64 incluidas) y solo recortaba la vista en el navegador — el mismo patrón que ya había congelado el panel una vez con datos de prueba masivos (ver entrada del 2026-08-25). Esta fase mueve esa paginación al servidor de verdad.
+
+### 🔧 Cambios
+1. **Índices nuevos**: `duenos.token_sesion` (se consulta en cada request autenticado) y `duenos.colonia` (filtrado en `mascotas.php`, agrupado en `stats.php`).
+2. **`stats.php`** ahora también devuelve `por_raza` (top 6 razas) — antes esa distribución se calculaba en el navegador recorriendo *todas* las mascotas solo para sacar ese conteo.
+3. **`GET /api/mascotas` y `GET /api/usuarios` ahora soportan paginación real** (`?page=&pageSize=`, máx. 100 por página) — devuelven `{rows, total}` en vez de un arreglo con todo. Es **retrocompatible a propósito**: sin `?page=`, siguen devolviendo el arreglo plano de siempre, así que `dashboard.html`/`asistente.html` (un ciudadano nunca tiene tantas mascotas como para necesitar paginar) no necesitaron ningún cambio.
+4. **`GET /api/usuarios` también soporta orden real en el servidor** (`?sort=&dir=`), con lista blanca de columnas (nombre, colonia, total_mascotas, creada, estatus, rol) — necesario porque esa tabla se puede tanto paginar como ordenar por columna, y ordenar solo la página actual habría dado un orden incorrecto.
+5. **Panel admin reescrito para pedir solo lo que se muestra**:
+   - "Datos" (KPIs, pastel de vacunación, barra de razas) ahora lee `stats` en vez de recorrer todas las mascotas; la mini-tabla de recientes pide solo 10.
+   - "Seguimiento" (tarjetas), "Roles y Cuentas" y "Usuarios" (antes esta última ni siquiera esperaba a que se abriera la pestaña) ahora piden una página a la vez al servidor, con búsqueda/filtro/orden reales — ya no hay un tope arbitrario de tarjetas mostradas escondiendo el resto de los resultados.
+   - Búsqueda con debounce (350ms): antes filtrar era gratis (arreglo ya en memoria); ahora cada letra puede disparar una consulta al servidor, así que se espera a que la persona termine de escribir.
+
+### ✅ Verificado
+Todo contra la API local (curl), no solo en código: paginación de mascotas y usuarios (offsets correctos, páginas sin filas repetidas), búsqueda por nombre, orden ascendente/descendente incluyendo por la columna calculada `total_mascotas`, un intento de inyección SQL vía `?sort=` cayó al orden por default sin tocar la base de datos (lista blanca funcionando), y `GET /api/mascotas` sin `?page=` sigue devolviendo el arreglo plano de siempre (probado con la sesión de una ciudadana real). `php -l` limpio en los 4 archivos PHP tocados; `admin.html` carga (200).
+
+### 📌 Pendiente (no es parte de esta fase)
+Fases 2-3 de la hoja de ruta (respaldo de BD, bitácora de auditoría, rol asistente, HTTPS, accesibilidad, etc.).
+
+### 📂 Archivos modificados
+- `web/database/schema.sql` (índices `idx_token_sesion`, `idx_colonia`).
+- `web/api/stats.php` (`por_raza`).
+- `web/api/mascotas.php`, `web/api/usuarios.php` (paginación + orden).
+- `web/admin.html` (KPIs/pastel/barra desde `stats`, Seguimiento/Roles/Usuarios reescritos con paginación real, debounce de búsqueda).
+- Base de datos local (no versionada en git): índices aplicados.
+
 ## 📅 [2026-09-07] — Fase 0 de seguridad: auditoría completa antes de producción y primeros bloqueantes corregidos
 
 ### 🤔 Contexto
