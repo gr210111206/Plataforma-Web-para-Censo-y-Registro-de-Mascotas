@@ -91,9 +91,9 @@ if ($method === 'POST' && $action === 'crear-cuenta') {
     $db = getDB();
 
     $body     = getBody();
-    $nombre   = trim($body['nombre'] ?? '');
+    $nombre   = clean(trim($body['nombre'] ?? ''));
     $email    = strtolower(trim($body['email'] ?? ''));
-    $telefono = trim($body['telefono'] ?? '');
+    $telefono = clean(trim($body['telefono'] ?? ''));
     $password = $body['password'] ?? '';
     $rol      = $body['rol'] ?? '';
 
@@ -242,10 +242,10 @@ if ($method === 'POST' && $action === 'buscar-o-crear') {
     $db = getDB();
 
     $body     = getBody();
-    $nombre   = trim($body['nombre'] ?? '');
-    $telefono = trim($body['telefono'] ?? '');
-    $direccion = trim($body['direccion'] ?? '');
-    $colonia   = trim($body['colonia'] ?? '');
+    $nombre   = clean(trim($body['nombre'] ?? ''));
+    $telefono = clean(trim($body['telefono'] ?? ''));
+    $direccion = clean(trim($body['direccion'] ?? ''));
+    $colonia   = clean(trim($body['colonia'] ?? ''));
 
     if (empty($nombre))   jsonError('El nombre completo es obligatorio.', 400);
     if (empty($telefono)) jsonError('El teléfono de contacto es obligatorio.', 400);

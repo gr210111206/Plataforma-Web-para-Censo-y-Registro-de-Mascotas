@@ -2,6 +2,37 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-07] — Fase 0 de seguridad: auditoría completa antes de producción y primeros bloqueantes corregidos
+
+### 🤔 Contexto
+El usuario pidió un análisis completo del proyecto (seguridad, rendimiento, arquitectura/roles) pensando en la entrega real al H. Ayuntamiento de El Grullo. Se hizo una auditoría de solo lectura en 3 frentes y se armó una hoja de ruta por fases (guardada como plan de la sesión). Esta entrada cubre la **Fase 0** (bloqueantes de seguridad), la única que ya se implementó — las Fases 1-3 (rendimiento, respaldo/bitácora, roadmap) quedan pendientes para cuando el usuario decida atacarlas.
+
+### 🔧 Cambios de esta fase
+1. **`web/web.zip` eliminado.** Contenía una copia de `config/database.php` con la contraseña real de la base de datos de producción en texto plano, físicamente dentro de la carpeta que se sube a HostGator. Nunca llegó a comitearse a git (confirmado con `git log --all --full-history`), pero **la contraseña real debe rotarse en HostGator de todos modos**, ya que estuvo expuesta en un archivo sin cifrar — esto queda pendiente de que el usuario lo haga directo en cPanel.
+2. **Saneado contra XSS almacenado**: `nombre`/`telefono` (registro público, `auth.php`) y `nombre`/`telefono`/`direccion`/`colonia` (`crear-cuenta` y `buscar-o-crear`, `usuarios.php`) ahora pasan por `clean()` igual que ya hacían `update-profile` y los campos de mascota — antes, alguien podía autoregistrarse con un nombre tipo `<img src=x onerror=...>` y ese script corría en el navegador de cualquiera que lo viera (admin en "Roles y Cuentas", o cualquier persona que abriera `mascota.html` de esa mascota). Verificado en vivo: un registro de prueba con ese payload quedó guardado como texto escapado (`&lt;img...&gt;`), inofensivo.
+3. **Folio público reemplazado por un token aleatorio.** El folio (`M-GRU-XXXXXXXXX`) es consecutivo y por lo tanto adivinable recorriendo números — y `mascota.html` lo aceptaba directo, sin sesión, exponiendo nombre y teléfono del dueño de cualquier mascota registrada. Se agregó `mascotas.token_publico` (32 caracteres aleatorios, `UNIQUE`), generado al registrar cada mascota; `mascota.html` y el QR/acta ahora usan `mascota.html?token=...` en vez de `?id=<folio>`. El folio se sigue usando igual que antes para todo lo interno (búsquedas, edición, actas). Las 70 mascotas ya existentes en local se migraron con un token nuevo cada una.
+4. **Límite de intentos de login.** Nuevas columnas `duenos.intentos_fallidos`/`bloqueado_hasta`: tras 5 contraseñas incorrectas seguidas, la cuenta se bloquea 15 minutos (aunque la siguiente contraseña sea la correcta). Se encontró y corrigió en el camino un bug real de zona horaria: comparar `bloqueado_hasta` con `time()`/`strtotime()` de PHP fallaba porque en este equipo PHP está en `Europe/Berlin` y MySQL en la zona del sistema (México) — un desfase de 8 horas que dejaba el bloqueo siempre "vencido". Se corrigió comparando `bloqueado_hasta > NOW()` **dentro** de la misma consulta MySQL, sin mezclar relojes de PHP y de MySQL.
+5. **Fotos de mascota validadas también en el servidor.** `foto_url` (POST y PUT de `mascotas.php`) ahora exige `data:image/(jpeg|png|webp);base64,...` y un tope de 3MB — antes solo lo limitaba el redimensionado en el navegador (Canvas), así que una llamada directa a la API podía guardar cualquier cosa. Mismo criterio que ya usaba `foto_perfil`, ahora compartido vía `validarFotoBase64()` en `helpers.php`.
+6. **Cambiar contraseña ahora cierra la sesión actual** (`token_sesion = NULL`) — antes, un token robado seguía funcionando hasta 30 días después de que la persona "aseguraba" su cuenta. Las 3 copias de `changePassword()` (dashboard/asistente/admin) ahora redirigen a `login.html` tras el cambio, en vez de solo limpiar el formulario.
+
+### ✅ Verificado
+Todo probado en vivo contra la API local (curl), no solo revisado en código: registro con payload XSS quedó escapado en BD; lookup público por `?token=` funciona y por `?id=` (folio) ya no expone nada sin sesión; 5 intentos fallidos + reintento con contraseña correcta → bloqueado (429), y se libera solo tras expirar `bloqueado_hasta`; `foto_url` no-imagen y con MIME no permitido → rechazado, JPEG válido → aceptado; las 70 mascotas migradas tienen `token_publico`/`link_publico` nuevos. Datos de prueba (cuentas y mascota de esta verificación) borrados después; `folio_counter` devuelto a 70. `php -l` limpio en los 4 archivos PHP tocados; las 4 páginas HTML tocadas cargan (200).
+
+### 📌 Pendiente (no es parte de esta fase)
+- Rotar en HostGator la contraseña real de la base de datos (ver punto 1).
+- Confirmar que la contraseña real de `admin@remac.elgrullo.mx` en producción ya no es la de `seed.sql` (`Admin1234`).
+- Fases 1-3 de la hoja de ruta (índices/paginación, respaldo de BD, bitácora de auditoría, rol asistente, accesibilidad, etc.) — quedaron documentadas pero no implementadas.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php` (`validarFotoBase64()`).
+- `web/api/auth.php`, `web/api/usuarios.php`, `web/api/mascotas.php`.
+- `web/js/api-client.js` (`apiGetMascota` → `apiGetMascotaPublica`, ahora por token).
+- `web/mascota.html`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html` (link público del acta/QR, `changePassword()`).
+- `web/database/schema.sql`, `web/database/seed.sql`.
+- `CLAUDE.md` (campo `token_publico`).
+- Base de datos local (no versionada en git): columnas nuevas aplicadas, 70 mascotas migradas con token.
+- `web/web.zip` eliminado (nunca estuvo en git).
+
 ## 📅 [2026-09-04] — Panel admin "Seguimiento": las tarjetas de mascota tenían 3 controles que no funcionaban de verdad
 
 ### 🐛 El usuario reportó (con capturas) tres bugs en la sección Seguimiento del panel admin

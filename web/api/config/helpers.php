@@ -160,6 +160,24 @@ function clean(?string $val): ?string {
     return trim(htmlspecialchars($val, ENT_QUOTES, 'UTF-8'));
 }
 
+/* ── Validar foto en Base64 (mascota, perfil) ───── */
+/* El redimensionado con Canvas ya limita esto desde el navegador, pero
+   una llamada directa a la API (sin pasar por la UI) podría mandar un
+   archivo enorme o que ni siquiera sea una imagen — esto es el respaldo
+   del lado del servidor. Un solo límite/formato para los tres lugares
+   que guardan fotos (perfil, mascota) en vez de una copia distinta en
+   cada endpoint. Devuelve null si es válida, o el mensaje de error. */
+function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
+    if ($foto === null || $foto === '') return null;
+    if (!preg_match('#^data:image/(jpeg|png|webp);base64,#', $foto)) {
+        return 'La imagen debe ser una foto en formato JPG, PNG o WEBP.';
+    }
+    if (strlen($foto) > $maxBytes) {
+        return 'La imagen es demasiado grande.';
+    }
+    return null;
+}
+
 /* ── Validar contraseña ─────────────────────────── */
 /* Mínimo razonable para un padrón ciudadano: al menos 8 caracteres, con
    al menos una letra y un número — bloquea casos como "123456789" (pura

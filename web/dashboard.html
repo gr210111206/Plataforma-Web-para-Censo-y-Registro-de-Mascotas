@@ -932,9 +932,9 @@ function verDetalle(i) {
 /*  VER QR                                            */
 /* ══════════════════════════════════════════════════ */
 function verQR(i) {
-  const pet   = myPets[i];
-  const folio = pet.id || pet.folio || 'M-GRU-000000001';
-  const link  = pet.link_publico || `mascota.html?id=${folio}`;
+  const pet = myPets[i];
+  if (!pet.link_publico) { showToast('❌ Esta mascota no tiene un link público generado.', 'error'); return; }
+  const link = pet.link_publico;
 
   // Build or reuse QR modal
   let qrModal = document.getElementById('modal-qr');
@@ -1181,7 +1181,7 @@ function downloadActa(folio) {
 
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('dashboard.html','')}mascota.html?id=${folio}`, 14, y + 6);
+  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('dashboard.html','')}${pet.link_publico}`, 14, y + 6);
   doc.text('Documento generado por el sistema REMAC. Válido como comprobante de registro municipal.', 14, y + 12);
 
   doc.save(`${folio}.pdf`);
@@ -1235,10 +1235,12 @@ async function changePassword() {
 
   try {
     await apiChangePassword(actual, nueva);
-    document.getElementById('pass-actual').value = '';
-    document.getElementById('pass-nueva').value = '';
-    document.getElementById('pass-nueva-confirm').value = '';
-    showToast('✅ Contraseña actualizada correctamente', 'success');
+    // El servidor ya invalidó el token de esta sesión al cambiar la
+    // contraseña (por seguridad) — hay que volver a iniciar sesión.
+    showToast('✅ Contraseña actualizada. Vuelve a iniciar sesión.', 'success');
+    localStorage.removeItem('padron_session');
+    sessionStorage.removeItem('padron_session');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

@@ -3090,7 +3090,7 @@ function downloadActaAdmin(id) {
 
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('admin.html','')}mascota.html?id=${id}`, 14, y + 6);
+  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('admin.html','')}${pet.link_publico}`, 14, y + 6);
   doc.text('Documento generado por el sistema REMAC. Válido como comprobante de registro municipal.', 14, y + 12);
 
   doc.save(`${id}.pdf`);
@@ -4224,10 +4224,12 @@ async function changePassword() {
 
   try {
     await apiChangePassword(actual, nueva);
-    document.getElementById('pass-actual').value = '';
-    document.getElementById('pass-nueva').value = '';
-    document.getElementById('pass-nueva-confirm').value = '';
-    showToast('✅ Contraseña actualizada correctamente', 'success');
+    // El servidor ya invalidó el token de esta sesión al cambiar la
+    // contraseña (por seguridad) — hay que volver a iniciar sesión.
+    showToast('✅ Contraseña actualizada. Vuelve a iniciar sesión.', 'success');
+    localStorage.removeItem('padron_session');
+    sessionStorage.removeItem('padron_session');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

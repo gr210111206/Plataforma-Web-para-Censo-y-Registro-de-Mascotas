@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS duenos (
   activo        TINYINT(1)   NOT NULL DEFAULT 1,
   token_sesion  VARCHAR(64)   DEFAULT NULL,
   token_creado_en TIMESTAMP  NULL DEFAULT NULL,
+  intentos_fallidos TINYINT UNSIGNED NOT NULL DEFAULT 0, -- login: se resetea en cada intento correcto
+  bloqueado_hasta   DATETIME NULL DEFAULT NULL,           -- login: bloqueo temporal tras 5 intentos fallidos
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS duenos (
 -- ── Tabla de mascotas ────────────────────────────
 CREATE TABLE IF NOT EXISTS mascotas (
   id               VARCHAR(20)  NOT NULL PRIMARY KEY,   -- M-GRU-XXXXXXXXX
+  token_publico    VARCHAR(32)  NOT NULL UNIQUE,        -- aleatorio (no el folio): así el link/QR público no es adivinable recorriendo folios
   nombre           VARCHAR(100) NOT NULL,
   especie          ENUM('perro','gato') NOT NULL,
   raza             VARCHAR(100) DEFAULT NULL,

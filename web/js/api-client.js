@@ -192,11 +192,13 @@ async function apiGetTodasMascotas(filtros = {}) {
 }
 
 /**
- * Ver una mascota por su ID REMAC (PÚBLICO — para el QR).
- * @param {string} id  Ej: "M-GRU-000000004"
+ * Ver una mascota por su token público (PÚBLICO — para el QR/acta).
+ * No es el folio: es un valor aleatorio (mascotas.token_publico) para que
+ * conocer/adivinar un folio no alcance para consultar los datos de nadie.
+ * @param {string} token  pet.link_publico ya trae este valor listo para usar
  */
-async function apiGetMascota(id) {
-  return _fetch(`${API_BASE_URL}/mascotas?id=${encodeURIComponent(id)}`);
+async function apiGetMascotaPublica(token) {
+  return _fetch(`${API_BASE_URL}/mascotas?token=${encodeURIComponent(token)}`);
 }
 
 /**

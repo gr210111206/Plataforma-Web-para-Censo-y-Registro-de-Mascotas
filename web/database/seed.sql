@@ -21,13 +21,15 @@ UPDATE duenos SET es_superadmin = 1 WHERE email = 'admin@remac.elgrullo.mx';
 UPDATE folio_counter SET ultimo = 6;
 
 -- ── Mascotas ─────────────────────────────────────
-INSERT INTO mascotas (id, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares, vacunado, esterilizado, estatus, dueno_id, fecha_registro, link_publico, ficha) VALUES
-('M-GRU-000000001','Max',      'perro','Labrador Retriever','3','3 años', 'macho', 'Dorado',            'Mancha blanca en el pecho',        1,0,'Alta',2,'2026-01-15','mascota.html?id=M-GRU-000000001','M-GRU-000000001.pdf'),
-('M-GRU-000000002','Luna',     'gato', 'Siamés',           '2','2 años', 'hembra','Blanco y gris',      'Ojos azules, cola corta',          1,1,'Alta',3,'2026-02-03','mascota.html?id=M-GRU-000000002','M-GRU-000000002.pdf'),
-('M-GRU-000000003','Rocky',    'perro','Pastor alemán',    '5','5 años', 'macho', 'Negro y café',       'Cicatriz en oreja izquierda',      0,0,'Alta',4,'2026-02-20','mascota.html?id=M-GRU-000000003','M-GRU-000000003.pdf'),
-('M-GRU-000000004','Solovino', 'perro','Mestizo',          '5','5 años', 'macho', 'Amarillo con blanco','Ninguna en especial',              1,0,'Alta',5,'2026-05-11','mascota.html?id=M-GRU-000000004','M-GRU-000000004.pdf'),
-('M-GRU-000000005','Toby',     'perro','Chihuahua',        '1','1 año',  'macho', 'Café',               'Manchas en la espalda',            1,0,'Alta',6,'2026-03-22','mascota.html?id=M-GRU-000000005','M-GRU-000000005.pdf'),
-('M-GRU-000000006','Canela',   'perro','Mestizo',          '7','7 años', 'hembra','Canela',             'Pata trasera derecha más corta',   0,1,'Baja',7,'2026-04-05','mascota.html?id=M-GRU-000000006','M-GRU-000000006.pdf');
+-- token_publico: aleatorio, NO el folio (así el link/QR público no es
+-- adivinable recorriendo folios consecutivos — ver mascotas.php).
+INSERT INTO mascotas (id, token_publico, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares, vacunado, esterilizado, estatus, dueno_id, fecha_registro, link_publico, ficha) VALUES
+('M-GRU-000000001','01d8b1df89f94a15a19d34f7dd3baa7c','Max',      'perro','Labrador Retriever','3','3 años', 'macho', 'Dorado',            'Mancha blanca en el pecho',        1,0,'Alta',2,'2026-01-15','mascota.html?token=01d8b1df89f94a15a19d34f7dd3baa7c','M-GRU-000000001.pdf'),
+('M-GRU-000000002','efb037998489c24d3300fa21659b1091','Luna',     'gato', 'Siamés',           '2','2 años', 'hembra','Blanco y gris',      'Ojos azules, cola corta',          1,1,'Alta',3,'2026-02-03','mascota.html?token=efb037998489c24d3300fa21659b1091','M-GRU-000000002.pdf'),
+('M-GRU-000000003','e7cb4563f9fffd8615499d8edcb0c7fa','Rocky',    'perro','Pastor alemán',    '5','5 años', 'macho', 'Negro y café',       'Cicatriz en oreja izquierda',      0,0,'Alta',4,'2026-02-20','mascota.html?token=e7cb4563f9fffd8615499d8edcb0c7fa','M-GRU-000000003.pdf'),
+('M-GRU-000000004','b7ba5323b7d685566044082dbc755342','Solovino', 'perro','Mestizo',          '5','5 años', 'macho', 'Amarillo con blanco','Ninguna en especial',              1,0,'Alta',5,'2026-05-11','mascota.html?token=b7ba5323b7d685566044082dbc755342','M-GRU-000000004.pdf'),
+('M-GRU-000000005','b00abfb42503ece08d6c3f4a9ea5644c','Toby',     'perro','Chihuahua',        '1','1 año',  'macho', 'Café',               'Manchas en la espalda',            1,0,'Alta',6,'2026-03-22','mascota.html?token=b00abfb42503ece08d6c3f4a9ea5644c','M-GRU-000000005.pdf'),
+('M-GRU-000000006','7ebd60069a5074272ed700fe334e770b','Canela',   'perro','Mestizo',          '7','7 años', 'hembra','Canela',             'Pata trasera derecha más corta',   0,1,'Baja',7,'2026-04-05','mascota.html?token=7ebd60069a5074272ed700fe334e770b','M-GRU-000000006.pdf');
 
 -- ── Campañas ─────────────────────────────────────
 INSERT INTO campanas (titulo, descripcion, fecha_inicio, fecha_fin, icono, banner_color, publicado) VALUES

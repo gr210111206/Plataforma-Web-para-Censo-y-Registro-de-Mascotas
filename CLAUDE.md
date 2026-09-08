@@ -46,6 +46,7 @@ La plataforma está diseñada con una arquitectura ligera, rápida y modular sin
 ### B. Registro de Mascotas (`mascotas`)
 - Pertenecen a un dueño (`dueno_id`).
 - Contienen: `folio` (ej: `REMAC-GRU-2026-001`), `nombre`, `especie` ('perro' | 'gato'), `raza`, `sexo` ('macho' | 'hembra'), `edad_anos`, `color`, `esterilizado` (T/F), `microchip`, `estatus` ('activo' | 'fallecido'), `foto_url`.
+- ⚠️ **`token_publico`** (VARCHAR(32), aleatorio, `UNIQUE`): identificador público real para `mascota.html`/el QR del acta — **nunca el folio**, que es consecutivo y por lo tanto adivinable. Conocer o adivinar un folio ya NO alcanza para consultar los datos de nadie. Ver `web/api/mascotas.php` (`GET ?token=`).
 
 ---
 

@@ -2,11 +2,11 @@
 /**
  * REMAC — API: Mascotas
  *
- * GET    /api/mascotas            → Listar (admin: todas | ciudadano: las suyas)
- * GET    /api/mascotas?id=XXXXX   → Ver una (PÚBLICO — para el QR)
- * POST   /api/mascotas            → Registrar nueva mascota
- * PUT    /api/mascotas?id=XXXXX   → Actualizar mascota
- * DELETE /api/mascotas?id=XXXXX   → Dar de baja (estatus = 'Baja')
+ * GET    /api/mascotas              → Listar (admin: todas | ciudadano: las suyas)
+ * GET    /api/mascotas?token=XXXXX  → Ver una (PÚBLICO — para el QR/acta)
+ * POST   /api/mascotas              → Registrar nueva mascota
+ * PUT    /api/mascotas?id=XXXXX     → Actualizar mascota
+ * DELETE /api/mascotas?id=XXXXX     → Dar de baja (estatus = 'Baja')
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -15,22 +15,25 @@ setCorsHeaders();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $id     = $_GET['id'] ?? null;
+$token  = $_GET['token'] ?? null;
 
 /* ════════════════════════════════════════════════
-   GET — Ver una mascota por ID (PÚBLICO, para QR)
+   GET — Ver una mascota por su token público (PÚBLICO, para QR)
    ════════════════════════════════════════════════ */
-if ($method === 'GET' && $id) {
+if ($method === 'GET' && $token) {
     // Vista pública (QR, sin sesión): solo lo necesario para reunir a la mascota
-    // con su dueño. NO se expone dirección/colonia (dato sensible, y los folios
-    // son consecutivos y por lo tanto enumerables).
+    // con su dueño. NO se expone dirección/colonia (dato sensible). Se busca
+    // por un token aleatorio (token_publico), NUNCA por el folio — el folio
+    // es consecutivo y por lo tanto enumerable; conocerlo no debe alcanzar
+    // para sacarle el teléfono a nadie del padrón.
     $db   = getDB();
     $stmt = $db->prepare('
         SELECT m.*, d.nombre AS persona, d.telefono
         FROM mascotas m
         JOIN duenos d ON m.dueno_id = d.id
-        WHERE m.id = ?
+        WHERE m.token_publico = ?
     ');
-    $stmt->execute([$id]);
+    $stmt->execute([$token]);
     $pet = $stmt->fetch();
 
     if (!$pet) jsonError('Mascota no encontrada.', 404);
@@ -109,35 +112,40 @@ if ($method === 'POST') {
         $duenoId = (int)$body['dueno_id'];
     }
 
-    $folio = generarFolioREMAC();
+    $fotoErr = validarFotoBase64($body['foto_url'] ?? null);
+    if ($fotoErr) jsonError($fotoErr, 400);
+
+    $folio        = generarFolioREMAC();
+    $tokenPublico = bin2hex(random_bytes(16));
 
     $stmt = $db->prepare('
         INSERT INTO mascotas
-          (id, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares,
+          (id, token_publico, nombre, especie, raza, edad, edad_label, sexo, color, senias_particulares,
            foto_url, vacunado, esterilizado, estatus, dueno_id, fecha_registro, link_publico, ficha)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
 
     $fecha = !empty($body['fecha_registro']) ? $body['fecha_registro'] : date('Y-m-d');
 
     $stmt->execute([
         $folio,
+        $tokenPublico,
         clean($body['nombre']),
         $body['especie'],
         clean($body['raza']   ?? null),
         clean($body['edad']   ?? null),
         clean($body['edad_label'] ?? null),
-        $body['sexo']         ?? null,
+        clean($body['sexo']   ?? null),
         clean($body['color']  ?? null),
         clean($body['senias_particulares'] ?? null),
         $body['foto_url']     ?? null,
         (int)($body['vacunado']    ?? 0),
         (int)($body['esterilizado']?? 0),
-        $body['estatus']      ?? 'Alta',
+        clean($body['estatus'] ?? 'Alta'),
         $duenoId,
         $fecha,
-        "mascota.html?id=$folio",
+        "mascota.html?token=$tokenPublico",
         "$folio.pdf",
     ]);
 
@@ -163,6 +171,11 @@ if ($method === 'PUT' && $id) {
     if (!$pet) jsonError('Mascota no encontrada.', 404);
     if ($user['rol'] !== 'admin' && $pet['dueno_id'] != $user['id']) {
         jsonError('No tienes permiso para editar esta mascota.', 403);
+    }
+
+    if (array_key_exists('foto_url', $body)) {
+        $fotoErr = validarFotoBase64($body['foto_url']);
+        if ($fotoErr) jsonError($fotoErr, 400);
     }
 
     $campos = [];

@@ -20,10 +20,10 @@ $action = $_GET['action'] ?? '';
 if ($method === 'POST' && $action === 'register') {
     $body = getBody();
 
-    $nombre   = trim($body['nombre'] ?? '');
+    $nombre   = clean(trim($body['nombre'] ?? ''));
     $email    = strtolower(trim($body['email'] ?? ''));
     $password = $body['password'] ?? '';
-    $telefono = trim($body['telefono'] ?? '');
+    $telefono = clean(trim($body['telefono'] ?? ''));
 
     if (empty($nombre)) {
         jsonError('El nombre completo es obligatorio.', 400);
@@ -79,17 +79,45 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $email = strtolower(trim($body['email']));
         $pass  = $body['password'];
 
+        // El "¿sigue bloqueada?" se calcula DENTRO de MySQL (bloqueado_hasta
+        // > NOW()), no comparando con time()/strtotime() de PHP: en hosting
+        // compartido el reloj/zona horaria de PHP y el de MySQL casi nunca
+        // coinciden (aquí mismo, PHP quedó en Europe/Berlin y MySQL en la
+        // zona del sistema) — comparar entre los dos rompía el bloqueo por
+        // completo. Manteniendo la comparación 100% del lado de MySQL, da
+        // igual qué zona horaria tenga cada quién.
         $db   = getDB();
-        $stmt = $db->prepare("SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin, password_hash FROM duenos WHERE email = ? AND activo = 1");
+        $stmt = $db->prepare("
+            SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin,
+                   password_hash, intentos_fallidos, (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > NOW()) AS bloqueado
+            FROM duenos WHERE email = ? AND activo = 1
+        ");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
+        // Bloqueo temporal tras varios intentos fallidos seguidos (fuerza
+        // bruta). Se revisa antes de verificar la contraseña para que ni
+        // siquiera un intento correcto "cuente" mientras sigue bloqueada.
+        if ($user && $user['bloqueado']) {
+            jsonError('Demasiados intentos fallidos. Intenta de nuevo en unos minutos.', 429);
+        }
+
         if (!$user || !password_verify($pass, $user['password_hash'])) {
+            if ($user) {
+                $intentos = (int)$user['intentos_fallidos'] + 1;
+                if ($intentos >= 5) {
+                    $db->prepare('UPDATE duenos SET intentos_fallidos = 0, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?')
+                       ->execute([$user['id']]);
+                } else {
+                    $db->prepare('UPDATE duenos SET intentos_fallidos = ? WHERE id = ?')->execute([$intentos, $user['id']]);
+                }
+            }
             jsonError('Correo o contraseña incorrectos.', 401);
         }
 
         $token = bin2hex(random_bytes(32));
-        $db->prepare('UPDATE duenos SET token_sesion = ?, token_creado_en = NOW() WHERE id = ?')->execute([$token, $user['id']]);
+        $db->prepare('UPDATE duenos SET token_sesion = ?, token_creado_en = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?')
+           ->execute([$token, $user['id']]);
 
         jsonOk([
             'token'         => $token,
@@ -153,12 +181,10 @@ if ($method === 'POST' && $action === 'update-profile') {
     // cliente ya la redimensiona antes de enviarla; este límite es solo
     // un respaldo por si la petición se hace directo, sin pasar por la UI.
     if (array_key_exists('foto_perfil', $body)) {
-        $foto = $body['foto_perfil'];
-        if ($foto !== null && strlen((string)$foto) > 3_000_000) {
-            jsonError('La imagen es demasiado grande.', 400);
-        }
+        $fotoErr = validarFotoBase64($body['foto_perfil']);
+        if ($fotoErr) jsonError($fotoErr, 400);
         $campos[] = 'foto_perfil = ?';
-        $params[] = clean($foto);
+        $params[] = clean($body['foto_perfil']);
     }
 
     $allowed = ['nombre', 'telefono', 'direccion', 'colonia'];
@@ -202,9 +228,14 @@ if ($method === 'POST' && $action === 'change-password') {
         jsonError('La nueva contraseña debe ser distinta a la actual.', 400);
     }
 
+    // Invalida la sesión actual (y cualquier otro token que ya hubiera
+    // circulando, robado o no): tras cambiar la contraseña hay que volver
+    // a iniciar sesión. Antes el token viejo seguía funcionando hasta por
+    // 30 días más, aun después de que la persona "aseguró" su cuenta.
     $hash = password_hash($nueva, PASSWORD_DEFAULT);
-    $db->prepare('UPDATE duenos SET password_hash = ? WHERE id = ?')->execute([$hash, $user['id']]);
-    jsonOk(['message' => 'Contraseña actualizada correctamente.']);
+    $db->prepare('UPDATE duenos SET password_hash = ?, token_sesion = NULL, token_creado_en = NULL WHERE id = ?')
+       ->execute([$hash, $user['id']]);
+    jsonOk(['message' => 'Contraseña actualizada correctamente. Vuelve a iniciar sesión.']);
 }
 
 jsonError('Acción no reconocida.', 404);
