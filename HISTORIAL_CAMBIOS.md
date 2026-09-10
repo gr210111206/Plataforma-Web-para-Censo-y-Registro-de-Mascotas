@@ -2,6 +2,30 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
 
+## 📅 [2026-09-08] — 3 bugs reportados por el usuario en "Mis mascotas" (dashboard ciudadano)
+
+### 🐛 1. El "Saltar al contenido principal" se veía como texto suelto, siempre visible
+El CSS nuevo (`.skip-link`, agregado hoy mismo en el pase de accesibilidad) nunca llegó al navegador del usuario: las 5 páginas cargan `css/styles.css?v=20260829b` con un número de versión que **no se actualizó** al tocar el archivo, así que el navegador siguió sirviendo la copia ya cacheada de antes de hoy. Corregido subiendo la versión a `?v=20260908` en las 5 páginas — fuerza a todos los navegadores a bajar el CSS actualizado.
+
+### 🐛 2. El botón "QR" no abría nada
+Dos bugs reales en `verQR()` (dashboard.html), no relacionados con lo de hoy:
+- El modal se construía y se llenaba con el código QR, pero **nunca se le agregaba la clase `open`** que usa todo el resto del sitio para mostrar un modal — quedaba armado en el HTML pero invisible.
+- La sección de información bajo el QR usaba una variable `folio` que **nunca se declaró** en esa función — al ejecutarse tronaba con `ReferenceError` a medio camino, así que ni siquiera alcanzaba a llegar al final (donde sí estaba, más abajo, el intento de abrir el modal).
+Aprovechando que ya estaba adentro corrigiendo esto: el código QR codificaba un link **relativo** (`mascota.html?token=...`) en vez de una URL completa — un celular ajeno escaneándolo probablemente no habría podido abrirlo. Ahora codifica la URL absoluta, y se agregó manejo de error por si la librería del QR (CDN externo) llega a fallar.
+
+### 🐛 3. En el modal de detalle de una mascota, el ícono se veía como texto SVG crudo
+`document.getElementById('detalle-titulo').textContent = ...` — cuando el valor es código SVG (el ícono de la especie), `textContent` lo mete como texto literal en vez de dibujarlo. Era `.innerHTML` lo que hacía falta. Bug ya existente, no introducido hoy.
+
+### 📌 Nota para la próxima vez que se edite `web/css/styles.css`
+Hay que subir el número de versión en el `<link rel="stylesheet" href="css/styles.css?v=...">` de las 5 páginas (`index`, `login`, `dashboard`, `admin`, `asistente`) — si no, los navegadores que ya visitaron el sitio antes no ven el cambio.
+
+### ✅ Verificado
+`dashboard.html` y `css/styles.css?v=20260908` cargan (200); confirmado por curl que la regla `.skip-link` ya viene en el CSS que se sirve con la nueva versión.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/login.html`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html` (versión de `styles.css`).
+- `web/dashboard.html` (`verQR()`, `verDetalle()`).
+
 ## 📅 [2026-09-08] — Fase 3 (parte 0): smoke test de la API
 
 `scripts/smoke_test.sh` (nuevo) — script de verificación rápida contra un servidor real: login por rol, endpoints públicos sin sesión, permisos correctos por rol (quién puede/no puede cada acción), y un ciclo CRUD completo de mascota (crear, consultar por token público, confirmar que el folio solo no alcanza, editar, dar de baja). No corre solo ni es parte del despliegue — es para correrlo a mano después de tocar el backend, antes de subir a producción, y agarrar regresiones como las que ya pasaron esta sesión (ver las dos correcciones de bugs de esta misma fecha más abajo). 24 verificaciones, las 24 pasan contra el estado actual.

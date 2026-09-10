@@ -6,7 +6,7 @@
   <meta name="description" content="Mi portal ciudadano — Padrón Municipal de Mascotas, El Grullo, Jalisco." />
   <title>Mi Portal — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260829b" />
+  <link rel="stylesheet" href="css/styles.css?v=20260908" />
   <style>
     /* ── Dashboard extras ── */
     .stat-trend {
@@ -908,7 +908,7 @@ function verDetalle(i) {
   const folio = pet.id || pet.folio || '—';
   const edad  = pet.edad_label || (pet.edad_anios ? pet.edad_anios + ' años' : 'N/D');
 
-  document.getElementById('detalle-titulo').textContent = `${icon} ${pet.nombre}`;
+  document.getElementById('detalle-titulo').innerHTML = `${icon} ${pet.nombre}`;
   document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(folio);
   document.getElementById('detalle-editar-btn').onclick = () => { closeModal('modal-detalle'); editarMascota(i); };
 
@@ -946,7 +946,8 @@ function verDetalle(i) {
 function verQR(i) {
   const pet = myPets[i];
   if (!pet.link_publico) { showToast('❌ Esta mascota no tiene un link público generado.', 'error'); return; }
-  const link = pet.link_publico;
+  const link  = pet.link_publico;
+  const folio = pet.id || pet.folio || '—';
 
   // Build or reuse QR modal
   let qrModal = document.getElementById('modal-qr');
@@ -973,19 +974,32 @@ function verQR(i) {
     document.body.appendChild(qrModal);
   }
 
+  // El modal se construye/reutiliza arriba pero nunca se mostraba — le
+  // faltaba la clase "open" que usa el resto del sitio para abrir modales
+  // (ver openModal()); por eso el botón "QR" no parecía hacer nada.
+  qrModal.classList.add('open');
+
   // Clear previous QR
   const qrCanvas = document.getElementById('qr-canvas');
   qrCanvas.innerHTML = '';
 
-  // Generate QR
-  new QRCode(qrCanvas, {
-    text: link,
-    width:  200,
-    height: 200,
-    colorDark:  '#1A1A1A',
-    colorLight: '#FFFFFF',
-    correctLevel: QRCode.CorrectLevel.M,
-  });
+  // Generate QR — la librería carga con "defer" desde un CDN externo; si
+  // tardó, falló, o algo la bloqueó (red del usuario, extensión), esto
+  // ya no debe dejar el modal abierto pero con el cuadro del QR vacío
+  // sin explicación.
+  const linkAbsoluto = `${window.location.origin}${window.location.pathname.replace('dashboard.html', '')}${link}`;
+  try {
+    new QRCode(qrCanvas, {
+      text: linkAbsoluto,
+      width:  200,
+      height: 200,
+      colorDark:  '#1A1A1A',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch (err) {
+    qrCanvas.innerHTML = '<div style="padding:20px; font-size:.82rem; color:var(--gray-2);">No se pudo generar el código QR. Revisa tu conexión e intenta de nuevo.</div>';
+  }
 
   // Info below QR
   document.getElementById('qr-titulo').textContent = `🔲 QR — ${pet.nombre}`;
@@ -996,8 +1010,7 @@ function verQR(i) {
     ${pet.telefono ? '<br/>📞 <strong>' + pet.telefono + '</strong>' : ''}<br/>
     <span style="font-family:monospace; font-size:.75rem; color:var(--orange-dark);">${folio}</span>
   `;
-  document.getElementById('qr-link-btn').href = link;
-  qrModal.classList.add('open');
+  document.getElementById('qr-link-btn').href = linkAbsoluto;
 }
 
 function printQR() {
