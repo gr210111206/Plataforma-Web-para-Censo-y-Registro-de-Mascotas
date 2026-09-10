@@ -1,5 +1,5 @@
 /**
- * REMAC — Datos geográficos reales de El Grullo, Jalisco
+ * Datos geográficos reales de El Grullo, Jalisco
  * H. Ayuntamiento de El Grullo, Jalisco
  *
  * Colonias (con su código postal) y nombres de calles reales del

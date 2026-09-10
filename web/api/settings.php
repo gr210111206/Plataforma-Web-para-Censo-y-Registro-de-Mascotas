@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Configuración del sitio
+ * API: Configuración del sitio
  * GET  /api/settings              → Lee toda la configuración (PÚBLICO)
  * POST /api/settings { key, value } → Guarda una clave (solo ADMIN)
  *

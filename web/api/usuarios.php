@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Gestión de cuentas ciudadanas y de personal (admin/asistente)
+ * API: Gestión de cuentas ciudadanas y de personal (admin/asistente)
  * GET  /api/usuarios                        → Listar/buscar ciudadanos (admin y asistente)
  * GET  /api/usuarios?rol=asistente          → Listar cuentas de personal de apoyo (solo admin)
  * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes juntos (solo admin)

@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Campañas y artículos
+ * API: Campañas y artículos
  * GET    /api/campanas               → Lista de campañas publicadas (público)
  * POST   /api/campanas               → Crear campaña/aviso (solo admin)
  * PUT    /api/campanas?id=X          → Actualizar campaña/aviso (solo admin)

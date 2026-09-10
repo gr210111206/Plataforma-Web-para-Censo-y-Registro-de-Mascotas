@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — Funciones auxiliares de la API
+ * Funciones auxiliares de la API
  */
 
 require_once __DIR__ . '/database.php';
@@ -26,7 +26,7 @@ set_exception_handler(function (Throwable $e): void {
 
 /* ── CORS ──────────────────────────────────────── */
 /* Antes: 'Access-Control-Allow-Origin: *' — la API respondía a
-   cualquier sitio del mundo. El frontend de REMAC solo llama a su
+   cualquier sitio del mundo. El frontend solo llama a su
    propio dominio (API_BASE_URL en api-client.js usa
    window.location.origin), así que restringir esto a los orígenes de
    desarrollo local + PRODUCTION_ORIGINS (database.php) no rompe nada
@@ -168,7 +168,7 @@ function registrarBitacora(array $user, string $accion, ?string $detalle = null)
 }
 
 /* ── Generador de folio M-GRU-XXXXXXXXX ─────────── */
-function generarFolioREMAC(): string {
+function generarFolioMunicipal(): string {
     $db = getDB();
     $db->beginTransaction();
     try {

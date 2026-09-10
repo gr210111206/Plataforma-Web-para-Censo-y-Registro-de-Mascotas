@@ -826,7 +826,7 @@ function renderPets() {
     const icon  = SPECIES_ICONS[pet.especie] || ICON_PAW;
     const color = CARD_COLORS[i % CARD_COLORS.length];
 
-    // REMAC: Alta/Baja estatus
+    // Alta/Baja estatus
     const estatusOk = (pet.estatus === 'Alta' || pet.estatus === 'activo');
     const statusBadge = estatusOk
       ? '<span class="badge badge-green">✓ Alta</span>'
@@ -1018,11 +1018,11 @@ function printQR() {
   if (!canvas) return;
   const win = window.open('');
   win.document.write(`
-    <html><head><title>QR - Mascota REMAC</title></head>
+    <html><head><title>QR - Padrón de Mascotas</title></head>
     <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Arial;gap:12px;">
       <img src="${canvas.toDataURL()}" alt="Código QR" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
       <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('🔲 QR — ','')}</div>
-      <div style="font-size:12px;color:#888;">Padrón Municipal REMAC · H. Ayuntamiento El Grullo</div>
+      <div style="font-size:12px;color:#888;">Padrón Municipal de Mascotas · H. Ayuntamiento El Grullo</div>
     </body></html>`);
   win.document.close();
   setTimeout(() => win.print(), 500);
@@ -1170,7 +1170,7 @@ function downloadActa(folio) {
   doc.setFontSize(15);
   doc.text('H. Ayuntamiento Constitucional de El Grullo, Jalisco', pageW / 2, 10, { align: 'center' });
   doc.setFontSize(11);
-  doc.text('Acta Oficial de Registro — Padrón Municipal de Mascotas (REMAC)', pageW / 2, 18, { align: 'center' });
+  doc.text('Acta Oficial de Registro — Padrón Municipal de Mascotas', pageW / 2, 18, { align: 'center' });
 
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
@@ -1207,7 +1207,7 @@ function downloadActa(folio) {
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
   doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('dashboard.html','')}${pet.link_publico}`, 14, y + 6);
-  doc.text('Documento generado por el sistema REMAC. Válido como comprobante de registro municipal.', 14, y + 12);
+  doc.text('Documento generado por el Padrón Municipal de Mascotas. Válido como comprobante de registro municipal.', 14, y + 12);
 
   doc.save(`${folio}.pdf`);
   showToast('✅ Acta descargada correctamente', 'success');

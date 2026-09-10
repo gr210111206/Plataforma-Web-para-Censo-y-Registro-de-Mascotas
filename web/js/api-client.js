@@ -1,15 +1,9 @@
 /**
- * REMAC — Cliente de la API REST
+ * Cliente de la API REST
  * H. Ayuntamiento de El Grullo, Jalisco
  *
- * Este archivo reemplaza las llamadas a mock-data.js
- * cuando el backend en HostGator esté listo.
- *
- * USO:
- *   1. Cambia API_BASE_URL a tu dominio real.
- *   2. En cada página HTML, carga este archivo
- *      EN VEZ de mock-data.js:
- *        <script src="js/api-client.js"></script>
+ * USO: carga este archivo en cada página HTML:
+ *   <script src="js/api-client.js"></script>
  */
 
 /* ══════════════════════════════════════════════
@@ -24,9 +18,6 @@
 // funciona en cualquier equipo/dispositivo/dominio sin editar este archivo.
 const API_BASE_URL = window.location.origin +
   window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/api';
-
-// En desarrollo local, usa mock-data en vez de la API:
-const USE_MOCK = false;  // → Cambia a true si aún no tienes hosting
 
 /* ══════════════════════════════════════════════
    HELPERS INTERNOS
@@ -393,14 +384,3 @@ async function apiSaveSiteConfig(key, value) {
   });
 }
 
-/* ══════════════════════════════════════════════
-   COMPATIBILIDAD con mock-data.js
-   Si USE_MOCK = true, las llamadas van a mock-data.
-   Así puedes cambiar fácilmente de mock → API real.
-   ══════════════════════════════════════════════ */
-
-if (typeof USE_MOCK !== 'undefined' && USE_MOCK) {
-  console.info('[REMAC] Modo MOCK activo — usando datos locales');
-} else {
-  console.info('[REMAC] Modo API activo →', API_BASE_URL);
-}

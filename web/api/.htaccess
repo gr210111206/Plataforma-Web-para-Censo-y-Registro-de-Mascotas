@@ -1,4 +1,4 @@
-# REMAC — Apache .htaccess para la API
+# Apache .htaccess para la API
 # Coloca este archivo en la carpeta /api/
 
 Options -Indexes

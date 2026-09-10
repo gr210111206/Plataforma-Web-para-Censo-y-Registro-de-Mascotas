@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — Respaldo automático de la base de datos
+ * Respaldo automático de la base de datos
  *
  * Pensado para correr como Cron Job de HostGator (cPanel → "Cron Jobs"),
  * ej. todos los días a las 3am:

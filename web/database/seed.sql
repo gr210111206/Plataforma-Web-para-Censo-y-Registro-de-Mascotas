@@ -1,12 +1,12 @@
 -- ══════════════════════════════════════════════════
--- REMAC — Datos de prueba (seed)
+-- Datos de prueba (seed)
 -- Ejecutar DESPUÉS de schema.sql, en la misma base de datos
 -- (no lleva "USE remac_db" para funcionar con cualquier nombre real).
 -- ══════════════════════════════════════════════════
 
 -- ── Dueños / Usuarios ────────────────────────────
 INSERT INTO duenos (nombre, telefono, email, direccion, colonia, password_hash, rol) VALUES
-('Administrador REMAC',   '341-000-0000', 'admin@remac.elgrullo.mx', NULL,          NULL,                '$2y$10$8ksdbsV2S2s5xMoNpX5Zg.n6rAh/XK/e8kwHmaw45wk2wQYixXDtW', 'admin'),
+('Administrador Municipal', '341-000-0000', 'admin@remac.elgrullo.mx', NULL,          NULL,                '$2y$10$8ksdbsV2S2s5xMoNpX5Zg.n6rAh/XK/e8kwHmaw45wk2wQYixXDtW', 'admin'),
 ('María García López',   '341-123-4567', 'maria@demo.com',        'Morelos 45',   'El Grullo centro', '$2y$10$AC5BxT5yAPTK5J28QygboeO0bKRxv7XioIgJP9YG3SAtKzkkXerH6', 'ciudadano'),
 ('Carlos Ramírez Flores','341-234-5678', 'carlos@demo.com',       'Hidalgo 12',   '10 de mayo',       NULL, 'ciudadano'),
 ('Ana Pérez Morales',    '341-345-6789', 'ana@demo.com',          'Juárez 78',    'Del sur',          NULL, 'ciudadano'),

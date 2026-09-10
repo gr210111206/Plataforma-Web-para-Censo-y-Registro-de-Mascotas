@@ -1,0 +1,101 @@
+{\rtf1\ansi\ansicpg1252\deff0\deflang3082
+{\fonttbl{\f0\fswiss\fcharset0 Calibri;}{\f1\froman\fcharset0 Times New Roman;}}
+{\colortbl;\red31\green78\blue121;\red46\green116\blue181;\red0\green0\blue0;}
+\paperw12240\paperh15840\margl1440\margr1440\margt1440\margb1440
+\f0\fs22
+
+\qc\fs44\b\cf1 MARCO TE\'d3RICO\par
+\fs28 Sistema de Registro y Censo de Mascotas\par
+\fs22\i H. Ayuntamiento Constitucional de El Grullo, Jalisco (2024\'962027)\i0\par
+\fs20\par
+Direcci\'f3n de Medio Ambiente e Inform\'e1tica Municipal\par
+Plataforma Web para Censo y Registro de Mascotas\par
+\fs20\par 2026\par
+\page
+\ql\cf0\b0\fs22
+
+\b\fs30\cf1 1. Introducci\'f3n\b0\cf0\fs22\par
+\fs22\par
+El presente marco te\'f3rico sustenta el desarrollo de esta plataforma web, destinada al censo y registro oficial de animales de compa\'f1\'eda (perros y gatos) en el municipio de El Grullo, Jalisco. El documento describe los antecedentes del problema que motiva el proyecto, los conceptos y modelos de datos que sustentan su dise\'f1o, as\'ed como las tecnolog\'edas, lenguajes, protocolos y herramientas empleadas en su construcci\'f3n, con el prop\'f3sito de justificar las decisiones t\'e9cnicas tomadas durante el desarrollo del sistema.\par
+\par
+
+\b\fs30\cf1 2. Antecedentes\b0\cf0\fs22\par
+\par
+La tenencia responsable de animales de compa\'f1\'eda es un tema de creciente relevancia en la administraci\'f3n p\'fablica municipal en M\'e9xico. La ausencia de un padr\'f3n formal de mascotas dificulta a los ayuntamientos labores como el control de campa\'f1as de esterilizaci\'f3n y vacunaci\'f3n antirr\'e1bica, la atenci\'f3n a reportes de maltrato o extrav\'edo, y la generaci\'f3n de estad\'edsticas confiables sobre la poblaci\'f3n animal del municipio.\par
+\par
+Diversos municipios mexicanos han impulsado iniciativas de registro de mascotas apoyadas en credenciales o placas de identificaci\'f3n, generalmente bajo procesos manuales o en papel, lo que limita su alcance y actualizaci\'f3n. Este proyecto surge como respuesta a esta necesidad concreta del H. Ayuntamiento de El Grullo: dotar a la administraci\'f3n municipal 2024\'962027 de una herramienta digital que permita a cualquier ciudadano registrar a su mascota desde un navegador, obtener un acta digital con folio \'fanico verificable (formato M-GRU-XXXXXXXXX) y, del lado institucional, dar seguimiento estad\'edstico y de campa\'f1as de salud animal, incluyendo un mecanismo de auditor\'eda (bit\'e1cora) sobre las acciones administrativas realizadas dentro del sistema.\par
+\par
+El proyecto se apoya conceptualmente en la Ley General en Materia de Bienestar Animal y en los reglamentos municipales de protecci\'f3n y bienestar animal vigentes en Jalisco, que reconocen la importancia de contar con registros oficiales para la planeaci\'f3n de pol\'edticas p\'fablicas de salud y bienestar animal a nivel local.\par
+\par
+
+\b\fs30\cf1 3. Marco Conceptual\b0\cf0\fs22\par
+\par
+\b\fs26\cf2 3.1 Censo y padr\'f3n municipal\b0\cf0\fs22\par
+Un padr\'f3n es un registro administrativo, ordenado y actualizable, de personas, bienes o \'97como en este caso\'97 animales, que sirve como base para la toma de decisiones de gobierno. A diferencia de un censo puntual (una fotograf\'eda en el tiempo), un padr\'f3n digital como este se actualiza de forma continua conforme los ciudadanos registran, editan o dan de baja a sus mascotas, lo que permite mantener estad\'edsticas vigentes en todo momento.\par
+\par
+\b\fs26\cf2 3.2 Arquitectura cliente-servidor y API REST\b0\cf0\fs22\par
+El sistema est\'e1 construido bajo el modelo cliente-servidor: el cliente (navegador) ejecuta HTML, CSS y JavaScript, y se comunica mediante peticiones HTTP con un conjunto de servicios en el servidor (API) que procesan la l\'f3gica de negocio y el acceso a datos. Estos servicios siguen los principios de una API REST (Representational State Transfer), un estilo arquitect\'f3nico descrito originalmente por Roy T. Fielding, en el cual cada recurso (mascotas, usuarios, campa\'f1as, estad\'edsticas) se expone mediante una URL y se manipula con verbos HTTP est\'e1ndar (GET, POST, PUT, DELETE), devolviendo datos en formato JSON.\par
+\par
+\b\fs26\cf2 3.3 Autenticaci\'f3n, sesiones y control de acceso basado en roles (RBAC)\b0\cf0\fs22\par
+El sistema implementa control de acceso basado en roles (Role-Based Access Control, RBAC), un modelo en el que los permisos no se asignan a usuarios individuales sino a roles predefinidos. El sistema define tres roles \'97ciudadano, asistente y administrador\'97, adem\'e1s de una bandera puntual de superadministrador para una \'fanica cuenta, cada uno con un conjunto distinto de acciones permitidas sobre las APIs. La autenticaci\'f3n se resuelve mediante credenciales (correo/contrase\'f1a) y un token de sesi\'f3n almacenado en el servidor, validado en cada solicitud protegida (patr\'f3n equivalente a un middleware de autenticaci\'f3n).\par
+\par
+\b\fs26\cf2 3.4 Identificadores p\'fablicos no adivinables\b0\cf0\fs22\par
+Para evitar que el acta digital de una mascota pueda ser consultada por terceros simplemente adivinando o incrementando un folio consecutivo (una debilidad conocida como Insecure Direct Object Reference, IDOR, catalogada por el proyecto OWASP), el sistema separa el folio visible e informativo (consecutivo, ej. M-GRU-000000001) de un token p\'fablico aleatorio de alta entrop\'eda, que es el verdadero identificador usado para exponer la ficha p\'fablica de la mascota y el c\'f3digo QR del acta.\par
+\par
+\b\fs26\cf2 3.5 Auditor\'eda y trazabilidad (bit\'e1cora)\b0\cf0\fs22\par
+La bit\'e1cora de auditor\'eda es un registro inmutable y cronol\'f3gico de acciones sensibles realizadas dentro de un sistema (qui\'e9n hizo qu\'e9 y cu\'e1ndo), un mecanismo est\'e1ndar de gobernanza de sistemas de informaci\'f3n que permite a una instituci\'f3n rendir cuentas y detectar usos indebidos. En este sistema, la bit\'e1cora registra espec\'edficamente acciones de gobierno \'97cambios de rol, activaci\'f3n o desactivaci\'f3n de cuentas, bajas o ediciones de mascotas ajenas\'97 y deliberadamente omite el uso cotidiano del sistema para no generar ruido.\par
+\par
+
+\b\fs30\cf1 4. Tecnolog\'edas Empleadas\b0\cf0\fs22\par
+\par
+\b\fs26\cf2 4.1 HTML5\b0\cf0\fs22\par
+HTML5 es la quinta revisi\'f3n mayor del lenguaje de marcado de hipertexto, estandarizada por el World Wide Web Consortium (W3C), que incorpora elementos sem\'e1nticos (header, nav, main, section, footer) y atributos de accesibilidad (ARIA) usados en el sistema para estructurar sus seis p\'e1ginas (portada, login, panel ciudadano, panel administrativo, registro asistido y ficha p\'fablica de mascota) de forma navegable tanto visualmente como por lectores de pantalla y teclado.\par
+\par
+\b\fs26\cf2 4.2 CSS3\b0\cf0\fs22\par
+CSS3 (Cascading Style Sheets, nivel 3) es el lenguaje de hojas de estilo usado para definir la presentaci\'f3n visual del documento HTML, separando el contenido de su forma. El sistema utiliza caracter\'edsticas modernas de CSS3 como variables personalizadas (custom properties, ej. --orange, --dark, --surface) para mantener un sistema de dise\'f1o consistente, Flexbox y CSS Grid para maquetaci\'f3n responsiva, y efectos de glassmorphism (superficies transl\'facidas con desenfoque) mediante la propiedad backdrop-filter.\par
+\par
+\b\fs26\cf2 4.3 JavaScript (ES6+), vanilla\b0\cf0\fs22\par
+JavaScript es el lenguaje de programaci\'f3n interpretado que se ejecuta en el navegador y permite manipular el Document Object Model (DOM) de forma din\'e1mica. El proyecto emplea JavaScript vanilla \'97sin frameworks como React o Vue\'97 organizado en m\'f3dulos por responsabilidad (api-client.js para el consumo de la API, el-grullo-data.js con los datos geogr\'e1ficos reales del municipio, tema.js para aplicar el tema visual configurado desde el panel administrativo), utilizando caracter\'edsticas de ECMAScript 6 y posteriores como funciones flecha, async/await para peticiones as\'edncronas mediante la Fetch API, y plantillas de cadena (template literals).\par
+\par
+\b\fs26\cf2 4.4 PHP\b0\cf0\fs22\par
+PHP (PHP: Hypertext Preprocessor) es un lenguaje de programaci\'f3n de prop\'f3sito general del lado del servidor, ampliamente utilizado en desarrollo web. El sistema utiliza PHP nativo (sin frameworks como Laravel o Symfony) en su versi\'f3n 8.x para implementar la capa de API RESTful, aprovechando caracter\'edsticas de PHP 8 como el operador de fusi\'f3n null-safe y tipado de propiedades. Cada archivo bajo web/api/ expone un recurso (auth.php, mascotas.php, usuarios.php, stats.php, contenido.php, bitacora.php, settings.php), siguiendo el principio de responsabilidad \'fanica.\par
+\par
+\b\fs26\cf2 4.5 MySQL y PDO\b0\cf0\fs22\par
+MySQL es un sistema gestor de bases de datos relacionales (RDBMS) de c\'f3digo abierto, utilizado por el sistema para persistir la informaci\'f3n de due\'f1os, mascotas, campa\'f1as, art\'edculos, bit\'e1cora y configuraci\'f3n del sitio, con relaciones declaradas mediante llaves for\'e1neas (por ejemplo, mascotas.dueno_id referencia a duenos.id) y motor de almacenamiento InnoDB, que soporta transacciones e integridad referencial. El acceso a la base de datos desde PHP se realiza mediante PDO (PHP Data Objects), una capa de abstracci\'f3n que permite el uso de consultas preparadas (prepared statements) con par\'e1metros vinculados, la defensa est\'e1ndar de la industria contra ataques de inyecci\'f3n SQL.\par
+\par
+\b\fs26\cf2 4.6 Seguridad de contrase\'f1as y hashing\b0\cf0\fs22\par
+Las contrase\'f1as de los usuarios no se almacenan en texto plano ni cifradas de forma reversible, sino mediante funciones de hash de un solo sentido. PHP provee para ello la funci\'f3n password_hash() (algoritmo bcrypt por defecto) junto con password_verify(), el mecanismo recomendado por la documentaci\'f3n oficial de PHP y alineado con las gu\'edas de almacenamiento de contrase\'f1as del proyecto OWASP (OWASP Password Storage Cheat Sheet).\par
+\par
+\b\fs26\cf2 4.7 JSON\b0\cf0\fs22\par
+JSON (JavaScript Object Notation) es un formato ligero de intercambio de datos, basado en una subestructura de la sintaxis de objetos de JavaScript pero independiente de lenguaje, estandarizado en RFC 8259. Es el formato en el que la API del sistema intercambia informaci\'f3n entre el servidor PHP y el cliente JavaScript.\par
+\par
+\b\fs26\cf2 4.8 Codificaci\'f3n Base64 para im\'e1genes\b0\cf0\fs22\par
+Base64 es un esquema de codificaci\'f3n que representa datos binarios (como una imagen) en una cadena de caracteres ASCII, definido en RFC 4648. El sistema lo utiliza para almacenar fotograf\'edas de mascotas, perfiles de usuario y banners de campa\'f1as directamente como texto dentro de columnas LONGTEXT de la base de datos, evitando as\'ed la necesidad de un sistema de archivos separado en el hosting compartido, a costa de un mayor tama\'f1o de almacenamiento \'97 mitigado mediante redimensionado y compresi\'f3n de im\'e1genes con la Canvas API de HTML5 antes de subirlas.\par
+\par
+\b\fs26\cf2 4.9 C\'f3digos QR\b0\cf0\fs22\par
+El c\'f3digo QR (Quick Response) es un c\'f3digo de barras bidimensional capaz de almacenar una URL, que el sistema genera para cada acta de mascota codificando la URL p\'fablica absoluta de su ficha (basada en el token_publico), permitiendo su verificaci\'f3n f\'edsica mediante cualquier lector de QR o c\'e1mara de tel\'e9fono inteligente.\par
+\par
+
+\b\fs30\cf1 5. Herramientas y Entorno de Desarrollo\b0\cf0\fs22\par
+\par
+{\pntext\f0 \'b7\tab}Git y GitHub \'97 control de versiones distribuido y alojamiento del repositorio del proyecto (gr210111206/Plataforma-Web-para-Censo-y-Registro-de-Mascotas), permitiendo el historial de cambios, colaboraci\'f3n y respaldo del c\'f3digo fuente.\par
+{\pntext\f0 \'b7\tab}phpMyAdmin \'97 interfaz web para la administraci\'f3n de la base de datos MySQL, incluida en el panel de control cPanel del proveedor de hosting.\par
+{\pntext\f0 \'b7\tab}cPanel / Apache \'97 panel de control de hosting compartido y servidor web utilizados en el entorno de producci\'f3n (HostGator), incluyendo el m\'f3dulo mod_rewrite de Apache para exponer rutas de API sin extensi\'f3n de archivo mediante reglas en .htaccess.\par
+{\pntext\f0 \'b7\tab}Claude Code \'97 asistente de desarrollo basado en inteligencia artificial utilizado como apoyo en la escritura, revisi\'f3n y documentaci\'f3n incremental del c\'f3digo a lo largo del proyecto.\par
+{\pntext\f0 \'b7\tab}mysqldump \'97 utilidad de l\'ednea de comandos de MySQL empleada para generar respaldos automatizados y programados de la base de datos.\par
+\par
+
+\b\fs30\cf1 6. Fuentes de Informaci\'f3n\b0\cf0\fs22\par
+\par
+\b [1]\b0  World Wide Web Consortium (W3C). (2023). HTML Living Standard / HTML5 Specification. https://html.spec.whatwg.org/\par
+\b [2]\b0  World Wide Web Consortium (W3C). (2023). Cascading Style Sheets (CSS) Snapshot. https://www.w3.org/Style/CSS/\par
+\b [3]\b0  Mozilla Developer Network (MDN). JavaScript Guide y Web APIs. https://developer.mozilla.org/es/docs/Web/JavaScript\par
+\b [4]\b0  The PHP Group. PHP Manual \'97 password_hash, PDO, sintaxis del lenguaje. https://www.php.net/manual/es/\par
+\b [5]\b0  Oracle Corporation. MySQL 8.0 Reference Manual. https://dev.mysql.com/doc/refman/8.0/en/\par
+\b [6]\b0  Fielding, R. T. (2000). Architectural Styles and the Design of Network-based Software Architectures (Tesis doctoral, Universidad de California, Irvine) \'97 cap\'edtulo 5, Representational State Transfer (REST). https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm\par
+\b [7]\b0  OWASP Foundation. OWASP Top Ten y Password Storage Cheat Sheet. https://owasp.org/www-project-top-ten/ y https://cheatsheetseries.owasp.org/\par
+\b [8]\b0  Bray, T. (Ed.). (2017). RFC 8259 \'97 The JavaScript Object Notation (JSON) Data Interchange Format. Internet Engineering Task Force (IETF). https://www.rfc-editor.org/rfc/rfc8259\par
+\b [9]\b0  Josefsson, S. (2006). RFC 4648 \'97 The Base16, Base32, and Base64 Data Encodings. Internet Engineering Task Force (IETF). https://www.rfc-editor.org/rfc/rfc4648\par
+\b [10]\b0  C\'e1mara de Diputados del H. Congreso de la Uni\'f3n. Ley General en Materia de Bienestar Animal (\'faltima reforma publicada). Diario Oficial de la Federaci\'f3n.\par
+\b [11]\b0  H. Ayuntamiento Constitucional de El Grullo, Jalisco. Reglamento de Protecci\'f3n y Bienestar Animal del municipio de El Grullo.\par
+}

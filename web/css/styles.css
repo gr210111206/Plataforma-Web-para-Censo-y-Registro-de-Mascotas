@@ -1553,7 +1553,7 @@ tbody tr:hover { background: var(--surface); }
 }
 
 /* ════════════════════════════════════════════
-   REMAC — Componentes de formulario
+   Componentes de formulario
    ════════════════════════════════════════════ */
 
 /* ── Toggle group (Especie, Sexo, Estatus) ── */
@@ -1626,13 +1626,6 @@ tbody tr:hover { background: var(--surface); }
   color: var(--orange-dark); letter-spacing: .05em;
 }
 
-/* ── REMAC badges en tarjetas ── */
-.remac-badge {
-  display: inline-block; background: var(--orange-pale);
-  border: 1px solid rgba(var(--orange-rgb),.3); border-radius: 4px;
-  padding: 2px 8px; font-family: monospace; font-size: .72rem;
-  font-weight: 700; color: var(--orange-dark); letter-spacing: .03em;
-}
 .estatus-alta { background: var(--green-light) !important; color: var(--green) !important; }
 .estatus-baja { background: #f5f5f5 !important; color: var(--gray-2) !important; }
 

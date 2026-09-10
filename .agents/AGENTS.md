@@ -1,4 +1,4 @@
-# Reglas del Proyecto REMAC
+# Reglas del Proyecto — Padrón Municipal de Mascotas de El Grullo
 
 ## 📜 Registro Obligatorio de Cambios (Changelog)
 - En cada turno, tarea o modificación realizada en el proyecto, **actualizar de forma continua y detallada** el archivo `HISTORIAL_CAMBIOS.md` ubicado en la raíz del proyecto.

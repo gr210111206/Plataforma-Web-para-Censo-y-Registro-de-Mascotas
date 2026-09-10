@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Bitácora de auditoría
+ * API: Bitácora de auditoría
  * GET /api/bitacora.php?page=&pageSize= → Lista paginada (solo admin)
  */
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — Configuración de la base de datos (PLANTILLA)
+ * Configuración de la base de datos (PLANTILLA)
  * H. Ayuntamiento de El Grullo, Jalisco
  *
  * Copia este archivo como "database.php" (mismo folder) y rellena

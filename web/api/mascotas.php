@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Mascotas
+ * API: Mascotas
  *
  * GET    /api/mascotas              → Listar (admin: todas | ciudadano: las suyas)
  * GET    /api/mascotas?token=XXXXX  → Ver una (PÚBLICO — para el QR/acta)
@@ -140,7 +140,7 @@ if ($method === 'POST') {
     $fotoErr = validarFotoBase64($body['foto_url'] ?? null);
     if ($fotoErr) jsonError($fotoErr, 400);
 
-    $folio        = generarFolioREMAC();
+    $folio        = generarFolioMunicipal();
     $tokenPublico = bin2hex(random_bytes(16));
 
     $stmt = $db->prepare('

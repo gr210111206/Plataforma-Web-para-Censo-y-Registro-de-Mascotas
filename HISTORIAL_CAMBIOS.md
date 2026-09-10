@@ -1,6 +1,37 @@
-# 📜 Historial de Cambios — REMAC (Padrón Municipal de Mascotas El Grullo)
+# 📜 Historial de Cambios — Padrón Municipal de Mascotas (El Grullo)
 
-Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto **REMAC**.
+Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
+
+## 📅 [2026-09-10] — Se quita "REMAC" de todo el proyecto
+
+### 🤔 Contexto
+El título oficial del proyecto es **"Desarrollo de Plataforma Web para Censo y Registro de Mascotas en el Municipio de El Grullo, Jalisco"** — "REMAC" nunca fue ese nombre oficial, era solo un apodo interno que se fue colando en comentarios de código, títulos de página, el acta PDF, y hasta en el propio Marco Teórico. El usuario pidió quitarlo de todo el proyecto, sin reemplazarlo por ninguna otra marca/sigla — solo descripciones directas ("Padrón Municipal de Mascotas", "el sistema", etc. según el contexto).
+
+### 🔧 Cambios
+- **Código muerto eliminado** (en vez de solo renombrarlo): `web/js/mock-data.js` (nunca lo cargaba ninguna página — confirmado antes de borrar) y el bloque `USE_MOCK`/"modo mock" en `api-client.js` que dependía de él; la clase CSS `.remac-badge` (sin ningún uso en HTML/JS).
+- **Identificadores internos renombrados** (seguros de cambiar, sin depender de nada externo): `generarFolioREMAC()` → `generarFolioMunicipal()` (`helpers.php`, `mascotas.php`); la llave de `localStorage` `remac_asistente_estado_*` → `asistente_estado_*` (`asistente.html`).
+- **Texto visible para cualquier persona**: títulos de las 6 páginas, el acta PDF oficial (título y pie de página — se genera igual en `dashboard.html`, `admin.html` y `asistente.html`, las 3 copias se corrigieron), el aviso de privacidad, las preguntas frecuentes, la página pública de cada mascota (`mascota.html`).
+- **Comentarios de código**: encabezado de los 9 archivos PHP de `web/api/`, los 3 archivos de `web/js/`, `schema.sql`, `seed.sql`, los 2 `.htaccess`, `scripts/backup_db.php` y `scripts/smoke_test.sh`, `styles.css`.
+- **Documentación**: `CLAUDE.md` (reescrito — de paso se corrigió que mencionaba `mock-data.js`/`main.js`/`db.php`, archivos que ya no existen con esos nombres, y el formato de folio viejo), `.agents/AGENTS.md`, `MANEJO_DE_IMAGENES.md`, `CUENTAS_PRUEBA.md` (de paso se actualizaron las credenciales reales de HostGator, que ya habían cambiado hoy mismo).
+- **El Marco Teórico de verdad** (`Marco_Teorico_REMAC.rtf` → `Marco_Teorico.rtf`): 14 menciones de "REMAC" en el cuerpo del texto académico, corregidas una por una preservando el formato RTF; de paso se actualizó el folio de ejemplo (`REMAC-GRU-2026-001` → `M-GRU-000000001`) y la lista de módulos JS (mencionaba `mock-data.js`/`main.js`, ya no existen).
+- **Cuenta admin semilla**: el nombre visible de la cuenta admin de prueba era literalmente "Administrador REMAC" (aparecía tal cual en la bitácora de auditoría) — cambiado a "Administrador Municipal" en `seed.sql` y en la base de datos local ya sembrada.
+- **`HISTORIAL_CAMBIOS.md`**: se cambió el título/introducción del documento, pero **a propósito NO se reescribió el cuerpo de entradas ya fechadas** — son un registro histórico de lo que era cierto en su momento, no documentación viva.
+
+### 🚫 Lo que NO se tocó (a propósito)
+- El correo `admin@remac.elgrullo.mx` — es una credencial real de acceso (login de la cuenta admin), no una marca; cambiarlo requeriría también cambiar la cuenta real en HostGator/local.
+- Nombres de base de datos/usuario/carpeta local (`remac_db`, `remac_local`, `C:\xampp\htdocs\remac`) — son configuración de infraestructura real (local y de ejemplo), no branding visible; renombrarlos exige también renombrar la carpeta XAMPP y la base de datos física, fuera del alcance de este cambio.
+
+### ✅ Verificado
+Barrido completo confirmado con `grep` recursivo case-insensitive sobre todo el proyecto — cero coincidencias de "REMAC" fuera de `HISTORIAL_CAMBIOS.md` (histórico, a propósito) y las excepciones documentadas arriba. `php -l` limpio en los 10 archivos PHP tocados. Las 6 páginas cargan (200). `scripts/smoke_test.sh` completo (24 verificaciones, 0 fallas) — confirma que `generarFolioMunicipal()` sigue generando folios válidos tras el renombre.
+
+### 📂 Archivos modificados
+- Eliminados: `web/js/mock-data.js`.
+- Renombrado: `Marco_Teorico_REMAC.rtf` → `Marco_Teorico.rtf`.
+- Backend: `web/api/{auth,bitacora,mascotas,usuarios,settings,stats,contenido}.php`, `web/api/config/{helpers,database,database.example}.php`.
+- Frontend: `web/{index,login,dashboard,admin,asistente,mascota}.html`, `web/js/{api-client,el-grullo-data,tema}.js`, `web/css/styles.css`, `web/.htaccess`, `web/api/.htaccess`.
+- Base de datos: `web/database/{schema,seed}.sql` + base de datos local ya sembrada.
+- Scripts: `scripts/{backup_db.php,smoke_test.sh}`.
+- Documentación: `CLAUDE.md`, `.agents/AGENTS.md`, `MANEJO_DE_IMAGENES.md`, `CUENTAS_PRUEBA.md`, `HISTORIAL_CAMBIOS.md`, `Marco_Teorico.rtf`.
 
 ## 📅 [2026-09-08] — 3 bugs reportados por el usuario en "Mis mascotas" (dashboard ciudadano)
 

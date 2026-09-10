@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Perfil público de mascota registrada en el Padrón Municipal REMAC de El Grullo, Jalisco." />
-  <title>Mascota REMAC — El Grullo</title>
+  <meta name="description" content="Perfil público de mascota registrada en el Padrón Municipal de Mascotas de El Grullo, Jalisco." />
+  <title>Mascota — Padrón de El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" />
@@ -262,7 +262,7 @@ function renderPet(pet) {
     <div class="card-header">
       <div class="card-header-badge">
         <img src="Imagenes/Logo blanco.png" alt="El Grullo" style="height:18px; width:auto; vertical-align:middle;" />
-        Padrón Municipal REMAC · El Grullo
+        Padrón Municipal de Mascotas · El Grullo
       </div>
       <div class="card-avatar">${avatarContent}</div>
       <div class="card-pet-name">${pet.nombre}</div>
@@ -274,7 +274,7 @@ function renderPet(pet) {
       <div class="info-row">
         <div class="info-icon">${ICON_ID}</div>
         <div class="info-content">
-          <div class="info-label">Folio REMAC</div>
+          <div class="info-label">Folio</div>
           <div class="info-value mono">${pet.id}</div>
         </div>
       </div>
@@ -345,7 +345,7 @@ function renderPet(pet) {
     <div class="card-footer">
       <div class="card-footer-logo" style="display:flex; align-items:center; justify-content:center; gap:8px;">
         <img src="Imagenes/LOGO 1.png" alt="H. Ayuntamiento" style="height:22px; width:auto;" />
-        Registrado en <strong>REMAC</strong> — H. Ayuntamiento de El Grullo, Jal.
+        Registrado en el Padrón Municipal de Mascotas — H. Ayuntamiento de El Grullo, Jal.
       </div>
     </div>
   `;
@@ -356,13 +356,13 @@ function renderNotFound() {
     <div class="not-found">
       <div class="not-found-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:2.2rem;height:2.2rem;"><path d="m13.5 8.5-5 5" /><path d="m8.5 8.5 5 5" /><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg></div>
       <h2>Mascota no encontrada</h2>
-      <p>Este enlace no corresponde a ninguna mascota registrada en el padrón REMAC.</p>
+      <p>Este enlace no corresponde a ninguna mascota registrada en el padrón municipal.</p>
       <p style="margin-top:12px; font-size:.8rem;">Si crees que es un error, contacta al Ayuntamiento.</p>
     </div>
     <div class="card-footer">
       <div class="card-footer-logo" style="display:flex; align-items:center; justify-content:center; gap:8px;">
         <img src="Imagenes/LOGO 1.png" alt="H. Ayuntamiento" style="height:22px; width:auto;" />
-        <strong>REMAC</strong> — H. Ayuntamiento de El Grullo, Jal.
+        Padrón Municipal de Mascotas — H. Ayuntamiento de El Grullo, Jal.
       </div>
     </div>
   `;
@@ -382,7 +382,7 @@ async function findPet(token) {
   const pet = await findPet(publicToken);
   if (pet) {
     renderPet(pet);
-    document.title = `${pet.nombre} — REMAC · El Grullo`;
+    document.title = `${pet.nombre} — Padrón de El Grullo`;
   } else {
     renderNotFound();
   }

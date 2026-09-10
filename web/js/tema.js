@@ -1,5 +1,5 @@
 /**
- * REMAC — Aplica el tema visual configurado desde el panel admin
+ * Aplica el tema visual configurado desde el panel admin
  * H. Ayuntamiento de El Grullo, Jalisco
  *
  * Antes, "Tema visual" (color + bordes) solo actualizaba una vista

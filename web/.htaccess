@@ -1,4 +1,4 @@
-# REMAC — Apache .htaccess para el sitio (carpeta raíz de web/)
+# Apache .htaccess para el sitio (carpeta raíz de web/)
 
 Options -Indexes
 

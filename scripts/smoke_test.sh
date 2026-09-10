@@ -1,5 +1,5 @@
 #!/bin/bash
-# REMAC — Smoke test de la API
+# Smoke test de la API
 #
 # Prueba de extremo a extremo, contra un servidor real (local o remoto):
 # login por rol, permisos correctos por rol, y un ciclo CRUD completo de
@@ -9,7 +9,7 @@
 #
 # Uso:
 #   bash scripts/smoke_test.sh                                    # usa http://localhost/remac
-#   BASE_URL=https://tumascota-elgrullo.com bash scripts/smoke_test.sh
+#   BASE_URL=https://mascota-elgrullo.com bash scripts/smoke_test.sh
 #
 # Requiere las cuentas de prueba de CUENTAS_PRUEBA.md ya sembradas
 # (seed.sql) en la base de datos contra la que se corre.
@@ -56,7 +56,7 @@ codigo_http() { # codigo_http METHOD URL [TOKEN] [BODY]  → imprime el código 
   fi
 }
 
-echo "REMAC — smoke test contra $BASE_URL"
+echo "Padrón Municipal de Mascotas — smoke test contra $BASE_URL"
 echo "───────────────────────────────────────────"
 
 # ── 1. Login por rol ─────────────────────────────

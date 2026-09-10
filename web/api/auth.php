@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Autenticación
+ * API: Autenticación
  * POST /api/auth.php?action=register → Crear cuenta de usuario
  * POST /api/auth.php?action=login    → Iniciar sesión (email + password)
  * POST /api/auth.php?action=logout   → Cierra la sesión

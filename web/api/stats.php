@@ -1,6 +1,6 @@
 <?php
 /**
- * REMAC — API: Estadísticas
+ * API: Estadísticas
  * GET /api/stats → Números para el dashboard y mapa
  */
 

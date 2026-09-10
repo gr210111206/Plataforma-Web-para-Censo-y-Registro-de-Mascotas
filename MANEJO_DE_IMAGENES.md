@@ -1,4 +1,4 @@
-# 🖼️ Manejo de Imágenes en REMAC
+# 🖼️ Manejo de Imágenes en el Padrón Municipal de Mascotas
 
 Documento de referencia técnica: cómo se suben, comprimen, guardan y muestran todas las imágenes del sistema (fotos de mascota, fotos de perfil, íconos/logos del sitio, imágenes de artículos). Pensado para poder explicar este apartado a detalle — por ejemplo, en la defensa del proyecto ante un asesor o profesor.
 
@@ -6,7 +6,7 @@ Documento de referencia técnica: cómo se suben, comprimen, guardan y muestran 
 
 ## 1. Resumen ejecutivo
 
-**REMAC no guarda las imágenes como archivos en el servidor.** Todas las imágenes que sube un usuario (foto de una mascota, foto de perfil, logos del sitio, imágenes dentro de un artículo) se convierten en el propio navegador a **texto Base64** y se guardan **directo dentro de una columna de la base de datos MySQL**, junto con el resto de los datos de esa fila.
+**El sistema no guarda las imágenes como archivos en el servidor.** Todas las imágenes que sube un usuario (foto de una mascota, foto de perfil, logos del sitio, imágenes dentro de un artículo) se convierten en el propio navegador a **texto Base64** y se guardan **directo dentro de una columna de la base de datos MySQL**, junto con el resto de los datos de esa fila.
 
 No existe una carpeta `uploads/` en el servidor, no hay ningún endpoint tipo `POST /api/upload-image`, y no hay ninguna URL de imagen tipo `https://tumascota.../fotos/123.jpg`. Cuando el navegador necesita mostrar una imagen, no hace una petición HTTP para descargarla — el texto Base64 ya viene incluido en la respuesta JSON de la API (junto con el nombre, teléfono, etc.) y el navegador lo pone directo como el `src` de una etiqueta `<img>`.
 

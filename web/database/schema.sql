@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════
--- REMAC — Sistema Municipal de Registro de Mascotas
+-- Sistema Municipal de Registro de Mascotas
 -- H. Ayuntamiento de El Grullo, Jalisco
 -- Base de datos MySQL — schema.sql
 -- Ejecutar en phpMyAdmin de HostGator
