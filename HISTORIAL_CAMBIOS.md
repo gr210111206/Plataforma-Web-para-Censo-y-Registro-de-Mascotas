@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-14] — Se ignora la carpeta `Word/` y se redacta un primer borrador del Reporte de Residencias
+
+### 🤔 Contexto
+El usuario agregó a la carpeta del proyecto (`Word/`) sus 2 documentos Word del Reporte de Residencias Profesionales, y pidió ayuda para completarlos respetando el formato oficial — dejando muy claro que esa carpeta **no debe subirse al repositorio** porque contiene sus datos personales.
+
+### 🔧 Cambios
+- **`.gitignore`**: se agregó la línea `Word/` para que esa carpeta (y cualquier archivo dentro de ella) nunca se rastree ni se suba al repositorio remoto. Se confirmó con `git status`/`git ls-files` que la carpeta no estaba rastreada antes de este cambio.
+- Se revisaron los 2 documentos de `Word/`: el que corresponde de verdad a la carrera del alumno (Ingeniería Informática, formato TSJ) es solo una portada + índice en blanco, sin contenido de capítulos; el otro trae la portada de otra carrera (Ingeniería en Gestión Empresarial) y es en realidad una guía de qué escribir en cada sección, no una plantilla para llenar — se usó únicamente como referencia.
+- **`Word/Formato de Reporte de Residencias Profesionales Ingeniería Informática TSJ.docx`** (fuera de git, no versionado): se completó vía automatización de Word (COM), preservando el formato original del documento:
+  - Portada: título real del proyecto, nombre del alumno (Luis Fernando Vargas Ramírez), número de control (210111206) y fecha.
+  - Se agregó, a partir de la página del índice, el contenido completo de los 6 capítulos (Introducción, Descripción de la empresa, Problemas a resolver, Objetivos, Justificación, Marco Teórico, Metodología, Desarrollo, Resultados, Conclusiones, Recomendaciones, Competencias y Anexos), redactado con base en el sistema real ya construido.
+  - Se dejaron marcados explícitamente con `[COMPLETAR: ...]` los campos que solo el alumno puede llenar de forma verídica: nombre de asesor interno y externo, actividades sociales realizadas, experiencia personal, fuentes de información realmente consultadas, y las capturas de pantalla/diagramas para los Anexos.
+
+### 🚫 Lo que NO se hizo
+- No se inventó contenido en secciones que son testimonio personal del alumno (experiencia personal, actividades sociales, asesores, bibliografía) — se dejaron marcadas para que el propio alumno las complete, en vez de rellenarlas con información falsa en un documento oficial.
+- No se tocó el segundo documento Word (el de Gestión Empresarial) más allá de leerlo como referencia, por decisión explícita del usuario.
+
+### 📂 Archivos modificados
+- `.gitignore` (agrega `Word/`).
+- `Word/Formato de Reporte de Residencias Profesionales Ingeniería Informática TSJ.docx` (no versionado — cambio documentado aquí porque la Regla de Oro del proyecto pide registrar cualquier modificación, aunque el archivo en sí no viaje al repositorio).
+
 ## 📅 [2026-09-10] — Se quita "REMAC" de todo el proyecto
 
 ### 🤔 Contexto
