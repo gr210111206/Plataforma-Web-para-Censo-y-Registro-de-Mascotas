@@ -1006,6 +1006,7 @@ input, select, textarea { font-family: inherit; }
   pointer-events: none;
 }
 .input-group .form-control { padding-left: 40px; }
+.input-group .form-control.has-toggle { padding-right: 40px; }
 .input-toggle {
   position: absolute;
   right: 14px;
@@ -1015,8 +1016,13 @@ input, select, textarea { font-family: inherit; }
   cursor: pointer;
   font-size: .9rem;
   transition: var(--transition);
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 0;
 }
 .input-toggle:hover { color: var(--orange); }
+.input-toggle svg { width: 18px; height: 18px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .form-hint { font-size: .78rem; color: var(--gray-2); }
 .form-divider {

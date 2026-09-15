@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-15] — Botón de "mostrar contraseña" (ícono de ojo) en login.html
+
+### 🤔 Contexto
+El usuario pidió agregar el típico ícono de ojo para mostrar/ocultar la contraseña en el formulario de inicio de sesión y en el de creación de cuenta.
+
+### 🔧 Cambios
+- **`web/css/styles.css`**: se aprovechó la clase `.input-toggle` que ya existía en el CSS pero no se usaba en ningún lado — se le agregó `background:none; border:none; padding:0; line-height:0;` (para poder usarla sobre un `<button>` real, no solo un `<span>`) y una regla nueva `.input-group .form-control.has-toggle { padding-right: 40px; }` para que el texto de la contraseña no quede debajo del ícono.
+- **`web/login.html`**: se agregó un `<button type="button" class="input-toggle">` (ícono de ojo) dentro de los 3 campos de contraseña del formulario (inicio de sesión, contraseña de registro y confirmar contraseña). Un clic cambia el `type` del input entre `password`/`text` y cambia el ícono entre ojo abierto y ojo tachado (función `togglePassword()`), incluyendo el `aria-label` ("Mostrar contraseña" / "Ocultar contraseña") para accesibilidad.
+- Se subió la versión del CSS (`?v=20260908` → `?v=20260915`) en las 5 páginas que lo cargan, para evitar el mismo bug de caché ya documentado el 2026-09-08 (el navegador sirviendo una copia vieja de `styles.css`).
+
+### 🚫 Lo que NO se tocó
+- Los campos de contraseña de `dashboard.html`, `admin.html` y `asistente.html` (cambiar contraseña, crear cuentas de asistente/admin) — el usuario solo pidió login e inicio de sesión/creación de cuenta; se puede replicar el mismo patrón (`has-toggle` + botón `.input-toggle` + `togglePassword()`) ahí si se pide después.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/login.html`, `web/{index,dashboard,admin,asistente}.html` (solo el `?v=` del CSS).
+
 ## 📅 [2026-09-14] — Se ignora la carpeta `Word/` y se redacta un primer borrador del Reporte de Residencias
 
 ### 🤔 Contexto
