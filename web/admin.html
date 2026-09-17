@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260915" />
+  <link rel="stylesheet" href="css/styles.css?v=20260917" />
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2482,17 +2482,26 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           <div style="font-family:'Outfit',sans-serif; font-weight:700; font-size:.9rem; margin-bottom:16px;">🔒 Cambiar contraseña</div>
           <div class="form-group" style="margin-bottom:14px;">
             <label for="pass-actual">Contraseña actual</label>
-            <input class="form-control" type="password" id="pass-actual" autocomplete="current-password" />
+            <div class="pw-wrap">
+              <input class="form-control has-toggle" type="password" id="pass-actual" autocomplete="current-password" />
+              <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('pass-actual', this)"></button>
+            </div>
           </div>
           <div class="form-row" style="margin-bottom:8px;">
             <div class="form-group">
               <label for="pass-nueva">Nueva contraseña</label>
-              <input class="form-control" type="password" id="pass-nueva" minlength="8"
-                     pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
+              <div class="pw-wrap">
+                <input class="form-control has-toggle" type="password" id="pass-nueva" minlength="8"
+                       pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
+                <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('pass-nueva', this)"></button>
+              </div>
             </div>
             <div class="form-group">
               <label for="pass-nueva-confirm">Confirmar nueva contraseña</label>
-              <input class="form-control" type="password" id="pass-nueva-confirm" minlength="8" autocomplete="new-password" />
+              <div class="pw-wrap">
+                <input class="form-control has-toggle" type="password" id="pass-nueva-confirm" minlength="8" autocomplete="new-password" />
+                <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('pass-nueva-confirm', this)"></button>
+              </div>
             </div>
           </div>
           <div class="form-hint" style="margin-bottom:16px;">Debe incluir al menos una letra y un número.</div>
@@ -3220,6 +3229,21 @@ async function toggleUsuarioActivo(id, estaActivo) {
     showToast(`❌ ${err.message}`, 'error');
   }
 }
+
+/* ══════════════════════════════════════════════════ */
+/*  MOSTRAR/OCULTAR CONTRASEÑA                        */
+/* ══════════════════════════════════════════════════ */
+const ICONO_OJO = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>';
+const ICONO_OJO_TACHADO = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></svg>';
+
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const mostrar = input.type === 'password';
+  input.type = mostrar ? 'text' : 'password';
+  btn.innerHTML = mostrar ? ICONO_OJO_TACHADO : ICONO_OJO;
+  btn.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+}
+document.querySelectorAll('.input-toggle[aria-label="Mostrar contraseña"]').forEach(btn => btn.innerHTML = ICONO_OJO);
 
 /* ══════════════════════════════════════════════════ */
 /*  MODAL genérico (admin.html no tenía ninguno antes) */

@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-17] — Ícono de ojo también en "Cambiar contraseña" (dashboard, admin, asistente)
+
+### 🤔 Contexto
+El usuario mandó una captura del bloque "Cambiar contraseña" del panel ciudadano y preguntó si convenía agregar ahí también el ícono de ojo — sí, sobre todo en "Confirmar nueva contraseña", que es justo donde más se necesita verificar que coincide sin verla dos veces por separado.
+
+### 🔧 Cambios
+- **`web/css/styles.css`**: la regla `padding-right` de `.has-toggle` ya no depende de estar dentro de `.input-group` (ese formulario no usa el ícono izquierdo de `.input-group`/`.input-icon`); se agregó una clase nueva y minúscula `.pw-wrap { position: relative; }` para envolver cada input de contraseña suelto y poder posicionar el botón del ojo encima, sin heredar el `padding-left:40px` que sí necesitan los campos de `login.html` (esos si tienen ícono a la izquierda).
+- **`web/dashboard.html`, `web/admin.html`, `web/asistente.html`**: se agregó el mismo botón `.input-toggle` (ícono de ojo) a los 3 campos del bloque "Cambiar contraseña" (Contraseña actual, Nueva contraseña, Confirmar nueva contraseña) en las 3 páginas, siguiendo el mismo patrón que ya se usó en `login.html` el 2026-09-15. La función `togglePassword()` y los íconos SVG se duplicaron en el `<script>` propio de cada página — mismo patrón que ya seguía el proyecto para `openModal()`/`closeModal()` (helpers pequeños de UI viven en cada página, no en un archivo JS compartido).
+- Se subió otra vez la versión del CSS (`?v=20260915` → `?v=20260917`) en las 5 páginas que lo cargan.
+
+### 🚫 Lo que NO se tocó
+- Los campos de contraseña de "Crear cuenta de asistente"/"Crear cuenta de administrador" en `admin.html` (`nu-password`, `ac-password`, etc.) — no se pidieron esta vez; se puede replicar el mismo patrón ahí si se solicita después.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/dashboard.html`, `web/admin.html`, `web/asistente.html`, `web/{index,login}.html` (solo el `?v=` del CSS).
+
 ## 📅 [2026-09-15] — Botón de "mostrar contraseña" (ícono de ojo) en login.html
 
 ### 🤔 Contexto

@@ -1006,7 +1006,8 @@ input, select, textarea { font-family: inherit; }
   pointer-events: none;
 }
 .input-group .form-control { padding-left: 40px; }
-.input-group .form-control.has-toggle { padding-right: 40px; }
+.form-control.has-toggle { padding-right: 40px; }
+.pw-wrap { position: relative; }
 .input-toggle {
   position: absolute;
   right: 14px;
