@@ -2,6 +2,36 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-18] — Corrige XSS almacenado en artículos + refuerzo de cabeceras de seguridad
+
+### 🤔 Contexto
+Se pidió una auditoría de seguridad completa del proyecto (documentada aparte, sin subirse al repositorio) y luego se pidió corregir el hallazgo más grave que salió de ahí: el editor de artículos del panel admin (`admin.html`, `wysiwygEditor`) guardaba su HTML tal cual, sin sanitizar, y ese HTML se volvía a insertar sin escapar en 3 páginas distintas — incluida la portada pública, sin sesión. Un admin (no hacía falta ser superadmin) podía publicar un artículo con `<img onerror="...">` o `<script>` y ese código se ejecutaba en el navegador de cualquier visitante de la portada, cualquier ciudadano en su dashboard, y cualquier otro admin (incluido el superadmin) al abrir ese artículo para editarlo — encadenable a robo de sesión, porque el token vive en `localStorage`.
+
+### 🔧 Cambios
+
+**1. XSS almacenado en artículos — corregido de raíz:**
+- **`web/api/config/helpers.php`**: nueva función `sanitizeArticleHtml()` — sanitizador de HTML con lista blanca real (etiquetas, atributos y esquemas de URL permitidos), escrito con `DOMDocument` (ya viene con PHP, sin librerías externas, coherente con "sin build step"). Permite exactamente lo que el editor WYSIWYG puede producir (negritas, cursivas, subrayado, tachado, títulos, listas, cita, imágenes en Base64, `style` con solo un puñado de propiedades seguras) y elimina por completo `<script>`, `<iframe>`, `<object>`, `<form>`, cualquier atributo `on*` (`onerror`, `onclick`...), `href`/`src` con esquema `javascript:`, y `style` con `expression()`/`url()`.
+- **`web/api/contenido.php`**: tanto `POST` como `PUT` de `?resource=articulos` ahora pasan `contenido` por `sanitizeArticleHtml()` antes de guardarlo — antes era la única columna del proyecto excluida a propósito de `clean()`.
+- Probado en dos niveles: (1) función aislada contra 7 casos (HTML legítimo, `<script>`, `onerror`, `href="javascript:"`, `style` con `expression()`, `<iframe>`, `onclick`) — el legítimo se conserva intacto, los 6 maliciosos quedan neutralizados; (2) extremo a extremo contra la API real corriendo en local (crear artículo con el mismo payload malicioso vía `curl`, confirmar en la respuesta que el HTML guardado ya viene limpio, borrar el artículo de prueba). Además se corrió `scripts/smoke_test.sh` completo (24 verificaciones, 0 fallas) para confirmar que no se rompió nada más en el resto de la API.
+
+**2. Cabeceras de seguridad reforzadas (arreglo rápido y seguro, sin riesgo de romper nada):**
+- **`web/.htaccess`**: antes las páginas HTML (`index.html`, `login.html`, etc.) no tenían NINGUNA cabecera de seguridad — solo las respuestas JSON de la API las tenían. Se agregaron `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, y `Content-Security-Policy-Report-Only` (en modo solo-reporte a propósito: el sitio usa bastantes `onclick=""` inline, así que un CSP que los bloqueara de verdad rompería la página — en modo Report-Only el navegador no bloquea nada, solo avisa en la consola qué violaría la política, útil para revisar antes de activarlo en serio más adelante).
+- **`web/api/.htaccess`**: se agregaron `Referrer-Policy` y `Permissions-Policy` junto a las cabeceras que ya existían.
+- 6 enlaces `target="_blank"` (ficha pública de mascota en `dashboard.html`, Giphy en `admin.html`, redes sociales y sitio del Ayuntamiento en `index.html`) ahora llevan `rel="noopener noreferrer"` — cierra el "reverse tabnabbing".
+
+### 🚫 Lo que NO se tocó en esta entrada (a propósito, requieren una decisión o un paso manual)
+- **HTTPS/HSTS** (`web/.htaccess`): sigue comentado — activar esto antes de confirmar el certificado SSL del dominio real deja el sitio inaccesible; ya estaba correctamente documentado como pendiente hasta ese momento.
+- **Límite de intentos por IP** (solo existe por cuenta hoy): requiere una tabla nueva en la base de datos de producción — pendiente de decidir/ejecutar con el usuario.
+- **Teléfono visible en la ficha pública del QR**: es una decisión de producto (una mascota perdida necesita que quien la encuentre pueda llamar), no un bug — queda a confirmar con el Ayuntamiento.
+- `ANALISIS_SEGURIDAD.md` (el reporte completo de la auditoría) — **no se sube al repositorio**, agregado a `.gitignore` a petición explícita del usuario.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php` (nueva función `sanitizeArticleHtml()`).
+- `web/api/contenido.php` (usa el sanitizador en `POST`/`PUT` de artículos).
+- `web/.htaccess`, `web/api/.htaccess` (cabeceras de seguridad).
+- `web/dashboard.html`, `web/admin.html`, `web/index.html` (`rel="noopener noreferrer"`).
+- `.gitignore` (agrega `ANALISIS_SEGURIDAD.md`).
+
 ## 📅 [2026-09-17] — Ícono de ojo también en "Cambiar contraseña" (dashboard, admin, asistente)
 
 ### 🤔 Contexto

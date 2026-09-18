@@ -126,9 +126,17 @@ if ($method === 'POST' && $resource === 'articulos') {
     $body = getBody();
 
     $titulo = trim($body['titulo'] ?? '');
-    $contenido = trim($body['contenido'] ?? '');
-    if ($titulo === '')    jsonError('El título es obligatorio.', 400);
-    if ($contenido === '') jsonError('El contenido no puede estar vacío.', 400);
+    if ($titulo === '') jsonError('El título es obligatorio.', 400);
+    if (trim($body['contenido'] ?? '') === '') jsonError('El contenido no puede estar vacío.', 400);
+
+    // Único campo del proyecto que guarda HTML de verdad (el editor
+    // WYSIWYG del panel admin) — se sanitiza con lista blanca en vez de
+    // htmlspecialchars(), que rompería el formato. Ver sanitizeArticleHtml()
+    // en config/helpers.php y ANALISIS_SEGURIDAD.md, hallazgo #1.
+    $contenido = sanitizeArticleHtml($body['contenido']);
+    if (trim(strip_tags($contenido)) === '' && !str_contains($contenido, '<img')) {
+        jsonError('El contenido no puede estar vacío.', 400);
+    }
 
     $db = getDB();
     $stmt = $db->prepare('
@@ -162,7 +170,7 @@ if ($method === 'PUT' && $resource === 'articulos' && $id) {
         if (array_key_exists($campo, $body)) {
             $campos[] = "$campo = ?";
             $params[] = $campo === 'publicado' ? (int)(bool)$body[$campo]
-                : ($campo === 'contenido' ? $body[$campo] : clean($body[$campo]));
+                : ($campo === 'contenido' ? sanitizeArticleHtml($body[$campo]) : clean($body[$campo]));
         }
     }
     if (!$campos) jsonError('No se recibieron campos para actualizar.');

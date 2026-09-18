@@ -188,6 +188,125 @@ function clean(?string $val): ?string {
     return trim(htmlspecialchars($val, ENT_QUOTES, 'UTF-8'));
 }
 
+/* ── Sanitizar HTML del editor de artículos (contenido.php) ──────
+   articulos.contenido es la ÚNICA columna del proyecto que necesita
+   guardar HTML de verdad (el editor WYSIWYG de admin.html genera
+   negritas, listas, títulos e imágenes) — por eso no puede pasar por
+   clean()/htmlspecialchars() como el resto de los campos, eso rompería
+   el formato a propósito. Sin sanitizar, un admin podía publicar
+   <img onerror="robar-la-sesión-de-quien-lo-vea"> y ese HTML se
+   ejecutaba tal cual en la portada pública, en el dashboard del
+   ciudadano y en el propio panel admin (ver ANALISIS_SEGURIDAD.md,
+   hallazgo #1). Esto aplica una lista blanca real de etiquetas,
+   atributos y esquemas de URL con DOMDocument (ya viene con PHP, sin
+   librerías externas — coherente con "sin build step" del proyecto). */
+function sanitizeArticleHtml(?string $html): string {
+    if ($html === null || trim($html) === '') return '';
+
+    $tagsPermitidos = [
+        'p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike',
+        'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'div', 'span', 'img', 'a',
+    ];
+    // Etiquetas peligrosas: se elimina TODO el subárbol (nunca solo la
+    // etiqueta) — no tiene caso "desenvolver" el contenido de un <script>.
+    $tagsPeligrosos = ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'link', 'meta', 'base', 'svg', 'math'];
+    $atributosPorTag = [
+        'img' => ['src', 'alt', 'width', 'height'],
+        'a'   => ['href', 'title'],
+    ];
+    $atributosGlobales = ['style']; // el resto de las etiquetas permitidas solo pueden traer "style"
+    $propiedadesCssPermitidas = [
+        'text-align', 'font-weight', 'font-style', 'text-decoration',
+        'max-width', 'width', 'height', 'border-radius',
+        'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+    ];
+
+    libxml_use_internal_errors(true);
+    $doc = new DOMDocument('1.0', 'UTF-8');
+    $doc->loadHTML('<?xml encoding="utf-8"?><div>' . $html . '</div>', LIBXML_NOERROR | LIBXML_NOWARNING);
+    libxml_clear_errors();
+
+    $body = $doc->getElementsByTagName('body')->item(0);
+    $root = null;
+    if ($body) {
+        foreach ($body->childNodes as $n) {
+            if ($n->nodeType === XML_ELEMENT_NODE) { $root = $n; break; }
+        }
+    }
+    if (!$root) return '';
+
+    $limpiarNodo = function (DOMNode $nodo) use (&$limpiarNodo, $tagsPermitidos, $tagsPeligrosos, $atributosPorTag, $atributosGlobales, $propiedadesCssPermitidas) {
+        foreach (iterator_to_array($nodo->childNodes) as $hijo) {
+            if ($hijo->nodeType === XML_TEXT_NODE) continue;
+
+            if ($hijo->nodeType !== XML_ELEMENT_NODE) {
+                $nodo->removeChild($hijo);
+                continue;
+            }
+
+            $tag = strtolower($hijo->nodeName);
+
+            if (in_array($tag, $tagsPeligrosos, true)) {
+                $nodo->removeChild($hijo);
+                continue;
+            }
+
+            if (!in_array($tag, $tagsPermitidos, true)) {
+                // Etiqueta no reconocida (ej. pegada desde Word/otra web):
+                // se conserva el contenido de adentro, se quita solo la envoltura.
+                $limpiarNodo($hijo);
+                while ($hijo->firstChild) {
+                    $nodo->insertBefore($hijo->firstChild, $hijo);
+                }
+                $nodo->removeChild($hijo);
+                continue;
+            }
+
+            $permitidosTag = array_merge($atributosPorTag[$tag] ?? [], $atributosGlobales);
+            foreach (iterator_to_array($hijo->attributes ?? []) as $attr) {
+                $nombreAttr = strtolower($attr->nodeName);
+                if (!in_array($nombreAttr, $permitidosTag, true)) {
+                    $hijo->removeAttribute($attr->nodeName);
+                    continue;
+                }
+                if ($nombreAttr === 'href') {
+                    $valor = trim($attr->nodeValue);
+                    if ($valor !== '' && !preg_match('~^(https?:|mailto:|tel:|/|#)~i', $valor)) {
+                        $hijo->removeAttribute('href');
+                    }
+                } elseif ($nombreAttr === 'src') {
+                    $valor = trim($attr->nodeValue);
+                    if (!preg_match('~^(https://|data:image/(jpeg|png|webp|gif);base64,)~i', $valor)) {
+                        $hijo->removeAttribute('src');
+                    }
+                } elseif ($nombreAttr === 'style') {
+                    $limpio = [];
+                    foreach (explode(';', $attr->nodeValue) as $decl) {
+                        $partes = explode(':', $decl, 2);
+                        if (count($partes) !== 2) continue;
+                        $prop = strtolower(trim($partes[0]));
+                        $val  = trim($partes[1]);
+                        if (!in_array($prop, $propiedadesCssPermitidas, true)) continue;
+                        if (preg_match('/url\s*\(|expression\s*\(|javascript:/i', $val)) continue;
+                        $limpio[] = "$prop: $val";
+                    }
+                    $hijo->setAttribute('style', implode('; ', $limpio));
+                }
+            }
+
+            $limpiarNodo($hijo);
+        }
+    };
+
+    $limpiarNodo($root);
+
+    $out = '';
+    foreach (iterator_to_array($root->childNodes) as $child) {
+        $out .= $doc->saveHTML($child);
+    }
+    return $out;
+}
+
 /* ── Validar foto en Base64 (mascota, perfil) ───── */
 /* El redimensionado con Canvas ya limita esto desde el navegador, pero
    una llamada directa a la API (sin pasar por la UI) podría mandar un

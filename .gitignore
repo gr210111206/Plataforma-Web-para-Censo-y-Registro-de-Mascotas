@@ -23,6 +23,10 @@ desktop.ini
 CUENTAS_PRUEBA.md
 web/api/config/database.php
 
+# Auditoría de seguridad interna — mapa de vulnerabilidades del proyecto,
+# no debe ser público mientras existan hallazgos sin corregir
+ANALISIS_SEGURIDAD.md
+
 # Dependencias (futuro)
 node_modules/
 vendor/

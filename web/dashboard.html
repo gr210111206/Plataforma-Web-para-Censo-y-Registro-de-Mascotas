@@ -944,7 +944,7 @@ function verDetalle(i) {
     ${pet.link_publico ? `
     <div style="margin-top:14px; padding:12px; background:var(--orange-pale); border-radius:var(--radius); border:1px solid rgba(var(--orange-rgb),.2);">
       <div style="font-size:.7rem; font-weight:700; text-transform:uppercase; color:var(--orange-dark); margin-bottom:4px;">Link público</div>
-      <a href="${pet.link_publico}" target="_blank" style="font-size:.8rem; color:var(--orange); word-break:break-all;">${pet.link_publico}</a>
+      <a href="${pet.link_publico}" target="_blank" rel="noopener noreferrer" style="font-size:.8rem; color:var(--orange); word-break:break-all;">${pet.link_publico}</a>
     </div>` : ''}`;
   openModal('modal-detalle');
 }
@@ -973,7 +973,7 @@ function verQR(i) {
         <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
           <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
           <div id="qr-info" style="font-size:.82rem; color:var(--gray-1); text-align:center;"></div>
-          <a id="qr-link-btn" href="#" target="_blank" class="btn btn-primary" style="width:100%;">🌐 Abrir página pública</a>
+          <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;">🌐 Abrir página pública</a>
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="document.getElementById('modal-qr').classList.remove('open')">Cerrar</button>
