@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21] — Dominio real confirmado: `mascota-elgrullo.com`
+
+### 🤔 Contexto
+El usuario confirmó (captura de la portada cargando con datos reales) que ya compró y conectó el dominio **`mascota-elgrullo.com`** (con guion, dominio propio en HostGator — no es subdominio de `elgrullo.com` ni de `elgrullo.mx`, los dos dominios que se habían intentado antes y no funcionaron). `CLAUDE.md` y `web/api/config/database.php` (local, gitignored) seguían apuntando al dominio viejo que nunca llegó a funcionar (`mascota.elgrullo.com`, sin guion — resultó ser un dominio ajeno parqueado en venta).
+
+### 🔧 Cambios
+- **`CLAUDE.md`**: nota de "dominio pendiente de confirmar/comprar" actualizada a "dominio real: `mascota-elgrullo.com`, comprado y funcionando".
+- **`web/api/config/database.php`** (local, no se sube a git): `BASE_URL` y `PRODUCTION_ORIGINS` corregidos de `mascota.elgrullo.com` → `mascota-elgrullo.com`. **Este cambio local no se refleja solo en producción** — hay que editar el archivo directo en cPanel (ver instrucciones que se le dieron al usuario en el chat).
+
+### ⚠️ Importante — el sitio en producción está desactualizado
+El deploy de este proyecto es 100% manual (sin CI/CD): el usuario reportó que el sitio ya carga en `mascota-elgrullo.com`, pero los archivos ahí siguen siendo de una subida anterior a esta conversación — le faltan como mínimo los últimos 3 commits (íconos de ojo en login/cambiar-contraseña, y sobre todo la **corrección del XSS de artículos del 2026-09-18**, `44cb82e`). Pendiente que el usuario vuelva a subir `web/` completo a `public_html` (sin pisar el `database.php` real del servidor con el de este repo) y actualice ahí mismo `BASE_URL`/`PRODUCTION_ORIGINS` con los valores de arriba.
+
+### 📂 Archivos modificados
+- `CLAUDE.md`.
+- `web/api/config/database.php` (local, gitignored — no viaja en este commit).
+
 ## 📅 [2026-09-18] — Corrige XSS almacenado en artículos + refuerzo de cabeceras de seguridad
 
 ### 🤔 Contexto

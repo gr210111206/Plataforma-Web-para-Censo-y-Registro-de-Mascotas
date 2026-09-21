@@ -10,7 +10,7 @@ Este proyecto (título oficial: **"Desarrollo de Plataforma Web para Censo y Reg
 - **Objetivo Principal:** Permitir a los ciudadanos registrar a sus mascotas (perros y gatos), obtener un acta digital oficial con folio único garantizado (`M-GRU-XXXXXXXXX`) y permitir al Ayuntamiento administrar estadísticas, campañas y control de salud animal.
 - **Repositorio GitHub:** `gr210111206/Plataforma-Web-para-Censo-y-Registro-de-Mascotas`
 - **Servidor de Producción Target:** HostGator (Entorno cPanel con Apache, PHP 8.x y MySQL/phpMyAdmin).
-- **Dominio real:** pendiente de confirmar/comprar (ver `HISTORIAL_CAMBIOS.md`, entradas de 2026-09-10) — no asumir un dominio fijo en el código sin confirmarlo primero.
+- **Dominio real:** `mascota-elgrullo.com` — comprado y funcionando en producción (ver `HISTORIAL_CAMBIOS.md`, entrada de 2026-09-21).
 
 ---
 
