@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21e] — Reporte de Residencias completado hasta la semana 5 sobre la plantilla del asesor (formato I–XIV)
+
+### 🤔 Contexto
+El usuario preguntó si ya estaba completo el Word de la plantilla del asesor interno (formato de 14 secciones); no lo estaba, solo tenía portada, índice y títulos vacíos. Se completó sobre esa misma plantilla, con el alcance que pidió el profesor: contenido hasta la semana 5 (la semana 1 empezó el 24 de agosto de 2026), lo realizado en pasado y el sistema y lo que sigue en curso en presente.
+
+### 🔧 Cambios
+- **`Word/Formato_de_Reporte_..._(MG).docx`** (fuera de git: `Word/` está en `.gitignore` por datos personales). Quedó de 40 páginas: portada completa, Resumen, Agradecimientos (opcional, con marcador), Índice automático con las 14 secciones y las secciones I a XIV redactadas con base en el anteproyecto, el marco teórico, este historial, el código y el esquema reales.
+- Incluye 8 figuras: mapa de ubicación y organigrama tomados del anteproyecto, diagramas de casos de uso y entidad-relación dibujados a partir del sistema real, las maquetas aprobadas de la portada y del panel, y capturas del sitio publicado (portada e inicio de sesión). Incluye 11 tablas: resumen por semana, servicios de la API y permisos por rol, maquetas frente a plataforma, cronograma frente a avance, diccionario de datos (7 tablas de la base) y el cronograma y las horas del anteproyecto.
+- Lo que solo el alumno puede aportar quedó marcado en amarillo (`[COMPLETAR]`, `[VERIFICAR]`, `[CONFIRMAR]`): agradecimientos, reseña histórica y valores del Ayuntamiento, fachada, organigrama resaltado, reuniones con el asesor externo, capturas con sesión iniciada, actividades sociales, asignaturas, y el nombre y año exactos de la ley general y del reglamento municipal citados en el marco teórico, que no se pudieron confirmar.
+- Se conservaron los comentarios de instrucciones de la plantilla y el índice se limitó a las 14 secciones. Copia de seguridad de la plantilla en blanco: `Word/Respaldos/MG_original_en_blanco.docx`.
+- Se corrigió además la **bitácora** (`Word/Bitacora_Residencias_Semanas_1-5.docx`): su semana 5 aún decía que el sitio publicado era del 8 de septiembre, y eso ya no era cierto.
+- Se generó con Word (automatización COM) a partir de un JSON de contenido; los scripts quedaron en la carpeta temporal de la sesión, no en el repositorio.
+
+### 🔎 Verificado
+- Producción: a las 13:00 (hora local) se volvió a subir el sitio. Ahora `http://` redirige a `https://` (301), responde con HSTS y las cabeceras de seguridad, y trae los cambios del 15 al 18 de septiembre. Esto reemplaza la nota de «sitio desactualizado» de las entradas anteriores de hoy.
+- Revisión automática del texto (sin marcadores sueltos, figuras 1 a 8 y tablas 1 a 11 en orden) y revisión visual de las 40 páginas.
+
+### 📂 Archivos
+- `Word/Formato_de_Reporte_..._(MG).docx`, `Word/Bitacora_Residencias_Semanas_1-5.docx` y `Word/Respaldos/MG_original_en_blanco.docx` (ninguno se versiona; se documentan aquí porque la Regla de Oro pide registrar cualquier modificación, igual que la entrada del 2026-09-14).
+
 ## 📅 [2026-09-21d] — Bitácora de residencia (semanas 1 a 5) armada a partir de git y de este historial
 
 ### 🤔 Contexto
