@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21d] — Bitácora de residencia (semanas 1 a 5) armada a partir de git y de este historial
+
+### 🤔 Contexto
+El profesor pidió que el Reporte de Residencias cubra hasta la semana 5 del cronograma, redactando en pasado lo realizado y en presente lo que sigue en curso, y el usuario pidió además una bitácora semanal. Se confirmó con el usuario que la **semana 1 empezó el lunes 24 de agosto de 2026**; por eso hoy (21 de septiembre) es el primer día de la semana 5. El trabajo anterior a esa fecha (38 commits desde el 12 de junio) se resume en una nota de "Antecedentes" en vez de repartirlo dentro de las semanas.
+
+### 🔧 Cambios
+- **`Word/Bitacora_Residencias_Semanas_1-5.docx`** (nuevo, 5 páginas, **fuera de git**: `Word/` está en `.gitignore` por contener datos personales). Trae: datos generales, descripción del proyecto (presente), antecedentes, resumen del avance por semana (commits: 6, 14, 10, 4 y 1), registro semanal con evidencia (hashes de commit y entradas de este historial) y bloque de firmas. La semana 5 sigue en curso y se redacta en presente. Formato de la escuela: Arial, hoja carta y el banner SEP/TecNM tomado de la plantilla del asesor.
+- Cada actividad se tomó de un commit o de una entrada de este historial; **las horas de cada semana quedaron como `[COMPLETAR]`** (resaltado en amarillo) porque no existe ese dato en el repositorio y no se inventa.
+- Se generó con Word (automatización COM) a partir de un JSON de contenido. Los scripts quedaron en la carpeta temporal de la sesión, no en el repositorio.
+
+### 🔎 Verificado en vivo ese mismo día
+- Hacia las 12:38, `https://mascota-elgrullo.com` respondía 200 con certificado HTTPS válido y `http://` también respondía 200, sin redirect. Minutos después se activó el redirect a HTTPS y HSTS en el repositorio (entrada 2026-09-21b), que llegará a producción hasta el próximo despliegue.
+- El `index.html` publicado tenía fecha de modificación del 8 de septiembre, lo que confirma la nota de la entrada «Dominio real confirmado» de hoy: faltan por subir a producción los cambios posteriores (entre ellos la corrección del XSS de artículos).
+
+### 📂 Archivos creados
+- `Word/Bitacora_Residencias_Semanas_1-5.docx` (no versionado — documentado aquí porque la Regla de Oro pide registrar cualquier modificación, igual que la entrada del 2026-09-14).
+
 ## 📅 [2026-09-21c] — Despliegue automático vía Git (cPanel)
 
 ### 🤔 Contexto
