@@ -1,0 +1,20 @@
+---
+# Despliegue automático vía Git Version Control de cPanel (HostGator).
+#
+# Este repo tiene web/ como subcarpeta (junto con scripts/, PDF/, etc.),
+# pero el sitio debe vivir en la RAÍZ de public_html (para que
+# https://mascota-elgrullo.com/index.html funcione, no .../web/index.html).
+# Por eso el deploy no es "copiar todo el repo": copia solo el CONTENIDO
+# de web/ (incluyendo los .htaccess, con el "." al final) hacia public_html.
+#
+# api/config/database.php NO está en este repo (gitignored, tiene las
+# credenciales reales de producción) — cp nunca lo toca ni lo borra, así
+# que sobrevive a cada deploy siempre que ya exista en el servidor.
+#
+# Cómo se usa: cPanel → "Git Version Control" → clona este repo (a una
+# carpeta FUERA de public_html, ej. /home2/ferna814/repositorio) → abre
+# el repo → pestaña "Pull or Deploy" → botón "Deploy HEAD Commit".
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home2/ferna814/public_html/
+    - /bin/cp -R web/. $DEPLOYPATH

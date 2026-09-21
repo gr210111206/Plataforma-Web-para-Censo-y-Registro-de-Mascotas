@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21c] — Despliegue automático vía Git (cPanel)
+
+### 🤔 Contexto
+El usuario preguntó si HostGator tenía alguna forma de traer los archivos directo del repositorio de GitHub en vez de subir un `.zip` a mano cada vez — sí existe ("Git™ Version Control" en cPanel), pero como este repo tiene `web/` como subcarpeta (junto con `scripts/`, `PDF/`, etc.) y el sitio debe vivir en la raíz de `public_html`, clonar el repo tal cual habría roto todas las rutas.
+
+### 🔧 Cambios
+- **`.cpanel.yml`** (nuevo, raíz del repo): define una tarea de despliegue que cPanel reconoce automáticamente — copia solo el *contenido* de `web/` (con el `.` al final, para incluir los `.htaccess`) hacia `public_html`, nunca el repo completo. `api/config/database.php` no está en el repo (gitignored) así que el `cp` nunca lo toca — sobrevive a cada deploy.
+
+### 📋 Cómo conectarlo en HostGator (pendiente, lo hace el usuario una sola vez)
+1. cPanel → **Git™ Version Control** → **Create**.
+2. Clone URL: `https://github.com/gr210111206/Plataforma-Web-para-Censo-y-Registro-de-Mascotas.git`
+3. Repository Path: algo FUERA de `public_html`, ej. `/home2/ferna814/repositorio` (nunca la carpeta del sitio directamente).
+4. Una vez creado, abrir el repo → pestaña **"Pull or Deploy"** → botón **"Deploy HEAD Commit"** — eso ejecuta el `.cpanel.yml` y copia `web/` a `public_html`.
+5. **Primera vez nada más**: crear a mano `public_html/api/config/database.php` con las credenciales reales (el deploy nunca lo va a crear ni a borrar).
+6. De ahí en adelante: cada vez que haya cambios nuevos, en el repo dar "Update" (trae los commits nuevos) y luego "Deploy HEAD Commit" — ya no hace falta zip/subir/extraer a mano.
+
+### 📂 Archivos modificados
+- `.cpanel.yml` (nuevo).
+
 ## 📅 [2026-09-21b] — Activa HTTPS/HSTS (SSL confirmado activo)
 
 ### 🤔 Contexto
