@@ -19,18 +19,12 @@ Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 Header always set Content-Security-Policy-Report-Only "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
 # Redirección forzada a HTTPS.
-# IMPORTANTE: deja esto COMENTADO hasta confirmar que el candado SSL ya
-# funciona en el dominio (cPanel → "Certificado SSL" → debe decir activo,
-# y https://tudominio.com debe cargar sin advertencias en el navegador).
-# Si activas esto antes de tener el SSL listo, el sitio queda inaccesible
-# (redirige a una versión https:// que todavía no existe).
-#
-# RewriteEngine On
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-#
+# Activado el 2026-09-21: SSL confirmado activo en cPanel (mascota-elgrullo.com)
+# y verificado en vivo con curl (200 OK, certificado válido) antes de activar esto.
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
 # HSTS: le dice al navegador que en las próximas visitas vaya DIRECTO a
-# https:// sin pasar por http:// primero. Actívalo junto con el redirect
-# de arriba (no antes) — si lo activas sin HTTPS funcionando, el navegador
-# igual intentará forzar https:// y el sitio quedaría inaccesible.
-# Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+# https:// sin pasar por http:// primero.
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"

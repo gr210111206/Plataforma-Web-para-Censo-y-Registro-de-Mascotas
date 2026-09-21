@@ -2,6 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21b] — Activa HTTPS/HSTS (SSL confirmado activo)
+
+### 🤔 Contexto
+El usuario mandó una captura de cPanel mostrando "Certificado SSL: Active" para `mascota-elgrullo.com`. Se verificó también en vivo con `curl -I https://mascota-elgrullo.com` (200 OK, certificado válido, sin advertencias) antes de activar nada — mismo criterio que ya estaba documentado como condición para hacerlo.
+
+### 🔧 Cambios
+- **`web/.htaccess`**: se descomentó el bloque de redirección forzada a HTTPS (`RewriteCond %{HTTPS} off` → redirige a `https://`) y el header `Strict-Transport-Security` (HSTS, 1 año, incluye subdominios).
+
+### ⚠️ Todavía no está en vivo
+Este cambio vive en el repositorio local — como el deploy es manual (ver entrada anterior de hoy), **no tiene efecto hasta que se vuelva a subir `web/` completo a `public_html`**, junto con la corrección del XSS del 2026-09-18 y el resto de cambios pendientes de subir.
+
+### 📂 Archivos modificados
+- `web/.htaccess`.
+
 ## 📅 [2026-09-21] — Dominio real confirmado: `mascota-elgrullo.com`
 
 ### 🤔 Contexto
