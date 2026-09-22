@@ -3,11 +3,12 @@
  * API: Gestión de cuentas ciudadanas y de personal (admin/asistente)
  * GET  /api/usuarios                        → Listar/buscar ciudadanos (admin y asistente)
  * GET  /api/usuarios?rol=asistente          → Listar cuentas de personal de apoyo (solo admin)
- * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes juntos (solo admin)
+ * GET  /api/usuarios?rol=todos              → Listar ciudadanos + asistentes + admins juntos (solo admin; solo superadmin puede promover/revocar)
  * PUT  /api/usuarios?id=X                   → Activar/desactivar una cuenta (solo admin)
  * POST /api/usuarios?action=crear-cuenta    → Crear cuenta de Ciudadano o Asistente (solo admin, nunca Administrador)
  * POST /api/usuarios?action=asignar-correo  → Da correo/contraseña a un ciudadano sin correo (solo admin)
  * POST /api/usuarios?action=promover-admin  → Convierte una cuenta existente en admin (solo superadmin)
+ * POST /api/usuarios?action=revocar-admin   → Le quita el rol admin a una cuenta, vuelve a ciudadano (solo superadmin)
  * POST /api/usuarios?action=buscar-o-crear  → Buscar por teléfono o crear ciudadano sin correo (admin y asistente)
  */
 
@@ -22,7 +23,11 @@ $action = $_GET['action'] ?? '';
 /* ── GET — listar/buscar cuentas. Por default solo ciudadanos (admin y
    asistente pueden verlos); ?rol=asistente o ?rol=todos exponen al
    personal de apoyo, reservado solo a admin (para no exponer datos de
-   otro personal a un asistente). ── */
+   otro personal a un asistente). ?rol=todos incluye también las cuentas
+   admin/superadmin — cualquier admin puede VERLAS en "Roles y Cuentas",
+   aunque solo el superadmin pueda promover/revocar (ver promover-admin
+   y revocar-admin más abajo; el frontend decide qué botones mostrar
+   con es_superadmin, que por eso se incluye en $selectCols). ── */
 if ($method === 'GET') {
     $rolFiltro = $_GET['rol'] ?? 'ciudadano';
     if (!in_array($rolFiltro, ['ciudadano', 'asistente', 'todos'], true)) {
@@ -38,7 +43,7 @@ if ($method === 'GET') {
     $where  = [];
     $params = [];
     if ($rolFiltro === 'todos') {
-        $where[] = "rol IN ('ciudadano', 'asistente')";
+        $where[] = "rol IN ('ciudadano', 'asistente', 'admin')";
     } else {
         $where[]  = 'rol = ?';
         $params[] = $rolFiltro;
@@ -61,7 +66,7 @@ if ($method === 'GET') {
     $sortDir = (($_GET['dir'] ?? '') === 'asc') ? 'ASC' : 'DESC';
 
     $selectCols = '
-        d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.rol, d.activo, d.created_at,
+        d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.rol, d.es_superadmin, d.activo, d.created_at,
         (SELECT COUNT(*) FROM mascotas m WHERE m.dueno_id = d.id) AS total_mascotas
     ';
     $baseSql = 'FROM duenos d WHERE ' . implode(' AND ', $where);
@@ -268,6 +273,59 @@ if ($method === 'POST' && $action === 'promover-admin') {
         'email'   => $cuenta['email'],
         'rol'     => 'admin',
         'message' => 'Cuenta promovida a administrador correctamente.',
+    ]);
+}
+
+/* ── POST ?action=revocar-admin — el superadmin le quita el rol admin a
+   una cuenta (vuelve a 'ciudadano', conserva correo/contraseña — sigue
+   pudiendo iniciar sesión, solo pierde los privilegios de admin). Mismas
+   protecciones que promover-admin: solo superadmin, nunca contra la
+   propia cuenta ni contra ninguna cuenta es_superadmin=1 (la propia
+   cuenta superadmin JAMÁS se puede revocar desde aquí — dejaría al
+   sistema sin nadie que pueda volver a promover a nadie), UPDATE atómico
+   con las mismas condiciones ya validadas, y queda en bitácora. ── */
+if ($method === 'POST' && $action === 'revocar-admin') {
+    $yo = requireSuperAdmin();
+    $db = getDB();
+
+    $body = getBody();
+    $id   = (int)($body['id'] ?? 0);
+    if ($id <= 0) jsonError('Falta el id de la cuenta.', 400);
+
+    if ($id === (int)$yo['id']) {
+        jsonError('No puedes quitarte tu propio rol de administrador desde aquí.', 400);
+    }
+
+    $stmt = $db->prepare('SELECT id, nombre, email, rol, es_superadmin FROM duenos WHERE id = ?');
+    $stmt->execute([$id]);
+    $cuenta = $stmt->fetch();
+    if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
+
+    if ($cuenta['rol'] !== 'admin') {
+        jsonError('Esta cuenta no es administrador.', 400);
+    }
+    if ((int)$cuenta['es_superadmin'] === 1) {
+        jsonError('No se puede quitar el rol de administrador a la cuenta superadmin.', 400);
+    }
+
+    $upd = $db->prepare("
+        UPDATE duenos SET rol = 'ciudadano', token_sesion = NULL
+        WHERE id = ? AND rol = 'admin' AND es_superadmin = 0
+    ");
+    $upd->execute([$id]);
+    if ($upd->rowCount() === 0) {
+        jsonError('La cuenta cambió mientras se procesaba. Intenta de nuevo.', 409);
+    }
+
+    registrarBitacora($yo, 'rol_revocado_admin',
+        "{$cuenta['nombre']} (id {$cuenta['id']}) — ahora: ciudadano");
+
+    jsonOk([
+        'id'      => $cuenta['id'],
+        'nombre'  => $cuenta['nombre'],
+        'email'   => $cuenta['email'],
+        'rol'     => 'ciudadano',
+        'message' => 'Se quitó el rol de administrador correctamente.',
     ]);
 }
 

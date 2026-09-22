@@ -2,6 +2,35 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22c] — "Roles y Cuentas" ya muestra a los administradores, y el superadmin puede quitar el rol admin
+
+### 🤔 Contexto
+El usuario notó que en "Roles y Cuentas" no aparecían las cuentas de administrador (solo ciudadanos y asistentes), y que no existía forma de quitarle el rol admin a alguien — solo de dárselo (el botón "⭐ Hacer administrador"). Pidió: que las cuentas admin/superadmin se vean ahí (tanto para admin normal como para superadmin, en modo consulta), y que el superadmin también pueda revocar el rol, no solo otorgarlo.
+
+### 🔧 Cambios
+- **`web/api/usuarios.php`**:
+  - `GET ?rol=todos` ahora incluye también `rol='admin'` (antes solo `'ciudadano','asistente'`) — sigue requiriendo sesión de admin (cualquiera, no solo superadmin), igual que ya era. Se agregó `es_superadmin` a las columnas devueltas, para que el frontend sepa distinguir "Administrador" de "Superadmin" y proteger la fila del superadmin.
+  - Nuevo endpoint **`POST ?action=revocar-admin`**: le quita el rol admin a una cuenta (vuelve a `ciudadano`, conserva correo/contraseña — sigue pudiendo iniciar sesión, solo pierde privilegios). Mismas protecciones que `promover-admin`: solo superadmin (`requireSuperAdmin()`), `UPDATE` atómico revalidando las condiciones, y queda registrado en bitácora (`rol_revocado_admin`). Bloqueado explícitamente por partida doble (antes de la consulta y en el propio `WHERE` del `UPDATE`) contra la cuenta `es_superadmin=1` — ni siquiera el superadmin puede quitarse su propio rol desde aquí, para no dejar el sistema sin nadie que pueda volver a promover a nadie.
+- **`web/js/api-client.js`**: nueva `apiRevocarAdmin(id)`.
+- **`web/admin.html`** (pestaña "Roles y Cuentas"):
+  - La columna de rol ahora distingue Administrador/Superadmin (antes solo mostraba Ciudadano/Asistente).
+  - Nuevo botón **"🔻 Quitar administrador"**, visible solo para el superadmin y solo en filas de administradores que no son la cuenta superadmin.
+  - El botón "⭐ Hacer administrador" ahora se oculta en filas que ya son admin (antes, si un admin llegaba a aparecer en la lista, el botón seguía ofreciendo "promoverlo" otra vez).
+  - Los botones "Desactivar/Activar" y "Agregar correo" se ocultan en filas de administrador — activarlos/desactivarlos vía este endpoint no estaba soportado del lado del servidor (`PUT` solo afecta `rol IN ('ciudadano','asistente')`) y hubiera fallado en silencio; no se pidió agregar esa capacidad, así que se dejó fuera del alcance de este cambio.
+  - Se actualizó la nota explicativa que ve el superadmin en esa pestaña para mencionar también "Quitar administrador".
+
+### 🔎 Verificado (contra la API real en local, no solo el código)
+- `GET /api/usuarios?rol=todos` como admin normal: sí incluye filas con `rol=admin` (antes no aparecían).
+- Ciclo completo con una cuenta de prueba: crear → promover a admin → confirmar que aparece como admin en la lista → revocar → confirmar que vuelve a `ciudadano` en la lista.
+- Un admin normal (no superadmin) sí puede leer `rol=todos` con filas de admin, pero `revocar-admin` le da `403 Acceso denegado. Se requiere ser superadmin.` — confirmado con una segunda cuenta de prueba.
+- Intentar `revocar-admin` contra la propia cuenta superadmin real (`id` de `admin@remac.elgrullo.mx`) da el error esperado en vez de ejecutarse.
+- Cuentas de prueba usadas para esto quedaron desactivadas al terminar (no se pueden borrar, el API no tiene `DELETE` para cuentas — mismo diseño que el resto del sistema).
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- **No se pudo probar el panel visualmente en navegador** (mismo motivo que las 2 entradas anteriores) — se verificó la API real end-to-end con `curl`, pero el HTML/CSS de los botones nuevos en `admin.html` no se vio renderizado.
+
+### 📂 Archivos modificados
+- `web/api/usuarios.php`, `web/js/api-client.js`, `web/admin.html`.
+
 ## 📅 [2026-09-22b] — "Mi perfil" del Asistente ya no es un modal — ahora es una página como en admin/ciudadano
 
 ### 🤔 Contexto

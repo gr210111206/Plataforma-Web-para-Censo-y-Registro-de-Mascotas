@@ -3389,7 +3389,11 @@ function renderRolesTable(data, total, sinFiltro) {
       <tr>
         <td style="font-weight:600;">${u.nombre}</td>
         <td style="font-size:.82rem; color:var(--gray-1);">${u.email || '<span style="color:var(--gray-2);">Sin correo</span>'}<br/><span style="color:var(--gray-2);">${u.telefono || '—'}</span></td>
-        <td>${u.rol === 'asistente' ? '<span class="badge badge-orange">Asistente</span>' : '<span class="badge badge-blue">Ciudadano</span>'}</td>
+        <td>${
+          u.rol === 'admin'
+            ? (Number(u.es_superadmin) === 1 ? '<span class="badge badge-amber">⭐ Superadmin</span>' : '<span class="badge badge-amber">Administrador</span>')
+            : u.rol === 'asistente' ? '<span class="badge badge-orange">Asistente</span>' : '<span class="badge badge-blue">Ciudadano</span>'
+        }</td>
         <td style="font-size:.78rem; color:var(--gray-2);">${(u.created_at || '').split(' ')[0]}</td>
         <td>
           ${u.activo == 1
@@ -3397,15 +3401,18 @@ function renderRolesTable(data, total, sinFiltro) {
             : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
         </td>
         <td style="text-align:right;">
-          ${esSuperAdmin(currentUser) && u.activo == 1 && u.email
+          ${esSuperAdmin(currentUser) && u.rol !== 'admin' && u.activo == 1 && u.email
             ? `<button class="btn btn-ghost btn-sm" style="color:var(--amber);" onclick="promoverAAdmin(${u.id})">⭐ Hacer administrador</button>`
+            : ''}
+          ${esSuperAdmin(currentUser) && u.rol === 'admin' && Number(u.es_superadmin) !== 1
+            ? `<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="revocarAdmin(${u.id})">🔻 Quitar administrador</button>`
             : ''}
           ${u.rol === 'ciudadano' && !u.email && u.activo == 1
             ? `<button class="btn btn-ghost btn-sm" style="color:var(--blue);" onclick="abrirAsignarCorreo(${u.id})">✉️ Agregar correo</button>`
             : ''}
-          <button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">
-            ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
-          </button>
+          ${u.rol !== 'admin'
+            ? `<button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}</button>`
+            : ''}
         </td>
       </tr>`).join('');
   }
@@ -3432,7 +3439,22 @@ async function promoverAAdmin(id) {
   try {
     await apiPromoverAAdmin(id);
     showToast(`⭐ ${u.nombre} ahora es Administrador`, 'success');
-    loadRolesTable(); // la fila desaparece: ya no es ciudadano/asistente
+    loadRolesTable(); // la fila desaparece de "ciudadano/asistente"... ahora sigue apareciendo, pero como Administrador
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/** Le quita el rol admin a una cuenta (vuelve a Ciudadano). Solo visible/
+    permitido para el superadmin, y nunca contra la propia cuenta
+    superadmin (ver revocar-admin en usuarios.php). */
+async function revocarAdmin(id) {
+  const u = allCuentas.find(x => x.id === id);
+  if (!u) return;
+  try {
+    await apiRevocarAdmin(id);
+    showToast(`🔻 Se le quitó el rol de administrador a ${u.nombre}`, 'success');
+    loadRolesTable();
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
@@ -4492,7 +4514,7 @@ async function initAdmin() {
 
   const notaRoles = document.getElementById('roles-admin-note');
   if (notaRoles && esSuperAdmin(currentUser)) {
-    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "⭐ Hacer administrador"). La cuenta resultante será un admin normal: no podrá promover a nadie más.';
+    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "⭐ Hacer administrador") o quitarle ese rol de vuelta (botón "🔻 Quitar administrador"). La cuenta resultante de "Hacer administrador" será un admin normal: no podrá promover ni revocar a nadie más. Tu propia cuenta superadmin nunca puede perder el rol de administrador desde aquí.';
   }
 
   try {

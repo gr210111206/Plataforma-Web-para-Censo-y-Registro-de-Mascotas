@@ -322,6 +322,18 @@ async function apiPromoverAAdmin(id) {
 }
 
 /**
+ * Le quita el rol admin a una cuenta (vuelve a 'ciudadano'). Requiere
+ * sesión de SUPERADMIN — el servidor responde 403 si la llama un admin
+ * normal, y 400 si se intenta contra la propia cuenta superadmin.
+ */
+async function apiRevocarAdmin(id) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=revocar-admin`, {
+    method: 'POST',
+    body: JSON.stringify({ id }),
+  });
+}
+
+/**
  * Le asigna correo y contraseña a un ciudadano que no tenía (registrado
  * sin correo por un asistente), para que pueda iniciar sesión por su
  * cuenta. Requiere sesión de admin (cualquiera, no solo superadmin).
