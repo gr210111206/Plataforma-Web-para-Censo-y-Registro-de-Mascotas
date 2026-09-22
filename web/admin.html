@@ -4530,7 +4530,7 @@ async function initAdmin() {
 
   const notaRoles = document.getElementById('roles-admin-note');
   if (notaRoles && esSuperAdmin(currentUser)) {
-    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "⭐ Hacer administrador") o quitarle ese rol de vuelta (botón "🔻 Quitar administrador"). La cuenta resultante de "Hacer administrador" será un admin normal: no podrá promover ni revocar a nadie más. Tu propia cuenta superadmin nunca puede perder el rol de administrador desde aquí.';
+    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "Hacer administrador") o quitarle ese rol de vuelta (botón "Quitar administrador"). La cuenta resultante de "Hacer administrador" será un admin normal: no podrá promover ni revocar a nadie más. Tu propia cuenta superadmin nunca puede perder el rol de administrador desde aquí.';
   }
 
   try {

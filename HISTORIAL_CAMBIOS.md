@@ -2,6 +2,17 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22g] — Corrige la nota del superadmin: seguía citando los emojis que ya se quitaron de los botones
+
+### 🤔 Contexto
+El usuario notó que el texto explicativo que ve el superadmin arriba de "Roles y Cuentas" seguía diciendo `botón "⭐ Hacer administrador"` y `botón "🔻 Quitar administrador"` — quedó desactualizado tras el rediseño de la entrada anterior (`2026-09-22f`), que ya quitó esos emojis de los botones reales.
+
+### 🔧 Cambios
+- **`web/admin.html`**: se quitaron los emojis `⭐`/`🔻` del texto de `notaRoles` — ahora solo cita el nombre del botón ("Hacer administrador" / "Quitar administrador"), que sí coincide con lo que se ve en pantalla.
+
+### 📂 Archivos modificados
+- `web/admin.html`.
+
 ## 📅 [2026-09-22f] — Rediseño de los botones de acción en "Roles y Cuentas" / "Usuarios" (menos anticuados, con jerarquía visual)
 
 ### 🤔 Contexto
