@@ -2,6 +2,30 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22h] — Quita los emojis de los botones de "Mi perfil" y "Configuración sitio" (se veían anticuados)
+
+### 🤔 Contexto
+El usuario mandó capturas de "Mi perfil" y "Configuración sitio" señalando que los botones (💾 Guardar cambios, 🔒 Actualizar contraseña, etc.) se veían anticuados/"muy IA" por usar emojis en vez de íconos — mismo tema que ya se corrigió en "Roles y Cuentas"/"Usuarios" la entrada anterior de hoy (`2026-09-22f`), pero ahí no se había tocado.
+
+### 🔧 Cambios
+- **`web/admin.html`**: se reemplazaron por íconos de línea SVG los emojis de **13 botones** en "Configuración sitio" (Guardar/Restablecer de Portada, Reglamento, Avisos, Eventos, Contactos, Apariencia, Municipio, Tema, SEO, y los 2 "Subir imagen") y **2 en "Mi perfil"** (Guardar cambios, Actualizar contraseña). También se corrigió el botón de "Nuevo artículo" (Guardar artículo) por la misma inconsistencia. Se agregaron `ICON_SAVE` e `ICON_SEND` a las constantes de íconos reutilizables (junto a las de la entrada `2026-09-22f`).
+- **Botones con texto dinámico** (que un `textContent =` en JS les borra el ícono al cambiar de "Publicar aviso"/"Guardar artículo" a "Guardar cambios" y viceversa, al editar/cancelar): se cambiaron esas 5 asignaciones de `textContent` a `innerHTML` con el ícono correspondiente, para que el ícono no desaparezca después del primer editar/cancelar — antes de esto, arreglar solo el HTML inicial se hubiera "deshecho" en cuanto alguien usara el formulario.
+- **El lápiz para cambiar la foto de perfil** (⏺️✏️, un círculo pequeño sobre el avatar) también era emoji — se cambió por un ícono de línea, en `admin.html`, `dashboard.html` y `asistente.html` (mismo bloque copiado en las 3 páginas, igual que ya pasó con otros arreglos de "Mi perfil" en entradas anteriores).
+- **`web/dashboard.html`, `web/asistente.html`**: se aplicó el mismo cambio a sus botones "Guardar cambios"/"Actualizar contraseña" de "Mi perfil" (idéntico al de `admin.html`), para que las 3 páginas se vean iguales.
+
+### 🚫 Lo que NO se tocó (a propósito, fuera de lo pedido)
+- Quedan emojis como encabezados/pestañas de navegación dentro de "Configuración sitio" (📢📅🖌️🌐 en las pestañas Contenido/Eventos/Tema/SEO, y el título "🔒 Cambiar contraseña") — el usuario pidió específicamente los **botones**, no los encabezados; se puede hacer aparte si se pide.
+- Otros "✏️ Editar" con emoji en Seguimiento, Artículos, Avisos, FAQ y Bitácora — mismo criterio, no se pidieron esta vez.
+
+### 🔎 Verificado
+- Las 3 páginas responden 200 en local; `admin.html` ya trae `ICON_SAVE`/`ICON_SEND`.
+- Balance de `<script>` y `<svg>` en las 3 páginas (todas 1:1 abre/cierra).
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas (cambio puramente visual).
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno).
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/dashboard.html`, `web/asistente.html`.
+
 ## 📅 [2026-09-22g] — Corrige la nota del superadmin: seguía citando los emojis que ya se quitaron de los botones
 
 ### 🤔 Contexto
