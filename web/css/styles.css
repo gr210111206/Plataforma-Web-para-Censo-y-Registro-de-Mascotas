@@ -1048,7 +1048,12 @@ input, select, textarea { font-family: inherit; }
   min-height: 100vh;
 }
 .sidebar {
-  background: var(--dark);
+  /* Degradado con las variables de marca (--brand-dark-*), no un negro
+     fijo — así el color elegido en "Tema visual" (panel admin) también
+     se ve reflejado aquí. Antes esta regla solo vivía en el <style>
+     interno de admin.html; dashboard.html y asistente.html se quedaban
+     con un gris/negro fijo sin importar el tema configurado. */
+  background: linear-gradient(180deg, var(--brand-dark-1) 0%, var(--brand-dark-2) 100%);
   display: flex;
   flex-direction: column;
   padding: 24px 0;

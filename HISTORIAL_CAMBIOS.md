@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22e] — El color del "Tema visual" ya se refleja en el sidebar de dashboard.html y asistente.html
+
+### 🤔 Contexto
+El usuario comparó capturas: en `admin.html` el sidebar cambia de color según lo configurado en "Tema visual" (panel admin → Configuración), pero en `asistente.html` el sidebar se quedaba negro plano, sin importar el color elegido.
+
+### 🔧 Cambios
+- **`web/css/styles.css`**: la regla base `.sidebar { background: var(--dark); ... }` (compartida por `dashboard.html`, `admin.html` y `asistente.html`) se cambió a `background: linear-gradient(180deg, var(--brand-dark-1) 0%, var(--brand-dark-2) 100%)` — las mismas variables que `aplicarTemaVisual()` (`tema.js`) ya actualiza en cada página cuando el admin guarda un color nuevo. Causa real: ese degradado solo existía en el `<style>` interno de `admin.html`, nunca se agregó al CSS compartido — así que `dashboard.html` (panel ciudadano) tenía exactamente el mismo problema que `asistente.html`, aunque el usuario solo lo notó en este último.
+- **`web/admin.html`**: se quitó la regla `.sidebar { ... }` de su `<style>` interno — quedó duplicada/redundante ahora que vive en `styles.css`.
+- Se subió la versión del CSS (`?v=20260917` → `?v=20260922`) en las 5 páginas que lo cargan.
+
+### 🔎 Verificado
+- `curl` contra el sitio local confirma que `styles.css` ya sirve la regla nueva.
+- Balance de llaves en `styles.css` (397 abren / 397 cierran) y de `<script>` en `admin.html` (6/6) sin cambios inesperados.
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas (cambio puramente visual, no toca backend).
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno) — pendiente que el usuario lo vea en pantalla.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/admin.html`, `web/{index,login,dashboard,asistente}.html` (solo el `?v=` del CSS).
+
 ## 📅 [2026-09-22d] — Botón QR también en "Mascotas que he registrado" (asistente)
 
 ### 🤔 Contexto

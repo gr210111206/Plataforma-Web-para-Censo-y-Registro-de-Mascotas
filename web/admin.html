@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260917" />
+  <link rel="stylesheet" href="css/styles.css?v=20260922" />
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     /* ── Admin overrides ── */
-    .sidebar { background: linear-gradient(180deg, var(--brand-dark-1) 0%, var(--brand-dark-2) 100%); }
+    /* El degradado del sidebar (--brand-dark-*) ya vive en styles.css
+       (.sidebar), compartido con dashboard.html/asistente.html — no se
+       repite aquí. */
     .sidebar-link.active { background: rgba(var(--orange-rgb),.28); color: var(--orange-light); }
     .sidebar-link:hover { background: rgba(255,255,255,.08); color: white; }
     .sidebar-badge {
