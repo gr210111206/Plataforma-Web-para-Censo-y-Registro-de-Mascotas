@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22] — Botón QR en Seguimiento (admin) + corrige HTTPS forzado en local
+
+### 🤔 Contexto
+El usuario comparó capturas del panel ciudadano (que sí tiene botón "QR" en cada mascota) contra la sección "Seguimiento" del panel admin/superadmin (que solo tenía "Cambiar estatus", "Editar" y "Ver acta") — pidió agregar ahí también el QR.
+
+### 🔧 Cambios
+- **`web/admin.html`**: se agregó el botón **"🔲 QR"** a las tarjetas de "Seguimiento", entre "Editar" y "Ver acta". Nueva función `verQRAdmin(id)` — mismo patrón exacto que `verQR()` de `dashboard.html` (que ya se había corregido el 2026-09-08), adaptada para buscar la mascota en `allPets` en vez de `myPets`. Se agregó también `printQR()` (idéntica a la de `dashboard.html`) y la librería `qrcodejs` (CDN, con `defer`, igual que `jsPDF`).
+- **`web/.htaccess`**: al probar el cambio anterior en local se detectó que el redirect a HTTPS + HSTS activado ayer (ver entrada `2026-09-21b`) también aplicaba en `localhost` — redirigía a `https://localhost` (certificado autofirmado de XAMPP, advertencia en el navegador) y guardaba HSTS ahí. Se corrigió para que el redirect y el header HSTS **solo apliquen fuera de local** (`RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|192\.168\.)` + `SetEnvIf Host ... es_local` / `env=!es_local`), mismo criterio `$esLocal` que ya usa `database.php`. Producción no se ve afectada por esta corrección — su `HTTP_HOST` nunca es `localhost`.
+
+### 🔎 Verificado
+- Local (XAMPP): antes del arreglo, `curl http://localhost/remac/admin.html` daba `301` a `https://`; después, `200` directo y sin cabecera `Strict-Transport-Security`. El HTML servido ya trae `verQRAdmin` (confirmado con `curl` + `grep`).
+- `scripts/smoke_test.sh` completo tras ambos cambios: 24 verificaciones, 0 fallas.
+- **No se pudo probar visualmente en navegador** (este entorno no tiene herramientas de automatización de navegador disponibles) — el usuario lo verificó él mismo en su XAMPP local.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/.htaccess`.
+
 ## 📅 [2026-09-21f] — La portada (`index.html`) ya no se ve "vacía" 2-3 segundos antes de cargar
 
 ### 🤔 Contexto

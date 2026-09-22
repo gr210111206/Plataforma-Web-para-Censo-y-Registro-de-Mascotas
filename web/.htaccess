@@ -18,13 +18,20 @@ Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 # más adelante (ver ANALISIS_SEGURIDAD.md, hallazgo #3).
 Header always set Content-Security-Policy-Report-Only "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
-# Redirección forzada a HTTPS.
+# Redirección forzada a HTTPS — SOLO en producción, nunca en localhost.
 # Activado el 2026-09-21: SSL confirmado activo en cPanel (mascota-elgrullo.com)
 # y verificado en vivo con curl (200 OK, certificado válido) antes de activar esto.
+# Corregido el 2026-09-22: al probar en local (XAMPP) este mismo .htaccess
+# también redirigía http://localhost a https://localhost (certificado
+# autofirmado de XAMPP, advertencia de seguridad en el navegador) y guardaba
+# HSTS ahí — mismo criterio $esLocal que ya usa database.php para no mezclar
+# local con producción.
 RewriteEngine On
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|192\.168\.)
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # HSTS: le dice al navegador que en las próximas visitas vaya DIRECTO a
-# https:// sin pasar por http:// primero.
-Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+# https:// sin pasar por http:// primero. Tampoco en local, por la misma razón.
+SetEnvIf Host "^(localhost|127\.0\.0\.1|192\.168\.)" es_local
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=!es_local
