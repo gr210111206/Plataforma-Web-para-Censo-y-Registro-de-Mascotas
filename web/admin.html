@@ -1450,7 +1450,7 @@
 
       <!-- Status bar -->
       <div class="config-status-bar">
-        <span style="font-weight:700; color:var(--dark); font-size:.78rem;">⚙️ Configuración del sitio</span>
+        <span style="font-weight:700; color:var(--dark); font-size:.78rem; display:inline-flex; align-items:center; gap:6px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></svg> Configuración del sitio</span>
         <div style="flex:1;"></div>
         <div class="status-item" id="statusReglamento"><div class="status-dot empty"></div> Reglamento (sin cambios)</div>
         <div class="status-item" id="statusContactos"><div class="status-dot empty"></div> Contactos (sin cambios)</div>
@@ -1463,45 +1463,45 @@
       <div class="config-card-nav">
         <div class="config-nav-item active" id="cnav-portada" onclick="switchConfig('portada', this)">
           <div class="config-nav-badge saved"></div>
-          <div class="config-nav-icon">🏠</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg></div>
           <div class="config-nav-label">Contenidos de Portada</div>
         </div>
         <div class="config-nav-item" id="cnav-reglamento" onclick="switchConfig('reglamento', this)">
           <div class="config-nav-badge saved"></div>
-          <div class="config-nav-icon">📋</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg></div>
           <div class="config-nav-label">Reglamento</div>
         </div>
         <div class="config-nav-item" id="cnav-avisos" onclick="switchConfig('avisos', this)">
-          <div class="config-nav-icon">📢</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg></div>
           <div class="config-nav-label">Avisos y promociones</div>
         </div>
         <div class="config-nav-item" id="cnav-eventos" onclick="switchConfig('eventos', this)">
-          <div class="config-nav-icon">📅</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg></div>
           <div class="config-nav-label">Eventos</div>
         </div>
         <div class="config-nav-item" id="cnav-contactos" onclick="switchConfig('contactos', this)">
           <div class="config-nav-badge saved"></div>
-          <div class="config-nav-icon">📞</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg></div>
           <div class="config-nav-label">Contactos</div>
         </div>
         <div class="config-nav-item" id="cnav-preguntas" onclick="switchConfig('preguntas', this)">
-          <div class="config-nav-icon">❓</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg></div>
           <div class="config-nav-label">Preguntas FAQ</div>
         </div>
         <div class="config-nav-item" id="cnav-apariencia" onclick="switchConfig('apariencia', this)">
-          <div class="config-nav-icon">🎨</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg></div>
           <div class="config-nav-label">Apariencia e íconos</div>
         </div>
         <div class="config-nav-item" id="cnav-municipio" onclick="switchConfig('municipio', this)">
-          <div class="config-nav-icon">🏛️</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v-7" /><path d="M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z" /><path d="M14 18v-7" /><path d="M18 18v-7" /><path d="M3 22h18" /><path d="M6 18v-7" /></svg></div>
           <div class="config-nav-label">Municipio</div>
         </div>
         <div class="config-nav-item" id="cnav-tema" onclick="switchConfig('tema', this)">
-          <div class="config-nav-icon">🖌️</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913" /><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z" /><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15" /></svg></div>
           <div class="config-nav-label">Tema visual</div>
         </div>
         <div class="config-nav-item" id="cnav-seo" onclick="switchConfig('seo', this)">
-          <div class="config-nav-icon">🌐</div>
+          <div class="config-nav-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg></div>
           <div class="config-nav-label">SEO y metadatos</div>
         </div>
       </div>
@@ -1760,7 +1760,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
           <!-- Formulario -->
           <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
-            <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700;">📢 Avisos y promociones</h3>
+            <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg> Avisos y promociones</h3>
             <div class="form-group" style="margin-bottom:14px;">
               <label for="aviso-titulo">Título</label>
               <input type="text" id="aviso-titulo" class="form-control" placeholder="Ej. Registra su mascota" />
@@ -1772,7 +1772,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
                    ondragover="event.preventDefault(); this.classList.add('drag-over')"
                    ondragleave="this.classList.remove('drag-over')"
                    ondrop="handleDrop(event, 'aviso-img')">
-                <div class="banner-drop-icon">⬆️</div>
+                <div class="banner-drop-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg></div>
                 <div class="banner-drop-text"><strong>Arrastre para subir</strong></div>
               </div>
               <input type="file" id="aviso-img" accept="image/*" style="display:none;" onchange="previewBanner(this,'aviso-prev')" />
@@ -3392,6 +3392,8 @@ const ICON_BAN           = '<svg class="icon-line" viewBox="0 0 24 24" fill="non
 const ICON_CHECK_CIRCLE  = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>';
 const ICON_SAVE          = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg>';
 const ICON_SEND          = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></svg>';
+const ICON_ARCHIVE       = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>';
+const ICON_PENCIL        = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg>';
 
 function renderRolesTable(data, total, sinFiltro) {
   const tbody = document.getElementById('rolesTableBody');
@@ -3546,11 +3548,12 @@ async function handleNuevoUsuario(e) {
 const bitacoraState = { page: 1 };
 
 const ACCION_LABELS = {
-  rol_promovido_admin:       '⭐ Rol promovido a Administrador',
-  cuenta_activada:           '✅ Cuenta activada',
-  cuenta_desactivada:        '🚫 Cuenta desactivada',
-  mascota_baja:              '🐾 Mascota dada de baja',
-  mascota_editada_por_admin: '✏️ Mascota editada por admin',
+  rol_promovido_admin:       ICON_SHIELD_CHECK + ' Rol promovido a Administrador',
+  rol_revocado_admin:        ICON_SHIELD_MINUS + ' Rol de Administrador revocado',
+  cuenta_activada:           ICON_CHECK_CIRCLE + ' Cuenta activada',
+  cuenta_desactivada:        ICON_BAN + ' Cuenta desactivada',
+  mascota_baja:              ICON_ARCHIVE + ' Mascota dada de baja',
+  mascota_editada_por_admin: ICON_PENCIL + ' Mascota editada por admin',
 };
 
 async function loadBitacora() {
@@ -4893,7 +4896,7 @@ function buildIconSelectors() {
              ondragover="event.preventDefault(); this.classList.add('drag-over')"
              ondragleave="this.classList.remove('drag-over')"
              ondrop="handleIconDrop(event,'${el.id}')">
-          <div>⬆️ Subir propia imagen o arrastrar</div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg> Subir propia imagen o arrastrar</div>
           <div style="font-size:.65rem; color:var(--gray-3); margin-top:4px;">JPG · PNG · GIF · SVG · Máx. 1 MB</div>
         </div>
         <input type="file" id="file-${el.id}" accept="image/*,.gif,.svg" style="display:none;" onchange="handleIconFile(this,'${el.id}')" />

@@ -2,6 +2,30 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22i] — Continúa el mismo rediseño en Bitácora y en las 10 pestañas de "Configuración del sitio"
+
+### 🤔 Contexto
+El usuario pidió seguir el mismo criterio de la entrada anterior (`2026-09-22h`) en el resto del panel: la columna "Acción" de la Bitácora, el encabezado de "Configuración del sitio", las 10 pestañas de esa sección (Contenidos de Portada, Reglamento, Avisos y promociones, Eventos, Contactos, Preguntas FAQ, Apariencia e íconos, Municipio, Tema visual, SEO y metadatos), y el encabezado + zona de arrastrar de "Avisos y promociones".
+
+### 🔧 Cambios
+- **`web/admin.html`**:
+  - `ACCION_LABELS` (Bitácora): sus 5 emojis (⭐✅🚫🐾✏️) se reemplazaron por íconos de línea, reutilizando `ICON_SHIELD_CHECK`/`ICON_CHECK_CIRCLE`/`ICON_BAN` ya creados en `2026-09-22f`, más 2 nuevos (`ICON_ARCHIVE` para "mascota dada de baja", `ICON_PENCIL` para "editada por admin").
+  - **Bug real encontrado de paso**: a la acción `rol_revocado_admin` (la de "Quitar administrador", agregada en `2026-09-22c`) le faltaba por completo su entrada en `ACCION_LABELS` — hoy mostraría el código interno en la Bitácora en vez de un texto legible. Se agregó: "Rol de Administrador revocado" con `ICON_SHIELD_MINUS`.
+  - Encabezado "⚙️ Configuración del sitio" y las **10 pestañas** de navegación (`.config-nav-icon`, antes 🏠📋📢📅📞❓🎨🏛️🖌️🌐) → íconos de línea (casa, portapapeles, megáfono, calendario, teléfono, ayuda, imagen, edificio de gobierno, pincel, globo terráqueo). El teléfono y el globo son exactamente el mismo SVG que ya usan `index.html`/`login.html` en otros lados, reutilizados tal cual.
+  - Encabezado "📢 Avisos y promociones" y el ícono de la zona de arrastrar banner (⬆️) → íconos de línea. También el texto "⬆️ Subir propia imagen o arrastrar" dentro de "Apariencia e íconos".
+
+### 🚫 Lo que NO se tocó (a propósito — es contenido, no decoración)
+- Los íconos de cada aviso en la lista **"Avisos publicados"** (💉🏥📚 en la captura del usuario) **no se tocaron**: vienen de `campanas.icono`, un campo que el propio admin elige libremente al crear cada campaña (parte de la función real de personalización, no un adorno fijo de la interfaz). Cambiar esto de raíz significaría quitarle esa opción al admin — se dejó pendiente de que el usuario confirme si de verdad quiere eso antes de tocarlo.
+
+### 🔎 Verificado
+- `admin.html` responde 200 en local y ya trae `ICON_ARCHIVE`/`ICON_PENCIL`/`rol_revocado_admin`.
+- Balance de `<script>` (6/6) y `<svg>` (57/57).
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno).
+
+### 📂 Archivos modificados
+- `web/admin.html`.
+
 ## 📅 [2026-09-22h] — Quita los emojis de los botones de "Mi perfil" y "Configuración sitio" (se veían anticuados)
 
 ### 🤔 Contexto
