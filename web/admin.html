@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel Admin — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260922" />
+  <link rel="stylesheet" href="css/styles.css?v=20260922b" />
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3273,10 +3273,12 @@ function renderUsuariosTable(data, total) {
             ? '<span class="badge badge-green">✓ Activa</span>'
             : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
         </td>
-        <td style="text-align:right;">
-          <button class="btn btn-ghost btn-sm" onclick="toggleUsuarioActivo(${u.id}, ${u.activo == 1})">
-            ${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}
-          </button>
+        <td>
+          <div class="row-actions">
+            ${u.activo == 1
+              ? `<button class="btn-icon danger" onclick="toggleUsuarioActivo(${u.id}, true)" title="Desactivar cuenta">${ICON_BAN}</button>`
+              : `<button class="btn-icon success" onclick="toggleUsuarioActivo(${u.id}, false)" title="Activar cuenta">${ICON_CHECK_CIRCLE}</button>`}
+          </div>
         </td>
       </tr>`).join('');
   }
@@ -3381,6 +3383,14 @@ function goToRolesPage(page) {
   loadRolesTable();
 }
 
+/* Íconos de línea (mismo estilo que el resto del sitio) para las
+   acciones de fila de Roles/Usuarios — antes eran emojis sueltos. */
+const ICON_SHIELD_CHECK = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg>';
+const ICON_SHIELD_MINUS = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="M9.5 12h5" /></svg>';
+const ICON_MAIL_PLUS    = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /><path d="M16 19h6" /><path d="M19 16v6" /></svg>';
+const ICON_BAN           = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m4.9 4.9 14.2 14.2" /></svg>';
+const ICON_CHECK_CIRCLE  = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>';
+
 function renderRolesTable(data, total, sinFiltro) {
   const tbody = document.getElementById('rolesTableBody');
 
@@ -3402,19 +3412,23 @@ function renderRolesTable(data, total, sinFiltro) {
             ? '<span class="badge badge-green">✓ Activa</span>'
             : '<span class="badge" style="background:var(--gray-4);color:var(--gray-1);">Desactivada</span>'}
         </td>
-        <td style="text-align:right;">
-          ${esSuperAdmin(currentUser) && u.rol !== 'admin' && u.activo == 1 && u.email
-            ? `<button class="btn btn-ghost btn-sm" style="color:var(--amber);" onclick="promoverAAdmin(${u.id})">⭐ Hacer administrador</button>`
-            : ''}
-          ${esSuperAdmin(currentUser) && u.rol === 'admin' && Number(u.es_superadmin) !== 1
-            ? `<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="revocarAdmin(${u.id})">🔻 Quitar administrador</button>`
-            : ''}
-          ${u.rol === 'ciudadano' && !u.email && u.activo == 1
-            ? `<button class="btn btn-ghost btn-sm" style="color:var(--blue);" onclick="abrirAsignarCorreo(${u.id})">✉️ Agregar correo</button>`
-            : ''}
-          ${u.rol !== 'admin'
-            ? `<button class="btn btn-ghost btn-sm" onclick="toggleCuentaActiva(${u.id}, ${u.activo == 1})">${u.activo == 1 ? '🚫 Desactivar' : '✅ Activar'}</button>`
-            : ''}
+        <td>
+          <div class="row-actions">
+            ${esSuperAdmin(currentUser) && u.rol !== 'admin' && u.activo == 1 && u.email
+              ? `<button class="btn-tag amber" onclick="promoverAAdmin(${u.id})">${ICON_SHIELD_CHECK} Hacer administrador</button>`
+              : ''}
+            ${esSuperAdmin(currentUser) && u.rol === 'admin' && Number(u.es_superadmin) !== 1
+              ? `<button class="btn-tag red" onclick="revocarAdmin(${u.id})">${ICON_SHIELD_MINUS} Quitar administrador</button>`
+              : ''}
+            ${u.rol === 'ciudadano' && !u.email && u.activo == 1
+              ? `<button class="btn-icon info" onclick="abrirAsignarCorreo(${u.id})" title="Agregar correo">${ICON_MAIL_PLUS}</button>`
+              : ''}
+            ${u.rol !== 'admin'
+              ? (u.activo == 1
+                  ? `<button class="btn-icon danger" onclick="toggleCuentaActiva(${u.id}, true)" title="Desactivar cuenta">${ICON_BAN}</button>`
+                  : `<button class="btn-icon success" onclick="toggleCuentaActiva(${u.id}, false)" title="Activar cuenta">${ICON_CHECK_CIRCLE}</button>`)
+              : ''}
+          </div>
         </td>
       </tr>`).join('');
   }

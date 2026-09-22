@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22f] — Rediseño de los botones de acción en "Roles y Cuentas" / "Usuarios" (menos anticuados, con jerarquía visual)
+
+### 🤔 Contexto
+El usuario mandó capturas de "Roles y Cuentas" señalando que los botones se veían "anticuados": cada acción era una pastilla con borde completo del mismo tamaño sin importar su importancia (Hacer/Quitar administrador igual de "grande" visualmente que Desactivar/Agregar correo), con emojis en vez de los íconos de línea que ya usa el resto del sitio, y al envolver en 2 líneas se veía amontonado.
+
+### 🔧 Cambios
+- **`web/css/styles.css`**: 3 clases nuevas para acciones de fila en tablas:
+  - `.btn-icon` — botón cuadrado compacto (32×32px) de solo ícono, con `title` como tooltip, para acciones frecuentes/de bajo riesgo (Activar/Desactivar, Agregar correo) — variantes `.danger`/`.success`/`.info` para el color según la acción.
+  - `.btn-tag` — "etiqueta" con fondo suave (no borde completo) para las 2 acciones de cambio de rol (Hacer/Quitar administrador) — más importantes y menos frecuentes, así que sí llevan texto, pero con menos peso visual que un botón pastilla completo.
+  - `.row-actions` — contenedor flex que alinea estos botones a la derecha con espaciado consistente.
+- **`web/admin.html`**: se actualizaron `renderRolesTable()` (Roles y Cuentas) y `renderUsuariosTable()` (Usuarios) para usar las clases nuevas. Los emojis (⭐🔻✉️🚫✅) se reemplazaron por íconos de línea SVG — mismo estilo que ya usa el resto del sitio desde el 2026-08-06 ("Reemplaza emojis por íconos de línea profesionales"), que esta tabla en particular se había quedado sin actualizar. Los 5 íconos (escudo con check, escudo con menos, sobre con +, círculo tachado, círculo con check) quedaron como constantes reutilizables (`ICON_SHIELD_CHECK`, etc.) en vez de repetir el SVG completo en cada fila.
+- Se subió la versión del CSS (`?v=20260922` → `?v=20260922b`) en las 5 páginas.
+
+### 🔎 Verificado
+- `curl` contra el sitio local: `styles.css` ya sirve las 3 clases nuevas, `admin.html` ya trae los íconos y `row-actions`.
+- Balance de llaves en `styles.css` (413/413) y de `<script>` en `admin.html` (6/6).
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas (cambio puramente visual).
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno) — pendiente que el usuario lo vea en pantalla.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/admin.html`, `web/{index,login,dashboard,asistente}.html` (solo el `?v=` del CSS).
+
 ## 📅 [2026-09-22e] — El color del "Tema visual" ya se refleja en el sidebar de dashboard.html y asistente.html
 
 ### 🤔 Contexto

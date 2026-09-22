@@ -215,6 +215,66 @@ input, select, textarea { font-family: inherit; }
 .btn-block { width: 100%; }
 .btn:disabled { opacity: .5; pointer-events: none; }
 
+/* ── Acciones de fila en tablas (Roles y Cuentas, Usuarios) ──
+   Antes cada acción era un botón "pastilla" con borde completo del
+   mismo tamaño sin importar qué tan frecuente/importante fuera — con 2-3
+   por fila se veía como un amontonamiento sin jerarquía. Ahora: las
+   acciones frecuentes/de bajo riesgo (activar, desactivar, agregar
+   correo) son botones-ícono compactos con tooltip; las de cambio de rol
+   (más importantes, menos frecuentes) son "etiquetas" con fondo suave
+   en vez de borde — se distinguen sin gritar. */
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--gray-4);
+  background: var(--white);
+  color: var(--gray-2);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.btn-icon svg { width: 16px; height: 16px; }
+.btn-icon:hover { background: var(--surface); border-color: var(--gray-3); color: var(--gray-1); }
+.btn-icon.danger  { color: var(--red); }
+.btn-icon.danger:hover  { background: var(--red-light); border-color: var(--red); }
+.btn-icon.success { color: var(--green); }
+.btn-icon.success:hover { background: var(--green-light); border-color: var(--green); }
+.btn-icon.info     { color: var(--blue); }
+.btn-icon.info:hover    { background: var(--blue-light); border-color: var(--blue); }
+
+.btn-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-tag svg { width: 14px; height: 14px; }
+.btn-tag.amber { background: var(--amber-light); color: var(--amber); }
+.btn-tag.amber:hover { background: var(--amber); color: var(--white); }
+.btn-tag.red   { background: var(--red-light);   color: var(--red); }
+.btn-tag.red:hover   { background: var(--red);   color: var(--white); }
+
 /* ── Navbar ── */
 .navbar {
   position: sticky;
