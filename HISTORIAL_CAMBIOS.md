@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22d] — Botón QR también en "Mascotas que he registrado" (asistente)
+
+### 🤔 Contexto
+El usuario notó que, al igual que pasaba antes en "Seguimiento" del panel admin (ver entrada `2026-09-22`), el modal "Mascotas que he registrado" de `asistente.html` solo tenía botón de "Acta", sin QR.
+
+### 🔧 Cambios
+- **`web/asistente.html`**: se agregó el botón **"🔲 QR"** junto a "Acta" en cada fila del modal "Mascotas que he registrado". Nueva función `verQRRegistro(id)` — mismo patrón exacto que `verQR()`/`verQRAdmin()` de `dashboard.html`/`admin.html`, adaptada a `misRegistros`. Se agregó también `printQR()` y la librería `qrcodejs` (CDN, con `defer`, igual que `jsPDF`) — esta página no tenía ninguna de las dos antes.
+
+### 🔎 Verificado
+- `curl` contra el sitio local: `asistente.html` responde 200 y ya trae `verQRRegistro`.
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- No se pudo probar visualmente en navegador (sin herramientas de automatización de navegador en este entorno).
+
+### 📂 Archivos modificados
+- `web/asistente.html`.
+
 ## 📅 [2026-09-22c] — "Roles y Cuentas" ya muestra a los administradores, y el superadmin puede quitar el rol admin
 
 ### 🤔 Contexto
@@ -1501,3 +1517,85 @@ El sitio corría enteramente sobre `localStorage`/`mock-data.js` pese a tener un
    - Permite personalizar los íconos/logos del navbar, hero, pasarela y footer permitiendo usar emojis, imágenes PNG transparentes o GIFs animados.
 2. **Corrección de Layout y Logos:**
    - Corrección de desbordamientos de texto en el logo principal y ajuste responsivo de los paneles de login y registro.
+
+---
+
+## ⚠️ Entradas reconstruidas a partir de git — anteriores a este documento
+`HISTORIAL_CAMBIOS.md` no existió como archivo hasta el commit `4a624ba` (2026-07-29, ver la entrada de esa fecha "Creación del Archivo de Contexto para Claude Code" — en realidad ese mismo commit también creó este changelog). Las 6 entradas de abajo (2026-06-12 a 2026-07-22) reconstruyen, a partir del historial real de `git log`, el trabajo que sí ocurrió antes de que existiera este documento — a petición del usuario, para no dejar un hueco en el registro. El detalle es más breve que en entradas posteriores porque se redactó después de los hechos, solo a partir del mensaje y el diff de cada commit, no de la sesión real de trabajo.
+
+## 📅 [2026-07-22] — Catálogo de colonias actualizado con datos reales de micodigopostal.org
+
+### 🔧 Cambios
+- **`web/js/mock-data.js`, `web/index.html`**: se reemplazó el catálogo de colonias de ejemplo por la lista completa y real de colonias/asentamientos de El Grullo, tomada de micodigopostal.org.
+
+### 📂 Archivos modificados
+- `web/js/mock-data.js`, `web/index.html`.
+
+*(commit `fd59a7a`)*
+
+## 📅 [2026-07-22] — Corrección de centrado del aside y scroll de pestañas en registro de mascotas
+
+### 🔧 Cambios
+- **`web/css/styles.css`, `web/login.html`**: ajuste de centrado del panel lateral (aside) en la vista de registro de mascotas, y corrección del scroll horizontal de las pestañas.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/login.html`.
+
+*(commit `f833da0`)*
+
+## 📅 [2026-07-22] — Se conecta el backend real: API en PHP, base de datos MySQL y cliente API
+
+### 🤔 Contexto
+Hasta este commit el proyecto era un prototipo puramente de frontend, con todos los datos (mascotas, dueños, estadísticas) simulados en `web/js/mock-data.js`. Este es el primer commit que agrega un backend de verdad.
+
+### 🔧 Cambios
+- **Nuevo `web/api/`**: primera versión de la API en PHP nativo — `auth.php` (registro/login), `mascotas.php` (CRUD, 200 líneas), `stats.php` (estadísticas), `contenido.php`, `config/database.php` (conexión PDO) y `config/helpers.php` (funciones auxiliares). Incluye su propio `.htaccess` con el ruteo de endpoints.
+- **Nuevo `web/database/`**: `schema.sql` (estructura de la base de datos) y `seed.sql` (datos iniciales de prueba) — primera versión del esquema de MySQL del proyecto.
+- **Nuevo `web/js/api-client.js`**: primer cliente HTTP para consumir la API real desde el frontend.
+- **`web/dashboard.html`, `web/index.html`, `web/css/styles.css`**: ajustes para empezar a consumir datos reales en vez de `mock-data.js` (que en este commit todavía coexiste con la API real, no se elimina).
+
+### 📂 Archivos modificados
+- Nuevos: `web/api/.htaccess`, `web/api/auth.php`, `web/api/config/database.php`, `web/api/config/helpers.php`, `web/api/contenido.php`, `web/api/mascotas.php`, `web/api/stats.php`, `web/database/schema.sql`, `web/database/seed.sql`, `web/js/api-client.js`.
+- Modificados: `web/css/styles.css`, `web/dashboard.html`, `web/index.html`, `web/js/mock-data.js`.
+
+*(commit `e3641be` — un salto de más de un mes desde el commit anterior, `ed7cb64` del 13 de junio; no hay registro de qué se trabajó en ese periodo, solo de este resultado)*
+
+## 📅 [2026-06-13] — Se sincroniza el README tras quitar el reporte de mascota extraviada
+
+### 🔧 Cambios
+- **`README.md`**: se quitó la mención a "Reporte de mascota extraviada" en la lista de funciones del Panel Ciudadano — quedó desactualizada un día después de que esa función se retiró del código (ver commit `16369dc`, 2026-06-12).
+
+### 📂 Archivos modificados
+- `README.md`.
+
+*(commit `ed7cb64`)*
+
+## 📅 [2026-06-12] — Se quita el reporte de "mascota extraviada" y se agrega un mapa a la portada
+
+### 🤔 Contexto
+En esta etapa muy temprana del proyecto, el identificador de una persona todavía era su **CURP** (se eliminaría por completo más adelante, ver la entrada del 2026-07-29 "Eliminación de CURP y Obligatoriedad del Teléfono") y el padrón incluía un estatus/reporte de "Extraviado" para mascotas perdidas, que se decidió quitar del alcance del proyecto.
+
+### 🔧 Cambios
+- Se eliminó la funcionalidad de "mascota extraviada" (estatus, gráfica y textos relacionados) de `admin.html`, `dashboard.html`, `index.html`, `login.html` y `mock-data.js`.
+- **`web/index.html`**: se agregó un mapa (Leaflet, vía CDN) a la portada — primera aparición del mapa que más adelante evolucionaría en el mapa de mascotas por colonia del panel admin.
+- Ajustes de texto de la portada (de "Registrarme" a "Registrar mascota", pasos de registro).
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/dashboard.html`, `web/index.html`, `web/js/mock-data.js`, `web/login.html`.
+
+*(commit `16369dc`, 43 minutos después del commit inicial)*
+
+## 📅 [2026-06-12] — Primer commit: prototipo inicial de la plataforma (solo frontend, con datos de prueba)
+
+### 🤔 Contexto
+Primer commit del repositorio (`16c1554`) — el punto de partida de todo el proyecto.
+
+### 🔧 Cambios
+- Primera versión del portal: `index.html` (portada), `login.html` (acceso/registro), `dashboard.html` (panel ciudadano), `admin.html` (panel administrativo) y `css/styles.css` — 6,653 líneas en total.
+- **`web/js/mock-data.js`**: todos los datos (mascotas, dueños, estadísticas) eran simulados en este archivo — todavía no existía ningún backend real ni base de datos (eso llegaría hasta el commit `e3641be`, 2026-07-22).
+- Cuentas de prueba de esta primera versión (documentadas en el `README.md` original, ya no vigentes): `admin@demo.com` / `Admin1234` y `ciudadano@demo.com` / `Demo1234`.
+
+### 📂 Archivos modificados
+- Nuevos: `.gitignore`, `README.md`, `web/admin.html`, `web/css/styles.css`, `web/dashboard.html`, `web/index.html`, `web/js/mock-data.js`, `web/login.html`.
+
+*(commit `16c1554`)*

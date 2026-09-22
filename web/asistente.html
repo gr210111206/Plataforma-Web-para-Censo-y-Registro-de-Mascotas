@@ -328,10 +328,12 @@
 <script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
 <script src="js/tema.js"></script>
-<!-- jsPDF va al final y con defer: solo lo necesita "Descargar acta" (mucho
-     después en el flujo) — si tarda o falla en cargar desde el CDN, ya no
-     bloquea que el resto del sitio (buscar/registrar) funcione. -->
+<!-- jsPDF/QRCode van al final y con defer: solo los necesitan "Acta"/"QR"
+     en "Mascotas que he registrado" (mucho después en el flujo) — si
+     tardan o fallan en cargar desde el CDN, ya no bloquean que el resto
+     del sitio (buscar/registrar) funcione. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script>
 let session = null;
 let selectedDueno = null;
@@ -397,8 +399,87 @@ function renderMisRegistros(data) {
         <div style="font-weight:600; font-size:.9rem;">${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}</div>
         <div style="font-size:.78rem; color:var(--gray-2);">${pet.persona || '—'} · ${pet.fecha_registro || ''} · <span style="font-family:monospace;">${pet.id}</span></div>
       </div>
+      <button class="btn btn-ghost btn-sm" onclick="verQRRegistro('${pet.id}')">🔲 QR</button>
       <button class="btn btn-ghost btn-sm" onclick="downloadActa(misRegistros.find(p => p.id === '${pet.id}'))">📄 Acta</button>
     </div>`).join('');
+}
+
+/* ── VER QR — mismo patrón que verQR() de dashboard.html / verQRAdmin()
+   de admin.html, adaptado a misRegistros (lo que este asistente dio de
+   alta). ── */
+function verQRRegistro(id) {
+  const pet = misRegistros.find(p => p.id === id);
+  if (!pet) { showToast('❌ No se encontró la mascota.', 'error'); return; }
+  if (!pet.link_publico) { showToast('❌ Esta mascota no tiene un link público generado.', 'error'); return; }
+  const link  = pet.link_publico;
+  const folio = pet.id || '—';
+
+  let qrModal = document.getElementById('modal-qr');
+  if (!qrModal) {
+    qrModal = document.createElement('div');
+    qrModal.className = 'modal-overlay';
+    qrModal.id = 'modal-qr';
+    qrModal.innerHTML = `
+      <div class="modal" style="max-width:340px; text-align:center;">
+        <div class="modal-header">
+          <h2 class="modal-title" id="qr-titulo">Código QR</h2>
+          <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('open')" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+          <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
+          <div id="qr-info" style="font-size:.82rem; color:var(--gray-1); text-align:center;"></div>
+          <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;">🌐 Abrir página pública</a>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="document.getElementById('modal-qr').classList.remove('open')">Cerrar</button>
+          <button class="btn btn-primary" onclick="printQR()">🖨️ Imprimir QR</button>
+        </div>
+      </div>`;
+    document.body.appendChild(qrModal);
+  }
+  qrModal.classList.add('open');
+
+  const qrCanvas = document.getElementById('qr-canvas');
+  qrCanvas.innerHTML = '';
+
+  const linkAbsoluto = `${window.location.origin}${window.location.pathname.replace('asistente.html', '')}${link}`;
+  try {
+    new QRCode(qrCanvas, {
+      text: linkAbsoluto,
+      width:  200,
+      height: 200,
+      colorDark:  '#1A1A1A',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch (err) {
+    qrCanvas.innerHTML = '<div style="padding:20px; font-size:.82rem; color:var(--gray-2);">No se pudo generar el código QR. Revisa tu conexión e intenta de nuevo.</div>';
+  }
+
+  document.getElementById('qr-titulo').textContent = `🔲 QR — ${pet.nombre}`;
+  document.getElementById('qr-info').innerHTML = `
+    <strong style="font-size:.95rem; color:var(--dark);">🐾 ${pet.nombre}</strong><br/>
+    ${capitalize(pet.especie)}${pet.raza ? ' · ' + pet.raza : ''}<br/>
+    ${pet.persona ? '👤 ' + pet.persona : ''}
+    ${pet.telefono ? '<br/>📞 <strong>' + pet.telefono + '</strong>' : ''}<br/>
+    <span style="font-family:monospace; font-size:.75rem; color:var(--orange-dark);">${folio}</span>
+  `;
+  document.getElementById('qr-link-btn').href = linkAbsoluto;
+}
+
+function printQR() {
+  const canvas = document.querySelector('#qr-canvas canvas');
+  if (!canvas) return;
+  const win = window.open('');
+  win.document.write(`
+    <html><head><title>QR - Padrón de Mascotas</title></head>
+    <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Arial;gap:12px;">
+      <img src="${canvas.toDataURL()}" alt="Código QR" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
+      <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('🔲 QR — ','')}</div>
+      <div style="font-size:12px;color:#888;">Padrón Municipal de Mascotas · H. Ayuntamiento El Grullo</div>
+    </body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
 }
 
 /* ══════════════════════════════════════════════════ */
