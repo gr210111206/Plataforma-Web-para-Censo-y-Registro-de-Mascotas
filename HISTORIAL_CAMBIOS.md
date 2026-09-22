@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-22b] — "Mi perfil" del Asistente ya no es un modal — ahora es una página como en admin/ciudadano
+
+### 🤔 Contexto
+El usuario comparó capturas: en `dashboard.html` (ciudadano) y `admin.html` (admin/superadmin), "Mi perfil" es una sección de página completa dentro del layout del panel; en `asistente.html` era una ventana modal encima del contenido. Pidió que se viera igual en los 3 roles.
+
+### 🔧 Cambios
+- **`web/asistente.html`**: se le agregó navegación real entre secciones (algo que antes no existía — todo el archivo era una sola vista fija de "Registrar mascota", con "Mi perfil" como modal encima):
+  - El contenido de "Registrar mascota" ahora vive en `id="section-registrar"`; se agregó `id="section-mi-perfil"` con la **misma estructura exacta** que la sección de `admin.html` (tarjeta de avatar+nombre+rol, nombre/teléfono/correo, tarjeta aparte de "Cambiar contraseña" — sin domicilio/colonia, que tampoco tiene la de admin, por ser cuentas de personal municipal, no de ciudadanos).
+  - Nueva función `showSection(name, linkEl)` (mismo patrón que `dashboard.html`) que alterna qué sección se muestra y actualiza el título del encabezado.
+  - Se eliminó el modal `#modal-mi-perfil` (evitaba además un `id="avatar-upload"` duplicado en el HTML, que ya existía sin querer entre el modal viejo y la sección nueva).
+  - `abrirMiPerfil()` se renombró a `applyCurrentUserToUI()` (mismo nombre que la función equivalente en `admin.html`) y ahora también actualiza el nombre/avatar de la barra lateral, no solo los campos del formulario — se llama una sola vez al cargar la página y de nuevo después de guardar cambios, en vez de cada vez que se "abría" el modal.
+  - `saveProfile()` ya no cierra ningún modal (no aplica); solo vuelve a llamar `applyCurrentUserToUI()` para refrescar todo en un solo lugar.
+
+### 🔎 Verificado
+- `curl` contra el sitio local: `asistente.html` responde 200, ya trae `showSection`/`applyCurrentUserToUI`/`section-mi-perfil`, y cero referencias sueltas a `modal-mi-perfil`.
+- Sin IDs duplicados (`avatar-upload`, `profileAvatar` aparecen una sola vez cada uno) y etiquetas `<script>` balanceadas.
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- **No se pudo probar visualmente en navegador** (mismo motivo que la entrada anterior: sin herramientas de automatización de navegador en este entorno) — pendiente que el usuario lo confirme en pantalla.
+
+### 📂 Archivos modificados
+- `web/asistente.html`.
+
 ## 📅 [2026-09-22] — Botón QR en Seguimiento (admin) + corrige HTTPS forzado en local
 
 ### 🤔 Contexto
