@@ -79,16 +79,19 @@ function _hexToRgbString(hex) {
  * Lee padron_tema_config (del servidor si hay conexión, si no de
  * localStorage) y sobrescribe las variables CSS del sitio. Debe
  * llamarse en cada página después de api-client.js.
+ *
+ * Acepta opcionalmente `configYaTraida` (el objeto que ya devolvió
+ * apiGetSiteConfig()) para páginas que ya lo pidieron ellas mismas —
+ * así se evita pedir /api/settings dos veces en la misma carga de
+ * página (index.html lo hacía: una vez aquí y otra en primeConfigFromServer()).
  */
-async function aplicarTemaVisual() {
+async function aplicarTemaVisual(configYaTraida) {
   let cfg = null;
   try {
-    if (typeof apiGetSiteConfig === 'function') {
-      const all = await apiGetSiteConfig();
-      if (all && all['padron_tema_config']) {
-        cfg = all['padron_tema_config'];
-        localStorage.setItem('padron_tema_config', JSON.stringify(cfg));
-      }
+    const all = configYaTraida || (typeof apiGetSiteConfig === 'function' ? await apiGetSiteConfig() : null);
+    if (all && all['padron_tema_config']) {
+      cfg = all['padron_tema_config'];
+      localStorage.setItem('padron_tema_config', JSON.stringify(cfg));
     }
   } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
 

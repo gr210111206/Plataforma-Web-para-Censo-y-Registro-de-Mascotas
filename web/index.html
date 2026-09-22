@@ -809,20 +809,6 @@ async function initMap() {
   });
 }
 
-/* ── Configuración del sitio (apariencia/contenidos/footer) desde el servidor ──
-   Trae la config real y la vuelca a localStorage ANTES de que corran
-   applyFooterConfig/applySiteContentConfig/applyAppearanceConfig, así
-   cualquier visitante ve siempre lo último publicado por el admin, no
-   solo lo que haya quedado cacheado en su propio navegador. ── */
-async function primeConfigFromServer() {
-  try {
-    const all = await apiGetSiteConfig();
-    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_eventos'].forEach(key => {
-      if (all[key]) localStorage.setItem(key, JSON.stringify(all[key]));
-    });
-  } catch (e) { /* sin conexión: seguimos con lo que haya en localStorage */ }
-}
-
 /* ── Contenidos de portada (hero, pasos, banner...) editados desde el admin ── */
 function applySiteContentConfig() {
   const raw = localStorage.getItem('padron_site_content');
@@ -883,29 +869,57 @@ async function applyRealStats() {
   } catch (e) { /* si falla, quedan los valores por defecto del HTML (0) */ }
 }
 
-/* ── Init ── */
-async function initIndex() {
-  await primeConfigFromServer();
-  aplicarTemaVisual();
-
-  try {
-    renderCampaigns(await apiGetCampanas());
-  } catch (e) { /* sección queda vacía si falla */ }
+/* ── Init ──
+   Antes, esto pedía 5 cosas al servidor UNA TRAS OTRA (config del sitio,
+   tema visual —que de hecho volvía a pedir la config completa por
+   segunda vez—, campañas, artículos y estadísticas), esperando cada
+   respuesta antes de empezar la siguiente. Con ~5 vueltas al servidor en
+   serie, la portada tardaba 2-3 segundos en mostrar los datos reales
+   (número de mascotas, foto del hero, etc.) — se veía "vacía" y luego
+   aparecía todo de golpe.
+   Ahora: (1) se aplica primero, sin esperar nada, lo que ya quedó
+   guardado en el navegador de una visita anterior (localStorage) — así
+   un visitante que ya había entrado antes ve la portada completa de
+   inmediato; (2) todo lo que sí necesita ir al servidor se pide en
+   PARALELO (Promise.all), no en fila. */
+function aplicarConfigCacheada() {
+  applySiteContentConfig();
+  applyAppearanceConfig();
+  applyFooterConfig();
+  applyReglamento();
+  renderFAQ();
   try {
     const eventosRaw = localStorage.getItem('padron_eventos');
     renderEvents(eventosRaw ? JSON.parse(eventosRaw) : []);
   } catch (e) { /* sin eventos publicados */ }
-  try {
-    renderArticles(await apiGetArticulos());
-  } catch (e) { /* sección queda vacía si falla */ }
+}
 
-  renderFAQ();
-  applyReglamento();
-  applyFooterConfig();
-  await applyRealStats();      // primero los datos reales...
-  applySiteContentConfig();    // ...luego, si el admin puso un número manual, ese manda
-  applyAppearanceConfig();
+async function initIndex() {
+  // 1) Instantáneo, sin red: lo que ya había en localStorage de una visita anterior.
+  aplicarConfigCacheada();
   applyNavAuthState();
+
+  // 2) Todo lo que sí necesita el servidor, en paralelo (no uno por uno).
+  const [siteConfig] = await Promise.all([
+    apiGetSiteConfig().catch(() => null),
+    (async () => {
+      try { renderCampaigns(await apiGetCampanas()); } catch (e) { /* sección queda vacía si falla */ }
+    })(),
+    (async () => {
+      try { renderArticles(await apiGetArticulos()); } catch (e) { /* sección queda vacía si falla */ }
+    })(),
+    applyRealStats(),
+  ]);
+
+  // 3) Con la config fresca del servidor ya en localStorage, se vuelve a
+  // aplicar por si el admin cambió algo desde la última visita guardada.
+  if (siteConfig) {
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_eventos'].forEach(key => {
+      if (siteConfig[key]) localStorage.setItem(key, JSON.stringify(siteConfig[key]));
+    });
+    aplicarConfigCacheada();
+  }
+  aplicarTemaVisual(siteConfig || undefined);
   initMap();
 
   // Recién ahora se empiezan a animar los contadores: ya tienen el

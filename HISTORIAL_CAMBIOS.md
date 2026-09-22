@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-21f] — La portada (`index.html`) ya no se ve "vacía" 2-3 segundos antes de cargar
+
+### 🤔 Contexto
+El usuario reportó (con capturas de `mascota-elgrullo.com`) que al entrar a la portada primero se ve todo en 0 y sin la foto del hero, y 2-3 segundos después aparecen los números y la imagen reales. Causa real: `initIndex()` pedía **5 cosas al servidor una tras otra** (`primeConfigFromServer()` → `aplicarTemaVisual()` —que de hecho volvía a pedir la config completa por segunda vez, redundante— → campañas → artículos → estadísticas), esperando cada respuesta antes de empezar la siguiente. Con ~5 vueltas al servidor en fila, ahí estaban los 2-3 segundos.
+
+### 🔧 Cambios
+- **`web/index.html`**: se reescribió `initIndex()`. Ahora, en cuanto carga la página: (1) se aplica de inmediato, sin esperar nada, lo que ya haya quedado guardado en el navegador de una visita anterior (`localStorage`) — así un visitante que ya había entrado antes ve la portada completa al instante, sin parpadeo; (2) todo lo que sí necesita el servidor (config del sitio, campañas, artículos, estadísticas) se pide **en paralelo** (`Promise.all`) en vez de uno por uno; (3) al terminar, se vuelve a aplicar la config por si el admin cambió algo desde la última visita guardada. Se eliminó `primeConfigFromServer()` (quedó duplicada dentro de la nueva `initIndex()`).
+- **`web/js/tema.js`**: `aplicarTemaVisual()` ahora acepta opcionalmente la configuración ya traída por la página que la llama, para no volver a pedir `/api/settings` una segunda vez en la misma carga (index.html se lo pasa; el resto de páginas la siguen llamando igual que antes, sin cambios para ellas).
+
+### 🚫 Lo que NO se tocó
+- El resto de páginas (`login.html`, `dashboard.html`, `admin.html`, `asistente.html`) no se revisaron — el usuario solo reportó esto en la portada pública. Si notan el mismo parpadeo en otra página, se puede aplicar el mismo patrón ahí.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/js/tema.js`.
+
 ## 📅 [2026-09-21e] — Reporte de Residencias completado hasta la semana 5 sobre la plantilla del asesor (formato I–XIV)
 
 ### 🤔 Contexto
