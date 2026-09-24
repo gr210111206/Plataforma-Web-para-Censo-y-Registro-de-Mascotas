@@ -2,6 +2,38 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-23] — Cuatro documentos Word para el Trello del profesor: Marco Teórico, Metodología, Lista de Requerimientos y Diseño de Base de Datos
+
+### 🤔 Contexto
+El profesor lleva la residencia en un tablero de Trello (columnas Pendientes / En Revisión / Finalizado) y pide un documento por cada tarjeta, con el formato de portada de `Word/trello/Formato del Documento.docx` (logo del Tecnológico Superior de Jalisco, título, fecha, profesor, materia, unidad, alumno y número de control). El usuario pidió los cuatro primeros: Marco Teórico, Metodología, Lista de Requerimientos y Diseño de Base de Datos. No se tocó código del sistema.
+
+### 🔧 Cambios
+- **Creados 4 documentos en `Word/trello/`** (carpeta ignorada por git; no se sube nada personal):
+  - `Marco Teórico.docx` (26 págs.): antecedentes (rabia, RUAC de la CDMX, el caso de El Grullo), marco normativo federal, estatal y municipal, marco conceptual, fundamentos tecnológicos, seguridad de la información, usabilidad y accesibilidad, fundamentos de ingeniería de software y de bases de datos, y 32 fuentes en APA 7.
+  - `Metodología.docx` (14 págs.): enfoque incremental e iterativo, 7 fases con horas y estado a la semana 5, técnicas, herramientas, roles, gestión de cambios, criterios de calidad, riesgos y consideraciones éticas.
+  - `Lista de Requerimientos.docx` (14 págs.): 42 requerimientos funcionales en 5 módulos, 16 no funcionales, 13 reglas de negocio, restricciones y supuestos, trazabilidad con los 5 objetivos del anteproyecto y resumen de estado (53 implementados, 3 parciales y 2 pendientes, de 58).
+  - `Diseño de Base de Datos.docx` (21 págs.): modelo conceptual, lógico y físico de las 7 tablas, diagrama entidad-relación, diccionario de datos, normalización, integridad, índices, consultas principales, seguridad y respaldo, evolución del esquema (11 cambios del 22 de julio al 8 de septiembre) y anexo con el DDL.
+- **Formato**: portada idéntica a la plantilla; cuerpo con el estilo "Formato apa" de la plantilla (Arial 12, interlineado doble, sangría de 0.5 cm, justificado); índice automático, número de página en el encabezado, tablas y figuras numeradas con pie tipo APA, y título y autor en las propiedades del archivo.
+- **Figuras nuevas**: arquitectura del sistema y ciclo de desarrollo incremental (dibujadas con GDI+); se reutilizan el diagrama de casos de uso y el entidad-relación de la semana 4.
+- **Verificación de fuentes legales por búsqueda web** (septiembre de 2026):
+  - La «Ley General en Materia de Bienestar Animal» que citaban `Marco_Teorico.rtf` y el reporte MG **no está expedida**: la reforma constitucional (DOF 2-dic-2024, artículos 3, 4 y 73) dio 180 días al Congreso (vencieron el 1-jun-2025) y solo se localizaron iniciativas. Los documentos nuevos citan esa reforma, la Ley de Protección y Cuidado de los Animales del Estado de Jalisco (publicada el 29-nov-2012), la NOM-011-SSA2-2011 y las leyes de protección de datos personales federal y de Jalisco.
+  - No se encontró un «Reglamento de Protección y Bienestar Animal» de El Grullo. El Reglamento de Policía y Buen Gobierno sí regula a los animales en la vía pública (artículos 12 fr. V y XIII, y 80 fr. V), pero no prevé un padrón. El enlace que publica el sitio del Ayuntamiento para el Reglamento de Medio Ambiente y Cambio Climático (2025) devuelve en realidad el Código de Ética, por eso quedó un marcador `[VERIFICAR]`.
+- Las fuentes de generación (script y JSON con todo el texto) se respaldaron en `Word/Respaldos/trello_fuentes/` para poder regenerar los documentos.
+
+### ⚠️ Pendiente (marcadores en amarillo)
+- **Profesor y Materia** en las portadas de los 4 documentos: el usuario no indicó quién es el profesor ni la materia.
+- Metodología: fechas y participantes de las reuniones del levantamiento de requerimientos.
+- Marco Teórico: revisar con el personal de Medio Ambiente el Reglamento de Medio Ambiente y Cambio Climático.
+- Los tres marcadores `[VERIFICAR]` del reporte MG siguen sin corregirse con los datos de arriba; falta el visto bueno del usuario.
+
+### 🔎 Verificado
+- Los 4 documentos se generaron con Word (automatización COM) y se revisaron página por página en PDF: sin referencias sin resolver, sin resaltado indebido y con el índice en una sola página.
+- Cifras contrastadas con el código y el historial: 24 verificaciones de la prueba de humo, 38 colonias, 7 tablas, 6 páginas HTML, 8 servicios de la API, límites de foto y de paginación.
+
+### 📂 Archivos
+- Creados (fuera de git): los 4 `.docx` de `Word/trello/` y `Word/Respaldos/trello_fuentes/`.
+- Modificado: `HISTORIAL_CAMBIOS.md`.
+
 ## 📅 [2026-09-22i] — Continúa el mismo rediseño en Bitácora y en las 10 pestañas de "Configuración del sitio"
 
 ### 🤔 Contexto
