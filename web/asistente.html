@@ -399,7 +399,7 @@ function renderMisRegistros(data) {
         <div style="font-weight:600; font-size:.9rem;">${pet.especie === 'gato' ? '🐈' : '🐕'} ${pet.nombre}</div>
         <div style="font-size:.78rem; color:var(--gray-2);">${pet.persona || '—'} · ${pet.fecha_registro || ''} · <span style="font-family:monospace;">${pet.id}</span></div>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="verQRRegistro('${pet.id}')">🔲 QR</button>
+      <button class="btn btn-ghost btn-sm" onclick="verQRRegistro('${pet.id}')"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1" /><rect width="5" height="5" x="16" y="3" rx="1" /><rect width="5" height="5" x="3" y="16" rx="1" /><path d="M21 16h-3a2 2 0 0 0-2 2v3" /><path d="M21 21v.01" /><path d="M12 7v3a2 2 0 0 1-2 2H7" /><path d="M3 12h.01" /><path d="M12 3h.01" /><path d="M12 16v.01" /><path d="M16 12h1" /><path d="M21 12v.01" /><path d="M12 21v-1" /></svg> QR</button>
       <button class="btn btn-ghost btn-sm" onclick="downloadActa(misRegistros.find(p => p.id === '${pet.id}'))">📄 Acta</button>
     </div>`).join('');
 }
@@ -428,11 +428,11 @@ function verQRRegistro(id) {
         <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
           <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
           <div id="qr-info" style="font-size:.82rem; color:var(--gray-1); text-align:center;"></div>
-          <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;">🌐 Abrir página pública</a>
+          <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg> Abrir página pública</a>
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="document.getElementById('modal-qr').classList.remove('open')">Cerrar</button>
-          <button class="btn btn-primary" onclick="printQR()">🖨️ Imprimir QR</button>
+          <button class="btn btn-primary" onclick="printQR()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg> Imprimir QR</button>
         </div>
       </div>`;
     document.body.appendChild(qrModal);
@@ -456,12 +456,12 @@ function verQRRegistro(id) {
     qrCanvas.innerHTML = '<div style="padding:20px; font-size:.82rem; color:var(--gray-2);">No se pudo generar el código QR. Revisa tu conexión e intenta de nuevo.</div>';
   }
 
-  document.getElementById('qr-titulo').textContent = `🔲 QR — ${pet.nombre}`;
+  document.getElementById('qr-titulo').innerHTML = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1" /><rect width="5" height="5" x="16" y="3" rx="1" /><rect width="5" height="5" x="3" y="16" rx="1" /><path d="M21 16h-3a2 2 0 0 0-2 2v3" /><path d="M21 21v.01" /><path d="M12 7v3a2 2 0 0 1-2 2H7" /><path d="M3 12h.01" /><path d="M12 3h.01" /><path d="M12 16v.01" /><path d="M16 12h1" /><path d="M21 12v.01" /><path d="M12 21v-1" /></svg> QR — ' + pet.nombre;
   document.getElementById('qr-info').innerHTML = `
-    <strong style="font-size:.95rem; color:var(--dark);">🐾 ${pet.nombre}</strong><br/>
+    <strong style="font-size:.95rem; color:var(--dark); display:inline-flex; align-items:center; gap:5px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg> ${pet.nombre}</strong><br/>
     ${capitalize(pet.especie)}${pet.raza ? ' · ' + pet.raza : ''}<br/>
-    ${pet.persona ? '👤 ' + pet.persona : ''}
-    ${pet.telefono ? '<br/>📞 <strong>' + pet.telefono + '</strong>' : ''}<br/>
+    ${pet.persona ? '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> ' + pet.persona : ''}
+    ${pet.telefono ? '<br/><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></svg> <strong>' + pet.telefono + '</strong>' : ''}<br/>
     <span style="font-family:monospace; font-size:.75rem; color:var(--orange-dark);">${folio}</span>
   `;
   document.getElementById('qr-link-btn').href = linkAbsoluto;
@@ -475,7 +475,7 @@ function printQR() {
     <html><head><title>QR - Padrón de Mascotas</title></head>
     <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:Arial;gap:12px;">
       <img src="${canvas.toDataURL()}" alt="Código QR" style="width:220px;height:220px;border:2px solid #eee;padding:12px;border-radius:12px;" />
-      <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('🔲 QR — ','')}</div>
+      <div style="font-size:18px;font-weight:700;">${document.getElementById('qr-titulo').textContent.replace('QR — ','').trim()}</div>
       <div style="font-size:12px;color:#888;">Padrón Municipal de Mascotas · H. Ayuntamiento El Grullo</div>
     </body></html>`);
   win.document.close();

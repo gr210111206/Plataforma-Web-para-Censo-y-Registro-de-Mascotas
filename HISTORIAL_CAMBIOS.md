@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-29] — El rediseño de íconos llega al modal de QR (dashboard, admin y asistente)
+
+### 🤔 Contexto
+El usuario notó que el modal de QR (el que se abre con el botón "QR" en "Mis mascotas"/Seguimiento/Mascotas registradas) se había quedado fuera del rediseño de íconos de las entradas `2026-09-22f` a `i` — de hecho, ese modal con sus emojis originales fue justo la plantilla que se copió tal cual a `admin.html` y `asistente.html` cuando se agregó el botón QR ahí (`2026-09-22`/`2026-09-22d`), así que el problema estaba multiplicado por 3.
+
+### 🔧 Cambios
+- **`web/dashboard.html`, `web/admin.html`, `web/asistente.html`**: en las 3 copias del modal de QR (`verQR()`/`verQRAdmin()`/`verQRRegistro()`), se reemplazaron por íconos de línea SVG: el título "🔲 QR — {nombre}", el botón "🌐 Abrir página pública", el botón "🖨️ Imprimir QR", y dentro de la ficha de info: "🐾 {nombre}" (mascota), "👤 {dueño}" y "📞 {teléfono}" — reutilizando exactamente los mismos SVG ya usados en el resto del sitio (pata, persona, teléfono, globo) en vez de crear íconos nuevos.
+- El título (`qr-titulo`) pasó de `textContent` a `innerHTML` para poder incluir el ícono — se ajustó `printQR()` en las 3 páginas (leía ese texto para armar la ventana de impresión y buscaba literalmente el emoji `🔲` para quitarlo).
+- De paso, el botón "QR" de la tarjeta de Seguimiento en `admin.html` (que decía "🔲 QR") también quedó con el ícono en vez del emoji.
+
+### 🚫 Lo que NO se tocó
+- `admin.html` tiene un emoji 🔲 más, en "Tema visual" → "Bordes redondeados (tarjetas)" — es una fila de configuración sin relación con el QR, se dejó fuera por no ser lo que se pidió.
+
+### 🔎 Verificado
+- Las 3 páginas responden 200 en local.
+- Balance de `<script>` y `<svg>` en las 3 (todas 1:1).
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno).
+
+### 📂 Archivos modificados
+- `web/dashboard.html`, `web/admin.html`, `web/asistente.html`.
+
 ## 📅 [2026-09-23] — Cuatro documentos Word para el Trello del profesor: Marco Teórico, Metodología, Lista de Requerimientos y Diseño de Base de Datos
 
 ### 🤔 Contexto
