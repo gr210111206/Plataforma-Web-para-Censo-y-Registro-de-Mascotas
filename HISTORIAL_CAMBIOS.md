@@ -2,6 +2,33 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-09-30] — "Datos"/"Bitácora" solo para el superadmin, y el mapa ya muestra las mascotas de cada colonia
+
+### 🤔 Contexto
+El usuario pidió 2 cosas: (1) que al hacer clic en un pin del mapa de "Datos" se pudiera ver la lista real de mascotas de esa colonia, no solo el número total; y (2) que las secciones "Datos" y "Bitácora" del menú solo las pueda ver el superadmin, no cualquier admin.
+
+### 🔧 Cambios
+
+**1. Mapa → lista de mascotas por colonia:**
+- **`web/admin.html`**: el popup de cada pin del mapa (antes solo mostraba "X mascotas registradas") ahora tiene un botón **"Ver mascotas →"**. Nueva función `abrirMascotasColonia(colonia)`: reutiliza el filtro `?colonia=` que ya existía en `mascotas.php` (no fue necesario tocar el backend) y muestra el resultado en un modal nuevo (`#modal-mapa-colonia`) como una lista de tarjetas (ícono de mascota, nombre, dueño, especie/raza, insignia de vacunado) — no una tabla de columnas, para que quepan bien los datos sin recortarse. Cada fila es clickeable y manda directo a "Seguimiento" ya buscando esa mascota (reutiliza `goToSeguimiento()`, el mismo patrón que ya usaba la mini-tabla de "Datos").
+
+**2. "Datos" y "Bitácora" restringidos al superadmin:**
+- **`web/api/bitacora.php`**: `requireAdmin()` → `requireSuperAdmin()`. Esta sí es una restricción real del lado del servidor — ni por consola del navegador ni llamando la API directo un admin normal puede ya leer la bitácora (probado con `curl`: da `403 Acceso denegado. Se requiere ser superadmin.`).
+- **`web/admin.html`**: para una cuenta admin que no es superadmin, se ocultan los links "Datos" y "Bitácora" del menú lateral, y la sección que se muestra al entrar al panel cambia de "Datos" a "Seguimiento" (ya que "Datos" queda oculta). El mapa (`initMap()`) tampoco se inicializa para un admin normal, para no gastar las peticiones a OpenStreetMap de una sección que no va a ver.
+- **Nota importante, para que quede claro qué tan protegido queda cada uno:** "Bitácora" quedó protegida de verdad (servidor + menú). "Datos" solo se ocultó del menú — sus números (total de mascotas, vacunados, etc.) **ya eran públicos** desde antes en la propia portada (`index.html`), así que no había nada que proteger ahí del lado del servidor; ocultarlo es solo para simplificar el menú de un admin normal, no una medida de seguridad.
+
+### 🔎 Verificado (contra la API real, no solo el código)
+- `GET /api/bitacora` con la cuenta superadmin real → `200`.
+- Se creó una cuenta de prueba, se promovió a admin (no superadmin), y `GET /api/bitacora` con esa cuenta → `403` confirmado.
+- `GET /api/mascotas?colonia=El Grullo centro` devuelve mascotas reales de esa colonia.
+- Cuenta de prueba revocada y desactivada al terminar.
+- Balance de `<script>` (6/6) y `<svg>` (65/65) sin cambios inesperados.
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+- No se pudo confirmar visualmente en navegador (sin herramientas de automatización de navegador en este entorno) — pendiente que el usuario confirme en pantalla, sobre todo que el popup del mapa y el modal nuevo se vean bien.
+
+### 📂 Archivos modificados
+- `web/api/bitacora.php`, `web/admin.html`.
+
 ## 📅 [2026-09-29] — El rediseño de íconos llega al modal de QR (dashboard, admin y asistente)
 
 ### 🤔 Contexto

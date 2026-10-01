@@ -1,7 +1,9 @@
 <?php
 /**
  * API: Bitácora de auditoría
- * GET /api/bitacora.php?page=&pageSize= → Lista paginada (solo admin)
+ * GET /api/bitacora.php?page=&pageSize= → Lista paginada (solo SUPERADMIN,
+ *   no cualquier admin — restringido el 2026-09-30 a petición del usuario;
+ *   antes cualquier cuenta admin podía verla).
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -12,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonError('Método no soportado.', 405);
 }
 
-requireAdmin();
+requireSuperAdmin();
 
 $db = getDB();
 
