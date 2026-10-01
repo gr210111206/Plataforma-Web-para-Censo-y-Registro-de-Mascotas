@@ -325,6 +325,29 @@ function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
     return null;
 }
 
+/* ── Envío de correo (recuperación de contraseña) ───────────
+   Usa mail() nativo de PHP con una cuenta de correo del propio dominio
+   (MAIL_FROM_ADDRESS, database.php) — así lo entrega HostGator sin pagar
+   ni configurar nada externo. En XAMPP local normalmente no hay un
+   servidor de correo real configurado, así que mail() regresa false sin
+   enviar nada de verdad (quien llama a esta función decide qué hacer en
+   ese caso — ver action=solicitar-recuperacion en auth.php, que además
+   deja el enlace en error_log() para poder probar el flujo en local sin
+   depender de que el correo llegue). Nunca lanza excepción: un correo que
+   no sale no debe tumbar la respuesta de la API (mismo criterio que
+   registrarBitacora()). */
+function enviarCorreo(string $para, string $asunto, string $cuerpoHtml): bool {
+    $headers = "MIME-Version: 1.0\r\n"
+             . "Content-Type: text/html; charset=UTF-8\r\n"
+             . 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM_ADDRESS . ">\r\n";
+
+    $enviado = @mail($para, $asunto, $cuerpoHtml, $headers);
+    if (!$enviado) {
+        error_log("enviarCorreo(): no se pudo enviar a $para — asunto: $asunto");
+    }
+    return $enviado;
+}
+
 /* ── Validar contraseña ─────────────────────────── */
 /* Mínimo razonable para un padrón ciudadano: al menos 8 caracteres, con
    al menos una letra y un número — bloquea casos como "123456789" (pura

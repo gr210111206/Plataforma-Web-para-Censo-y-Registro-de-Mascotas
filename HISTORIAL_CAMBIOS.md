@@ -2,6 +2,43 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01d] — Recuperación de contraseña por correo (olvidé mi contraseña)
+
+### 🤔 Contexto
+Hasta ahora, si un ciudadano olvidaba su contraseña no había ninguna forma de recuperarla por su cuenta — dependía de que un admin le reseteara la cuenta a mano. El usuario pidió implementar la recuperación por correo y decidió que, para empezar, el envío se haga con una cuenta de correo del propio dominio (`no-responder@mascota-elgrullo.com`, por crear en cPanel) en vez de un servicio externo de pago.
+
+### 🔐 Base de datos (`web/database/schema.sql`)
+- 2 columnas nuevas en `duenos`: `reset_token` (VARCHAR 64, token aleatorio de un solo uso) y `reset_token_expira` (DATETIME, vence 1 hora después de solicitarse).
+- Nuevo índice `idx_reset_token` — se consulta en cada clic al enlace de recuperación.
+- La vigencia se compara `reset_token_expira > NOW()` **dentro de MySQL**, nunca con `time()`/`strtotime()` de PHP — mismo criterio ya usado para `bloqueado_hasta`/`token_creado_en` (PHP y MySQL pueden tener zonas horarias distintas en el mismo servidor).
+- Migración aplicada manualmente en la base de datos local (`ALTER TABLE duenos ADD COLUMN reset_token ..., ADD COLUMN reset_token_expira ..., ADD INDEX idx_reset_token`); **pendiente aplicarla también en HostGator** cuando se retome el despliegue — mismo patrón ya usado para migraciones anteriores (rol `asistente`, `es_superadmin`).
+
+### 🔧 Backend (`web/api/auth.php`, `web/api/config/helpers.php`, `web/api/config/database.php`)
+- Nuevo endpoint `POST /api/auth?action=solicitar-recuperacion` (sin sesión, es justo para quien no puede iniciar sesión): recibe un correo, genera el token y lo guarda con 1 hora de vigencia, y manda el correo con el enlace (`{BASE_URL}/login.html?reset=TOKEN`). **Siempre responde el mismo mensaje exista o no esa cuenta** — si cambiara según el caso, cualquiera podría usar este formulario para averiguar qué correos están registrados en el padrón (enumeración de cuentas).
+- Nuevo endpoint `POST /api/auth?action=restablecer-password` (sin sesión, el token hace de credencial): valida que el token exista y no haya vencido, exige la misma regla de contraseña que el resto del sitio (`validarPassword()`), actualiza `password_hash`, borra el token (de un solo uso — no se puede reusar el mismo enlace) y además invalida la sesión/bloqueo existentes (`token_sesion`, `intentos_fallidos`, `bloqueado_hasta`), igual que ya hace `change-password`.
+- Nueva función `enviarCorreo()` en `helpers.php`: usa `mail()` nativo de PHP con la cuenta `MAIL_FROM_ADDRESS`/`MAIL_FROM_NAME` (nuevas constantes en `database.php`, separadas por entorno local/producción igual que `BASE_URL`). Nunca lanza excepción — un correo que no sale no debe tumbar la respuesta de la API (mismo criterio que `registrarBitacora()`).
+- `database.php`: en producción, `MAIL_FROM_ADDRESS` queda como `no-responder@mascota-elgrullo.com` — **⚠️ pendiente: crear esa cuenta de correo real en cPanel → "Cuentas de correo" antes de que esto funcione en el sitio en vivo** (gratis, incluida en el hosting; sin ella `mail()` puede fallar o el correo cae a spam).
+
+### 🎨 Frontend (`web/login.html`, `web/js/api-client.js`)
+- Link "¿Olvidaste tu contraseña?" junto a "Recordarme" en el formulario de inicio de sesión → abre el modal `#modal-recuperar` (pide el correo).
+- Nuevo modal `#modal-restablecer` (nueva contraseña + confirmar) que se abre solo si la URL trae `?reset=TOKEN` (el enlace del correo) — no exige sesión. Al terminar, limpia el `?reset=` de la URL con `history.replaceState` para que el enlace ya gastado no quede visible/reusable por accidente.
+- `apiSolicitarRecuperacion(email)` y `apiRestablecerPassword(token, password)` nuevas en `api-client.js`, mismo patrón que el resto del cliente HTTP.
+
+### 🔎 Verificado (con `curl` contra la API local, no hay navegador en este entorno)
+- Correo inexistente vs. correo real → **mismo mensaje** en ambos casos (no filtra qué correos están registrados).
+- Token inválido → 400. Contraseña débil con token válido → 400 (mismo mensaje que el resto del sitio). Token válido + contraseña válida → 200, contraseña actualizada. Reusar el mismo token después → 400 (ya se gastó). Login con la contraseña restablecida → 200.
+- `scripts/smoke_test.sh` completo tras el cambio: 24 verificaciones, mismas 3 fallas preexistentes de la cuenta admin real (no relacionadas con este cambio — ver nota de la importación de datos reales más abajo), el resto OK.
+- En local (XAMPP) no hay servidor de correo real configurado, así que `mail()` no llega a enviar de verdad — para poder probar el flujo completo sin depender de eso, `solicitar-recuperacion` también deja el enlace en `error_log()`.
+
+### 🚫 Lo que NO se hizo
+- No se armó verificación de correo al registrarse (fuera de alcance de este cambio).
+- No se agregó límite de frecuencia (ej. "espera 1 minuto antes de pedir otro enlace") — con el 1-hora de vigencia y que cada solicitud nueva reemplaza el token anterior, no es crítico para el tamaño actual del padrón, pero queda como posible mejora futura si se ve abuso real.
+- No se usó ningún servicio externo (Brevo/SendGrid) — decisión explícita del usuario, para no depender de un registro/cuenta de terceros por ahora.
+
+### 📂 Archivos modificados
+- `web/database/schema.sql`, `web/api/auth.php`, `web/api/config/helpers.php`, `web/api/config/database.example.php`, `web/js/api-client.js`, `web/login.html`.
+- (`web/api/config/database.php` también se actualizó con las mismas constantes, pero ese archivo nunca se sube a git — ver `.gitignore`.)
+
 ## 📅 [2026-10-01c] — Bloquea temporalmente que Google/Bing indexen el sitio (sigue en pruebas)
 
 ### 🤔 Contexto

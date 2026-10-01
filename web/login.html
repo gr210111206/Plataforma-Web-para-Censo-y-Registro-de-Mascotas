@@ -166,6 +166,7 @@
           <label style="display:flex; align-items:center; gap:6px; font-size:.83rem; cursor:pointer; color:var(--gray-1);">
             <input type="checkbox" id="remember" style="accent-color:var(--orange);"> Recordarme
           </label>
+          <a href="#" onclick="event.preventDefault(); openModal('modal-recuperar');" style="font-size:.83rem; color:var(--orange); font-weight:600;">¿Olvidaste tu contraseña?</a>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">Acceder a mi portal →</button>
@@ -274,6 +275,65 @@
   </div>
 </div>
 
+<!-- ── Modal: Solicitar recuperación de contraseña ── -->
+<div class="modal-overlay" id="modal-recuperar">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Recuperar contraseña</h2>
+      <button class="modal-close" onclick="closeModal('modal-recuperar')" aria-label="Cerrar">✕</button>
+    </div>
+    <form onsubmit="handleSolicitarRecuperacion(event)">
+      <div class="modal-body">
+        <p style="font-size:.85rem; color:var(--gray-2); margin-bottom:16px;">Escribe el correo con el que te registraste. Si está dado de alta en el padrón, te enviaremos un enlace para elegir una nueva contraseña.</p>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="recuperar-email">Correo electrónico *</label>
+          <div class="input-group">
+            <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></svg></span>
+            <input type="email" id="recuperar-email" class="form-control" placeholder="tu@correo.com" required />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-recuperar')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="recuperar-btn">Enviar enlace</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal: Restablecer contraseña (llega desde el enlace del correo, ?reset=TOKEN) ── -->
+<div class="modal-overlay" id="modal-restablecer">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Elige tu nueva contraseña</h2>
+    </div>
+    <form onsubmit="handleRestablecerPassword(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="restablecer-password">Nueva contraseña *</label>
+          <div class="input-group">
+            <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+            <input type="password" id="restablecer-password" class="form-control has-toggle" placeholder="Mínimo 8 caracteres, con letras y números" required minlength="8"
+                   pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Mínimo 8 caracteres, con al menos una letra y un número" autocomplete="new-password" />
+            <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('restablecer-password', this)"></button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="restablecer-password-confirm">Confirmar nueva contraseña *</label>
+          <div class="input-group">
+            <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+            <input type="password" id="restablecer-password-confirm" class="form-control has-toggle" placeholder="Repite tu nueva contraseña" required minlength="8" autocomplete="new-password" />
+            <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('restablecer-password-confirm', this)"></button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary btn-block">Guardar nueva contraseña</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -362,6 +422,54 @@ async function handleRegistroUsuario(e) {
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
+}
+
+/* ── Recuperar / restablecer contraseña ── */
+async function handleSolicitarRecuperacion(e) {
+  e.preventDefault();
+  const email = document.getElementById('recuperar-email').value.trim();
+  if (!email) { showToast('❌ Escribe tu correo electrónico', 'error'); return; }
+
+  const btn = document.getElementById('recuperar-btn');
+  btn.disabled = true;
+  try {
+    const data = await apiSolicitarRecuperacion(email);
+    showToast(`✅ ${data.message}`, 'success');
+    closeModal('modal-recuperar');
+    document.getElementById('recuperar-email').value = '';
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+let tokenRestablecer = null;
+
+async function handleRestablecerPassword(e) {
+  e.preventDefault();
+  const pass     = document.getElementById('restablecer-password').value;
+  const passConf = document.getElementById('restablecer-password-confirm').value;
+  if (pass.length < 8)   { showToast('❌ La contraseña debe tener al menos 8 caracteres', 'error'); return; }
+  if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
+
+  try {
+    await apiRestablecerPassword(tokenRestablecer, pass);
+    showToast('✅ Contraseña actualizada. Ya puedes iniciar sesión.', 'success');
+    closeModal('modal-restablecer');
+    window.history.replaceState({}, '', 'login.html'); // quita el ?reset= de la URL: el enlace ya no sirve, no debe quedar reusable
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
+}
+
+/* Si la URL trae ?reset=TOKEN (el enlace que llegó por correo), abre
+   directo el modal para elegir nueva contraseña — a propósito no exige
+   sesión, el token hace las veces de credencial. */
+const tokenDeLaUrl = new URLSearchParams(window.location.search).get('reset');
+if (tokenDeLaUrl) {
+  tokenRestablecer = tokenDeLaUrl;
+  document.addEventListener('DOMContentLoaded', () => openModal('modal-restablecer'));
 }
 
 /* ── Toast ── */

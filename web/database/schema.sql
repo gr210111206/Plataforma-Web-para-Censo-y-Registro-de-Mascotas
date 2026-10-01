@@ -29,12 +29,15 @@ CREATE TABLE IF NOT EXISTS duenos (
   token_creado_en TIMESTAMP  NULL DEFAULT NULL,
   intentos_fallidos TINYINT UNSIGNED NOT NULL DEFAULT 0, -- login: se resetea en cada intento correcto
   bloqueado_hasta   DATETIME NULL DEFAULT NULL,           -- login: bloqueo temporal tras 5 intentos fallidos
+  reset_token        VARCHAR(64) DEFAULT NULL,            -- recuperación de contraseña: token aleatorio de un solo uso, enviado por correo
+  reset_token_expira DATETIME NULL DEFAULT NULL,          -- vence 1 hora después de solicitarse; se compara con NOW() del lado de MySQL, mismo criterio que bloqueado_hasta
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
   INDEX idx_rol   (rol),
   INDEX idx_token_sesion (token_sesion), -- se consulta en CADA request autenticado (requireAuth)
-  INDEX idx_colonia (colonia)            -- filtrado en mascotas.php y agrupado en stats.php
+  INDEX idx_colonia (colonia),           -- filtrado en mascotas.php y agrupado en stats.php
+  INDEX idx_reset_token (reset_token)    -- se consulta en restablecer-password
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de mascotas ────────────────────────────

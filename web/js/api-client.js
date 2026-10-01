@@ -146,6 +146,28 @@ async function apiChangePassword(actual, nueva) {
   });
 }
 
+/**
+ * Solicita el correo de recuperación de contraseña. El servidor siempre
+ * responde con el mismo mensaje exista o no esa cuenta registrada.
+ */
+async function apiSolicitarRecuperacion(email) {
+  return _fetch(`${API_BASE_URL}/auth?action=solicitar-recuperacion`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+/**
+ * Fija una nueva contraseña a partir del token recibido por correo
+ * (enlace tipo login.html?reset=TOKEN).
+ */
+async function apiRestablecerPassword(token, password) {
+  return _fetch(`${API_BASE_URL}/auth?action=restablecer-password`, {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+}
+
 async function apiRequireSession(rolRequerido = null) {
   try {
     const user = await apiGetMe();

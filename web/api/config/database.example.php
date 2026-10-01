@@ -22,6 +22,15 @@ define('BASE_URL',    'http://localhost/remac');  // ← Cambiar al dominio/URL 
 define('TOKEN_EXPIRY', 2592000);                  // 30 días en segundos (techo máx.; ver "Recordarme" en api-client.js)
 
 /**
+ * Correo para enviar el enlace de recuperación de contraseña (mail()
+ * nativo de PHP). MAIL_FROM_ADDRESS debe ser una cuenta de correo real
+ * del propio dominio (cPanel → "Cuentas de correo") para que no la
+ * marquen como spam.
+ */
+define('MAIL_FROM_ADDRESS', 'no-responder@tudominio.com');
+define('MAIL_FROM_NAME', 'Padrón de Mascotas');
+
+/**
  * Orígenes permitidos para CORS. Rellena con el/los dominio(s) reales
  * desde donde se sirve el sitio (ver setCorsHeaders() en helpers.php).
  */
