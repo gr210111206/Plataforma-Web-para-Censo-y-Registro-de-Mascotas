@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01c] — Bloquea temporalmente que Google/Bing indexen el sitio (sigue en pruebas)
+
+### 🤔 Contexto
+El usuario pidió que, mientras el sitio sigue en fase de pruebas, nadie pueda encontrarlo buscando en Google — ni por rastreo normal ni porque alguien ya tenga un link directo.
+
+### 🔧 Cambios
+- **`web/robots.txt`** (nuevo): `Disallow: /` para todos los buscadores — les pide no rastrear nada del sitio.
+- **`web/.htaccess`**: se agregó el header `X-Robots-Tag: noindex, nofollow, noarchive` — más fuerte que `robots.txt` solo: esto le prohíbe a Google **indexar** el sitio aunque llegue a rastrearlo (por ejemplo si alguien comparte un link directo en otro lado).
+- Ambos quedaron marcados explícitamente como **temporales**, con una nota de qué 2 archivos hay que tocar (`robots.txt` y el header de `.htaccess`) cuando el Ayuntamiento autorice que el sitio sea público en buscadores — hace falta quitar los dos, no solo uno.
+
+### 🔎 Verificado
+- `curl -I` local confirma el header `X-Robots-Tag` presente; `curl` a `/robots.txt` sirve el archivo correcto.
+- `scripts/smoke_test.sh` completo: 24 verificaciones, 0 fallas.
+
+### 📂 Archivos modificados
+- `web/robots.txt` (nuevo), `web/.htaccess`.
+
 ## 📅 [2026-10-01b] — Nuevo documento `LIBRERIAS_Y_LICENCIAS.md`: revisión legal de todo lo de terceros que usa el proyecto
 
 ### 🤔 Contexto

@@ -1,0 +1,11 @@
+# Mientras el sitio está en fase de pruebas, se le pide a TODOS los
+# buscadores (Google, Bing, etc.) que no rastreen nada de aquí.
+#
+# IMPORTANTE: cuando el Ayuntamiento confirme que el sitio ya está listo
+# para el público en general y se quiera que aparezca en Google, hay que
+# BORRAR este archivo (o cambiar la línea de abajo a "Disallow:" vacío)
+# Y TAMBIÉN quitar el header X-Robots-Tag de web/.htaccess — los dos
+# bloquean la indexación, no basta con quitar solo uno de los dos.
+
+User-agent: *
+Disallow: /

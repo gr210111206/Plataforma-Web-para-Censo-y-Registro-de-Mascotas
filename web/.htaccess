@@ -2,6 +2,17 @@
 
 Options -Indexes
 
+# ⚠️ TEMPORAL (2026-10-01): mientras el sitio esté en pruebas, le dice a
+# Google/Bing/etc. que NO lo indexen ni lo muestren en resultados de
+# búsqueda — ni siquiera si alguien ya tiene el link directo de una
+# página, no debe poder "buscar" el sitio y encontrarlo. Es más fuerte
+# que robots.txt (ese solo pide no rastrear; esto prohíbe indexar incluso
+# si ya se rastreó). CUANDO EL AYUNTAMIENTO AUTORICE QUE EL SITIO SEA
+# PÚBLICO EN BUSCADORES: borrar esta línea Y TAMBIÉN borrar/vaciar
+# web/robots.txt — los dos bloquean la indexación, hace falta quitar
+# ambos, no solo uno.
+Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+
 # Cabeceras de seguridad (antes solo estaban en web/api/.htaccess, así que
 # solo protegían las respuestas JSON — las páginas HTML no tenían ninguna).
 Header always set X-Content-Type-Options "nosniff"
