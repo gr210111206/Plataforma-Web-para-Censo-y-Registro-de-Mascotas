@@ -326,26 +326,99 @@ function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
 }
 
 /* ── Envío de correo (recuperación de contraseña) ───────────
-   Usa mail() nativo de PHP con una cuenta de correo del propio dominio
-   (MAIL_FROM_ADDRESS, database.php) — así lo entrega HostGator sin pagar
-   ni configurar nada externo. En XAMPP local normalmente no hay un
-   servidor de correo real configurado, así que mail() regresa false sin
-   enviar nada de verdad (quien llama a esta función decide qué hacer en
-   ese caso — ver action=solicitar-recuperacion en auth.php, que además
-   deja el enlace en error_log() para poder probar el flujo en local sin
-   depender de que el correo llegue). Nunca lanza excepción: un correo que
-   no sale no debe tumbar la respuesta de la API (mismo criterio que
-   registrarBitacora()). */
+   Manda el correo por SMTP autenticado directo contra el servidor de
+   Titan (MAIL_SMTP_HOST/PORT, database.php), usando la cuenta real
+   no-responder@mascota-elgrullo.com (MAIL_FROM_ADDRESS/MAIL_SMTP_PASS).
+   Se probó primero con mail() nativo de PHP (más simple) y SÍ lo
+   aceptaba el servidor sin error, pero el correo nunca llegaba a Gmail
+   (ni a spam) — porque mail() entrega por el MTA genérico de HostGator,
+   que no tiene la reputación/autenticación (SPF/DKIM) del dominio, ya
+   que el correo real del dominio vive en Titan, no en HostGator. Mandar
+   por el SMTP de Titan de verdad (la misma ruta que usaría un humano
+   mandando desde el webmail) sí trae esa autenticación. Implementado a
+   mano con sockets (stream_socket_client) en vez de una librería tipo
+   PHPMailer para no romper la regla del proyecto de backend 100% PHP
+   nativo sin paquetes externos (ver LIBRERIAS_Y_LICENCIAS.md).
+   Nunca lanza excepción: un correo que no sale no debe tumbar la
+   respuesta de la API (mismo criterio que registrarBitacora()). */
 function enviarCorreo(string $para, string $asunto, string $cuerpoHtml): bool {
-    $headers = "MIME-Version: 1.0\r\n"
-             . "Content-Type: text/html; charset=UTF-8\r\n"
-             . 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM_ADDRESS . ">\r\n";
-
-    $enviado = @mail($para, $asunto, $cuerpoHtml, $headers);
-    if (!$enviado) {
-        error_log("enviarCorreo(): no se pudo enviar a $para — asunto: $asunto");
+    $smtp = @stream_socket_client(
+        'ssl://' . MAIL_SMTP_HOST . ':' . MAIL_SMTP_PORT,
+        $errno, $errstr, 10
+    );
+    if (!$smtp) {
+        error_log("enviarCorreo(): no se pudo conectar a " . MAIL_SMTP_HOST . " — $errstr ($errno)");
+        return false;
     }
-    return $enviado;
+    stream_set_timeout($smtp, 10);
+
+    // Lee una respuesta SMTP completa (puede venir en varias líneas,
+    // ej. "250-algo" seguidas de una final "250 algo" — la última línea
+    // de cada respuesta siempre trae un espacio, no un guion, en la
+    // 4ª posición).
+    $leer = function () use ($smtp): string {
+        $resp = '';
+        while (($linea = fgets($smtp, 515)) !== false) {
+            $resp .= $linea;
+            if (strlen($linea) < 4 || $linea[3] === ' ') break;
+        }
+        return $resp;
+    };
+    $escribir = function (string $cmd) use ($smtp, $leer): string {
+        fwrite($smtp, $cmd . "\r\n");
+        return $leer();
+    };
+    $codigo = fn(string $resp): string => substr($resp, 0, 3);
+
+    $saludo = $leer();
+    if ($codigo($saludo) !== '220') {
+        error_log("enviarCorreo(): saludo inesperado del servidor — $saludo");
+        fclose($smtp);
+        return false;
+    }
+
+    // La 3ª columna es solo para el log si algo falla — nunca el comando
+    // real, así nunca se escribe la contraseña (ni en base64, que se
+    // revierte trivial) en error_log().
+    $pasos = [
+        ['EHLO mascota-elgrullo.com', '250', 'EHLO'],
+        ['AUTH LOGIN', '334', 'AUTH LOGIN'],
+        [base64_encode(MAIL_FROM_ADDRESS), '334', 'usuario SMTP'],
+        [base64_encode(MAIL_SMTP_PASS), '235', 'contraseña SMTP'],
+        ['MAIL FROM:<' . MAIL_FROM_ADDRESS . '>', '250', 'MAIL FROM'],
+        ['RCPT TO:<' . $para . '>', '250', 'RCPT TO'],
+        ['DATA', '354', 'DATA'],
+    ];
+    foreach ($pasos as [$cmd, $esperado, $etiqueta]) {
+        $resp = $escribir($cmd);
+        if ($codigo($resp) !== $esperado) {
+            error_log("enviarCorreo(): falló el paso '$etiqueta' — se esperaba $esperado, llegó: $resp");
+            fclose($smtp);
+            return false;
+        }
+    }
+
+    $asuntoMime = '=?UTF-8?B?' . base64_encode($asunto) . '?=';
+    $mensaje = 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM_ADDRESS . ">\r\n"
+             . "To: <$para>\r\n"
+             . "Subject: $asuntoMime\r\n"
+             . "MIME-Version: 1.0\r\n"
+             . "Content-Type: text/html; charset=UTF-8\r\n"
+             . "\r\n"
+             . $cuerpoHtml;
+    // Dot-stuffing (RFC 5321): una línea que empiece con "." se duplica,
+    // para que no se confunda con el "." final que cierra el mensaje.
+    $mensaje = preg_replace('/^\./m', '..', $mensaje);
+
+    $resp = $escribir($mensaje . "\r\n.");
+    $escribir('QUIT');
+    fclose($smtp);
+
+    if ($codigo($resp) !== '250') {
+        error_log("enviarCorreo(): el servidor no aceptó el mensaje final — $resp");
+        return false;
+    }
+    return true;
 }
 
 /* ── Validar contraseña ─────────────────────────── */

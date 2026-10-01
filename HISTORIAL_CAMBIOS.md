@@ -2,6 +2,39 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01e] — El correo de recuperación usa SMTP real de Titan (mail() nativo no llegaba a Gmail)
+
+### 🤔 Contexto
+Al probar en producción la recuperación de contraseña de la entrada anterior (2026-10-01d), el correo nunca llegaba a Gmail (ni a la bandeja ni a spam) aunque el servidor no reportaba ningún error. Diagnóstico completo, paso a paso, revisando el `error_log` real del servidor en cada intento:
+
+1. `mail()` nativo de PHP entrega por el servidor genérico de HostGator (`mx74.hostgator.mx`), **no por Titan** — aunque el dominio en realidad usa Titan para su correo real (MX apunta a `mx1.titan.email`/`mx2.titan.email`).
+2. El registro SPF del dominio (`v=spf1 include:spf.titan.email ~all`, ya existía de antes) solo autoriza a los servidores de Titan — el servidor de HostGator que usa `mail()` no está cubierto, así que como mucho pasa como "softfail" (`~all`).
+3. Se probó agregar un registro DKIM (`titan1._domainkey`, sugerido por el propio panel de Titan) y habilitar "acceso de aplicaciones de terceros" en Titan — ninguno de los dos ayuda a `mail()`, porque ese DKIM es la llave privada de los servidores de Titan, no algo que el `mail()` local pueda usar para firmar.
+4. Con esto, Outlook/Hotmail sí entregaba el correo (a la carpeta de correo no deseado — tolera el softfail de SPF), pero **Gmail lo descartaba por completo** (más estricto, sin SPF alineado y sin DKIM real, probablemente lo tira sin ni siquiera mandarlo a spam).
+
+### 🔧 La solución real
+En vez de `mail()`, el servidor ahora manda el correo por **SMTP autenticado de verdad contra Titan** (`smtp.titan.email:465`), usando la propia cuenta `no-responder@mascota-elgrullo.com` con su contraseña — la misma ruta que seguiría un humano mandando desde el webmail de Titan, así que sí hereda el SPF/DKIM que ya están configurados para Titan.
+
+- **`web/api/config/helpers.php`**: `enviarCorreo()` reescrita de cero — ya no usa `mail()`, ahora abre un socket TLS (`stream_socket_client`) y habla el protocolo SMTP a mano (`EHLO`, `AUTH LOGIN`, `MAIL FROM`, `RCPT TO`, `DATA`, con dot-stuffing según RFC 5321 y el asunto codificado en MIME `=?UTF-8?B?...?=` para que los acentos no se rompan). Se implementó a mano con sockets (no con una librería tipo PHPMailer) para no romper la regla del proyecto de backend 100% PHP nativo sin paquetes externos — ver `LIBRERIAS_Y_LICENCIAS.md`. Cada paso de la conversación SMTP se valida contra el código de respuesta esperado; si algo falla se registra en `error_log()` identificando el paso (`EHLO`, `AUTH LOGIN`, etc.) — a propósito **nunca** se registra la contraseña ni su base64 (un descuido que sí pasó en una versión intermedia de esta misma sesión, corregido antes de subir a producción).
+- **`web/api/config/database.example.php`** y **`web/api/config/database.php`** (gitignored): 3 constantes nuevas — `MAIL_SMTP_HOST` (`smtp.titan.email`), `MAIL_SMTP_PORT` (`465`), `MAIL_SMTP_PASS` (la contraseña real de `no-responder@mascota-elgrullo.com`, documentada también en `CUENTAS_PRUEBA.md`). A diferencia de `mail()`, esto sí funciona igual desde XAMPP local (es una conexión saliente a internet, no depende del servidor), así que `MAIL_FROM_ADDRESS`/`MAIL_FROM_NAME` dejaron de tener una rama distinta para local — es la misma cuenta real en los dos entornos.
+
+### 🔐 Lado de Titan/DNS (ya hecho, documentado para no repetirlo)
+- DKIM (`titan1._domainkey`, registro TXT) verificado desde el panel de Titan.
+- SPF (`v=spf1 include:spf.titan.email ~all`) ya existía desde que se activó el correo del dominio — confirmado con una consulta DNS real (`dns.google/resolve`), no asumido.
+- "Enable Titan on other apps" (acceso SMTP de aplicaciones externas) activado desde el webmail de Titan — viene apagado por default, sin esto Titan rechaza la autenticación con `535 5.7.8 authentication failed` aunque la contraseña sea correcta.
+
+### 🔎 Verificado
+- Probado en local (XAMPP) contra el SMTP real de Titan antes de tocar producción.
+- Una vez desplegado: `solicitar-recuperacion` contra `https://mascota-elgrullo.com` en vivo, para una cuenta de Gmail y una de Hotmail — confirmado en el buzón real de ambas cuentas (no solo por la respuesta `ok:true` de la API, que siempre es igual a propósito).
+- `scripts/smoke_test.sh`: 24 verificaciones, mismas 3 fallas preexistentes de la cuenta admin real (no relacionadas).
+
+### 🚫 Lo que NO se tocó
+- No se cambió nada del endpoint `solicitar-recuperacion`/`restablecer-password` en `auth.php` — la firma de `enviarCorreo()` se mantuvo idéntica a propósito, solo cambió su implementación interna.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`, `web/api/config/database.example.php`.
+- (`web/api/config/database.php` también, en local y en el servidor real vía Administrador de archivos — gitignored, nunca se sube a git.)
+
 ## 📅 [2026-10-01d] — Recuperación de contraseña por correo (olvidé mi contraseña)
 
 ### 🤔 Contexto
