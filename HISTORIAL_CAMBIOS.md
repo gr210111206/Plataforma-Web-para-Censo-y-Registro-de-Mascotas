@@ -2,6 +2,14 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01] — Renombra "Usuarios" a "Cuentas Ciudadanas" en el menú del panel admin
+
+### 🔧 Cambios
+- **`web/admin.html`**: el link del menú lateral decía "Usuarios" aunque el título de la página, al entrar, ya decía "Cuentas Ciudadanas" desde antes — quedaban desalineados. Se igualó el texto del menú al del título. El `id`/`onclick` internos (`nav-usuarios`, `showAdmin('usuarios')`) no se tocaron, son identificadores internos, no texto visible.
+
+### 📂 Archivos modificados
+- `web/admin.html`.
+
 ## 📅 [2026-09-30] — "Datos"/"Bitácora" solo para el superadmin, y el mapa ya muestra las mascotas de cada colonia
 
 ### 🤔 Contexto
