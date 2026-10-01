@@ -903,10 +903,16 @@
     </div>
 
     <div class="sidebar-section">Menú principal</div>
-    <a class="sidebar-link active" id="nav-datos" role="button" tabindex="0" onclick="showAdmin('datos')">
+    <!-- Oculto por HTML/CSS desde el primer render (no con JS después de
+         cargar) — initAdmin() lo vuelve a mostrar SOLO si confirma que la
+         cuenta es superadmin. Antes se mostraba por defecto y se ocultaba
+         ya iniciado JS, lo que dejaba ver "Datos"/"Bitácora" un instante
+         a CUALQUIER admin mientras la página terminaba de cargar (bug
+         reportado por el usuario, con capturas, 2026-10-01). -->
+    <a class="sidebar-link" id="nav-datos" role="button" tabindex="0" onclick="showAdmin('datos')" style="display:none;">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg></span> Datos
     </a>
-    <a class="sidebar-link" id="nav-seguimiento" role="button" tabindex="0" onclick="showAdmin('seguimiento')">
+    <a class="sidebar-link active" id="nav-seguimiento" role="button" tabindex="0" onclick="showAdmin('seguimiento')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg></span> Seguimiento
       <span class="sidebar-badge" id="seguimiento-badge">0</span>
     </a>
@@ -916,7 +922,7 @@
     <a class="sidebar-link" id="nav-roles" role="button" tabindex="0" onclick="showAdmin('roles')">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span> Roles
     </a>
-    <a class="sidebar-link" id="nav-bitacora" role="button" tabindex="0" onclick="showAdmin('bitacora')">
+    <a class="sidebar-link" id="nav-bitacora" role="button" tabindex="0" onclick="showAdmin('bitacora')" style="display:none;">
       <span class="icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg></span> Bitácora
     </a>
     <a class="sidebar-link" id="nav-articulo" role="button" tabindex="0" onclick="showAdmin('articulo')">
@@ -955,8 +961,8 @@
         <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16" /><path d="M4 6h16" /><path d="M4 18h16" /></svg>
       </button>
       <div>
-        <div class="dashboard-title" id="adminTitle">Datos del Padrón</div>
-        <div class="dashboard-subtitle" id="adminSub">Mapa de mascotas · Gráficas · Seguimiento en tiempo real</div>
+        <div class="dashboard-title" id="adminTitle">Seguimiento de Mascotas</div>
+        <div class="dashboard-subtitle" id="adminSub">Busca y gestiona el registro individual de cada mascota</div>
       </div>
       <div class="flex gap-8 items-center">
         <span class="badge badge-orange" style="display:inline-flex; align-items:center; gap:5px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px; height:13px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> Admin</span>
@@ -967,7 +973,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- SECCIÓN: DATOS                             -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="dashboard-content" id="sec-datos">
+    <div class="dashboard-content" id="sec-datos" style="display:none;">
       <div class="kpi-row" id="kpiRow">
         <div class="kpi-tile">
           <div class="kpi-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" /><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" /></svg></div>
@@ -1059,7 +1065,7 @@
     <!-- ══════════════════════════════════════════ -->
     <!-- SECCIÓN: SEGUIMIENTO                       -->
     <!-- ══════════════════════════════════════════ -->
-    <div class="dashboard-content" id="sec-seguimiento" style="display:none;">
+    <div class="dashboard-content" id="sec-seguimiento">
       <!-- Search -->
       <div class="flex gap-12 items-center" style="margin-bottom:20px; flex-wrap:wrap;">
         <div class="search-box" style="flex:1; min-width:200px;">
@@ -4615,14 +4621,6 @@ async function initAdmin() {
   currentUser = await apiRequireSession(); // redirige a login.html si no hay sesión válida
   if (currentUser.rol === 'asistente') { window.location.href = 'asistente.html'; return; }
   if (currentUser.rol !== 'admin') { window.location.href = 'dashboard.html'; return; }
-  await primeConfigFromServer();
-  applyAdminOwnAppearance();
-  applyCurrentUserToUI();
-
-  const notaRoles = document.getElementById('roles-admin-note');
-  if (notaRoles && esSuperAdmin(currentUser)) {
-    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "Hacer administrador") o quitarle ese rol de vuelta (botón "Quitar administrador"). La cuenta resultante de "Hacer administrador" será un admin normal: no podrá promover ni revocar a nadie más. Tu propia cuenta superadmin nunca puede perder el rol de administrador desde aquí.';
-  }
 
   // "Datos" y "Bitácora" solo para el superadmin (a petición del usuario,
   // 2026-09-30). "Datos" es solo ocultar el menú — sus números ya son
@@ -4631,9 +4629,25 @@ async function initAdmin() {
   // queda protegida de verdad en el servidor (bitacora.php ahora exige
   // requireSuperAdmin()) — ocultar el link es solo para que no aparezca un
   // botón que de todos modos fallaría con 403 para un admin normal.
-  if (!esSuperAdmin(currentUser)) {
-    document.getElementById('nav-datos').style.display = 'none';
-    document.getElementById('nav-bitacora').style.display = 'none';
+  //
+  // Importante: el HTML ya trae estos 2 links ocultos por defecto (y
+  // "Seguimiento" como sección inicial) — aquí solo se REVELAN para quien
+  // sí es superadmin, nunca al revés. Antes era al revés (visibles por
+  // defecto, se ocultaban aquí) y eso dejaba ver "Datos"/"Bitácora" un
+  // instante a CUALQUIER admin mientras la página cargaba, antes de que
+  // este código alcanzara a correr (bug reportado con capturas, 2026-10-01).
+  if (esSuperAdmin(currentUser)) {
+    document.getElementById('nav-datos').style.display = '';
+    document.getElementById('nav-bitacora').style.display = '';
+  }
+
+  await primeConfigFromServer();
+  applyAdminOwnAppearance();
+  applyCurrentUserToUI();
+
+  const notaRoles = document.getElementById('roles-admin-note');
+  if (notaRoles && esSuperAdmin(currentUser)) {
+    notaRoles.innerHTML = 'Como <strong>superadmin</strong>, eres la única cuenta que puede convertir a un Ciudadano o Asistente en Administrador (botón "Hacer administrador") o quitarle ese rol de vuelta (botón "Quitar administrador"). La cuenta resultante de "Hacer administrador" será un admin normal: no podrá promover ni revocar a nadie más. Tu propia cuenta superadmin nunca puede perder el rol de administrador desde aquí.';
   }
 
   try {
@@ -4679,14 +4693,10 @@ async function initAdmin() {
   renderEventos();
   renderFaqTable();
 
-  if (esSuperAdmin(currentUser)) {
-    // Init map after DOM is ready
-    setTimeout(() => { initMap(); }, 300);
-  } else {
-    // "Datos" (donde vive el mapa) está oculto para un admin normal —
-    // arranca en "Seguimiento" en vez de la sección oculta.
-    showAdmin('seguimiento');
-  }
+  // Sección inicial: "Datos" (con su mapa) para quien sí puede verla,
+  // "Seguimiento" para todos los demás — showAdmin() ya se encarga de
+  // inicializar el mapa la primera vez que se entra a "datos".
+  showAdmin(esSuperAdmin(currentUser) ? 'datos' : 'seguimiento');
 }
 
 initAdmin();

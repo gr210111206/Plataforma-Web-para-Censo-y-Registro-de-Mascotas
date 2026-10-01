@@ -2,6 +2,35 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01g] — Corrige el destello de "Datos"/"Bitácora" al cargar el panel admin
+
+### 🤔 Contexto
+El usuario reportó (con capturas) un bug real de seguridad/percepción: al entrar como admin normal (no superadmin), por una fracción de segundo se alcanzaba a ver el menú completo (con "Datos" y "Bitácora", que no le corresponden) y un avatar/nombre genérico ("AD" / "Administrador"), antes de que la página se corrigiera sola. Preguntó si convenía separar `admin.html` en dos archivos (uno por rol) para evitarlo.
+
+**Diagnóstico:** no hacía falta duplicar el archivo — el bug era de *orden*, no de arquitectura. `initAdmin()` mostraba todo por defecto y **recién después** de varias llamadas a la API (sesión, configuración, estadísticas, campañas, artículos...) ocultaba "Datos"/"Bitácora" si la cuenta no era superadmin. Mientras esas llamadas iban y venían, el HTML ya pintado en el navegador mostraba el menú completo — un caso clásico de "destello de contenido no autorizado" (flash of unauthorized content).
+
+### 🔧 La solución: invertir la lógica por defecto
+En vez de "mostrar todo y ocultar lo que no toca" (depende de que JS alcance a correr), ahora es "ocultar todo lo privilegiado desde el HTML mismo, y mostrarlo solo si se confirma que sí es superadmin":
+
+- `web/admin.html`: los links `nav-datos` y `nav-bitacora` del sidebar ahora traen `style="display:none"` **directo en el HTML** (no agregado por JavaScript) — un admin normal nunca los ve, ni por una fracción de segundo, pase lo que pase con la red. `nav-seguimiento` pasa a ser el link con `class="active"` por defecto.
+- La sección `sec-datos` (con el mapa y las tarjetas) también arranca oculta por HTML; `sec-seguimiento` arranca visible — se intercambiaron respecto a como estaban antes.
+- El título/subtítulo por defecto del encabezado (`adminTitle`/`adminSub`) se cambiaron de "Datos del Padrón" a "Seguimiento de Mascotas", para que coincidan con lo que de verdad se ve primero.
+- En `initAdmin()`: el bloque que decidía mostrar/ocultar "Datos"/"Bitácora" se movió al inicio de la función (justo después de confirmar el rol, antes de las demás llamadas a la API) y se invirtió — ahora **revela** esos 2 links solo si `esSuperAdmin(currentUser)` es verdadero, en vez de ocultarlos si no lo es. Al final de la función, la sección inicial se decide con una sola línea simétrica (`showAdmin(esSuperAdmin(currentUser) ? 'datos' : 'seguimiento')`), reutilizando la inicialización de mapa que `showAdmin()` ya traía incorporada en vez del `setTimeout` suelto que había antes.
+
+Con esto, aunque JavaScript tardara varios segundos en correr (red lenta, muchas llamadas a la API), un admin normal **nunca** llega a ver en el DOM los links ni la sección de "Datos"/"Bitácora" — no es que se oculten rápido, es que nunca estuvieron visibles para empezar.
+
+### 🚫 Por qué no se hizo un `admin.html` aparte por rol
+Se consideró y se descartó: hubiera significado mantener dos copias de ~5,200 líneas de HTML/CSS/JS sincronizadas a mano por siempre (cada botón, cada campo nuevo, cada corrección habría que aplicarla dos veces) — mucho más caro a largo plazo que este cambio de 15 líneas, y con el mismo resultado final para el usuario.
+
+### 🔎 Verificado
+- `curl` directo a `admin.html` (sin ejecutar JavaScript) confirma que `nav-datos`, `nav-bitacora` y `sec-datos` ya llegan con `display:none` en el HTML crudo que manda el servidor — la restricción no depende de que el navegador alcance a correr nada.
+- `php -l` sin errores.
+- `scripts/smoke_test.sh`: 24 verificaciones, mismas 3 fallas preexistentes de la cuenta admin real (no relacionadas).
+- Pendiente que el usuario confirme visualmente que ya no ve el destello — no hay navegador disponible en este entorno para probarlo de primera mano.
+
+### 📂 Archivos modificados
+- `web/admin.html`.
+
 ## 📅 [2026-10-01f] — Termina de quitar los emojis del panel admin (pestaña Datos, Configuración, Roles, Avisos, FAQ)
 
 ### 🤔 Contexto
