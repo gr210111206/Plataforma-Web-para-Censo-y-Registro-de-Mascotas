@@ -2,6 +2,39 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01f] — Termina de quitar los emojis del panel admin (pestaña Datos, Configuración, Roles, Avisos, FAQ)
+
+### 🤔 Contexto
+El usuario pidió revisar `admin.html` completo — el rediseño de íconos de sesiones anteriores no había cubierto ni por asomo todo el panel: la pestaña "Datos" (donde se nota más, capturas de pantalla incluidas), toda "Configuración del sitio" y varias tablas/tarjetas dinámicas seguían con emoji sueltos.
+
+### 🔧 Qué se hizo
+Barrido completo de `web/admin.html` buscando cada carácter emoji (`[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}]`) y reemplazándolo por el mismo ícono de línea SVG (estilo Lucide, `class="icon-line"`) ya usado en el resto del sitio — reutilizando trazos ya existentes en el propio archivo (sidebar, login.html) en vez de inventar íconos nuevos:
+
+- **Pestaña "Datos"**: las 4 tarjetas KPI (huella/familias/jeringa/tendencia), el badge "Admin" y "Exportar CSV" del encabezado, el pie del mapa ("Mascotas en el padrón"), el ícono de búsqueda (4 veces), el estado vacío de Seguimiento, las insignias de vacunado/esterilizado en la tabla y en las tarjetas de detalle, y el botón de "Ver seguimiento" (ojo).
+- **Modal "Editar mascota"**: casillas de vacunado/esterilizado y botón "Guardar cambios".
+- **"Configuración del sitio"**: los 9 íconos de categoría (`setting-section-icon`), los 4 interruptores (modo oscuro, animaciones, bordes, folio), los encabezados de cada sub-sección del editor de portada (Hero, Estadísticas, Banner, Cómo funciona, Campañas/Tips/FAQ), Reglamento, Nuevo evento, Identidad del sitio, Datos de contacto, Redes sociales (con íconos tipo Instagram/Facebook/globo), vista previa del footer, Checklist SEO, vista previa de Open Graph, y Cambiar contraseña.
+- **"Apariencia e íconos"**: los 4 botones de modo (Emoji/Imagen/GIF/Ocultar), los 4 botones de logo preconfigurado, el aviso de "elemento oculto" y los mensajes de "Seleccionado"/imagen lista.
+- **Editor de artículos**: título de sección y los botones de insertar imagen/emoji de la barra de herramientas.
+- **Tablas de Roles/Usuarios**: insignias "Activa" y "⭐ Superadmin".
+- **Listas de Avisos, Eventos y FAQ**: botones Editar/Eliminar, detalle de lugar/hora, y el título dinámico del formulario de FAQ (que alternaba entre "❓ Preguntas" y "✏️ Editar pregunta" con `.textContent` — se cambió a `.innerHTML` para que el ícono no se perdiera al cambiar de estado, mismo bug ya visto antes con otros botones).
+- **Vista previa de "Tema visual"**: la mini maqueta (logo, tarjeta de estadística, insignias) que antes mezclaba emoji con los colores/tipografía configurados.
+- **Toasts (`showToast()`)**: en vez de un emoji distinto pegado a mano en cada uno de los ~90 mensajes, ahora `showToast()` pone un solo ícono según el tipo (✓ verde para éxito, ✕ rojo para error, ℹ naranja para info) — se centralizó con una pasada de PowerShell sobre el archivo (dos rondas: una para emoji del plano básico de Unicode, otra para los de plano suplementario que van en pares subrogados, incluyendo los casos con operador ternario) en vez de editar cada llamada a mano.
+
+### 🚫 Lo que se dejó igual, a propósito
+- El botón "✕" de cerrar modal (en ~6 modales) — es un símbolo geométrico simple, no un emoji a color, ya es el estándar del sitio.
+- Los símbolos ♂/♀ en el selector de sexo — igual de simples, no emoji a color.
+- El emoji por defecto de `campanas.icono` (📢) y el selector de emoji de "Apariencia e íconos" (`ICON_EMOJIS`, `ICON_ELEMENTS`) — son campos de **contenido elegido por el admin**, no adorno fijo de la interfaz; ya se había decidido así en una sesión anterior.
+- Los `value=""` por defecto de los campos del editor de portada (ej. "🏛️ Gobierno Municipal...", "🐶 Registrar mi mascota") — son el **contenido real que se publica en index.html**, una decisión de contenido del sitio público, no del panel admin en sí.
+
+### 🔎 Verificado
+- `php -l web/admin.html` después de cada tanda de cambios (más de 15 veces) — sin errores de sintaxis.
+- `scripts/smoke_test.sh`: 24 verificaciones, mismas 3 fallas preexistentes de la cuenta admin real (no relacionadas).
+- Se confirmó que cada `${ICON_...}` usado tiene su `const` correspondiente definida (ninguna referencia suelta) y se borraron 3 constantes que quedaron sin usar (`ICON_X`, `ICON_CAMERA`, `ICON_DOWNLOAD`).
+- No se pudo probar visualmente en navegador (sin esa herramienta en este entorno) — pendiente que el usuario confirme viendo el panel en vivo.
+
+### 📂 Archivos modificados
+- `web/admin.html` (único archivo tocado — todo el trabajo fue dentro de su CSS y HTML/JS propios, no se tocó `web/css/styles.css` compartido).
+
 ## 📅 [2026-10-01e] — El correo de recuperación usa SMTP real de Titan (mail() nativo no llegaba a Gmail)
 
 ### 🤔 Contexto
