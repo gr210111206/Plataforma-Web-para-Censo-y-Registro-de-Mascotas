@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-01b] — Nuevo documento `LIBRERIAS_Y_LICENCIAS.md`: revisión legal de todo lo de terceros que usa el proyecto
+
+### 🤔 Contexto
+El usuario pidió revisar si las librerías que usa el proyecto son libres o si hace falta acreditar a sus autores, para evitar problemas legales al entregarlo al Ayuntamiento.
+
+### 🔧 Qué se hizo
+Se revisó el código real (no de memoria) buscando cada `<script src="http...">`/`<link href="http...">` externo en las 6 páginas HTML y en `styles.css`, y se armó el inventario completo:
+- **Leaflet 1.9.4** (mapa) — BSD-2-Clause.
+- **jsPDF 2.5.1** (acta en PDF) — MIT.
+- **QRCode.js 1.0.0** (código QR) — MIT.
+- **Teselas de OpenStreetMap** (mapa de calles) — ODbL, exige mostrar el crédito "© OpenStreetMap contributors" — **ya estaba puesto** en el código desde antes.
+- **Google Fonts** (Outfit + Inter) — SIL Open Font License.
+- **Íconos de línea** — tomados de **Lucide** (no es una librería cargada, se copió el SVG de cada ícono directo al HTML el 2026-08-06) — licencia **ISC** (se corrige aquí: esa entrada del historial decía "MIT/ISC", la correcta es ISC).
+- Backend: PHP nativo puro, sin ninguna librería externa (sin Composer).
+
+**Conclusión: ninguna librería usada cobra licencia, obliga a abrir el código del proyecto, ni requiere permiso del autor — son todas licencias permisivas (MIT/BSD/ISC/OFL). La única atribución obligatoria (OpenStreetMap) ya estaba cumplida.**
+
+### 📂 Archivos
+- `LIBRERIAS_Y_LICENCIAS.md` (nuevo — sí se sube al repositorio, a diferencia de `ANALISIS_SEGURIDAD.md`: este documento no contiene ningún dato sensible ni vulnerabilidad, al contrario, es evidencia de que se revisó la procedencia de todo).
+
 ## 📅 [2026-10-01] — Renombra "Usuarios" a "Cuentas Ciudadanas" en el menú del panel admin
 
 ### 🔧 Cambios
