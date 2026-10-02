@@ -2,6 +2,16 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02] — Ignora la carpeta `mobile-mcp/` en git
+
+### 🔧 Cambios
+- Se clonó el repositorio externo `github.com/mobile-next/mobile-mcp` (servidor MCP para controlar celulares/emuladores desde Claude Code) dentro de `mobile-mcp/`, en la raíz del proyecto. Es una herramienta de desarrollo con su propio repositorio git, no forma parte de la plataforma.
+- Se agregó `mobile-mcp/` al `.gitignore` para que nunca se suba por error al repositorio del proyecto (por ejemplo con un `git add .`).
+
+### 📁 Archivos modificados
+- `.gitignore`
+- `HISTORIAL_CAMBIOS.md`
+
 ## 📅 [2026-10-01g] — Corrige el destello de "Datos"/"Bitácora" al cargar el panel admin
 
 ### 🤔 Contexto

@@ -37,3 +37,6 @@ vendor/
 # Respaldos de la base de datos (scripts/backup_db.php) — nunca a git
 backups_remac/
 *.sql.gz
+
+# Herramienta externa clonada aparte (github.com/mobile-next/mobile-mcp) — tiene su propio repo, no es parte del proyecto
+mobile-mcp/
