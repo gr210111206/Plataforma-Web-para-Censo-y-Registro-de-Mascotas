@@ -7,6 +7,10 @@
   <title>Mi Portal — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
   <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
+       se vea un destello del color naranja original (ver tema.js). -->
+  <script src="js/tema.js"></script>
+  <script>aplicarTemaSincrono();</script>
   <style>
     /* ── Dashboard extras ── */
     .stat-trend {
@@ -576,7 +580,6 @@
 <!-- QR Code library -->
 <script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
-<script src="js/tema.js"></script>
 <!-- QRCode/jsPDF van al final y con defer: si el CDN tarda o falla, ya no
      bloquean que el resto del sitio (registrar/editar mascota, perfil)
      funcione — solo se usan para el botón "Descargar acta"/código QR. -->

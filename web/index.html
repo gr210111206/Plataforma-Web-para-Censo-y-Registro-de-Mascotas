@@ -7,6 +7,10 @@
   <title>Padrón Municipal de Mascotas — El Grullo, Jalisco</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
   <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
+       se vea un destello del color naranja original (ver tema.js). -->
+  <script src="js/tema.js"></script>
+  <script>aplicarTemaSincrono();</script>
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -428,7 +432,6 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
 
 <script src="js/api-client.js"></script>
-<script src="js/tema.js"></script>
 <script>
 /* ── Render Campaigns ── */
 // Si la campaña/aviso trae imagen se usa como fondo del banner; si no,

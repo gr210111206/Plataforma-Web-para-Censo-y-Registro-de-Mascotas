@@ -7,6 +7,10 @@
   <title>Acceso — Padrón de El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
   <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
+       se vea un destello del color naranja original (ver tema.js). -->
+  <script src="js/tema.js"></script>
+  <script>aplicarTemaSincrono();</script>
   <style>
     /* ── Searchable Select ── */
     .searchable-select { position: relative; }
@@ -338,7 +342,6 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="js/api-client.js"></script>
-<script src="js/tema.js"></script>
 <script>
 /* ── Mostrar/ocultar contraseña ── */
 const ICONO_OJO = '<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>';

@@ -75,10 +75,51 @@ function _hexToRgbString(hex) {
   return `${r}, ${g}, ${b}`;
 }
 
+/** Aplica sobre <html> las variables CSS de un objeto cfg ya resuelto (color/radius). */
+function _aplicarVariables(cfg) {
+  const root = document.documentElement.style;
+  if (cfg.color) {
+    root.setProperty('--orange', cfg.color);
+    root.setProperty('--orange-dark', _shadeColor(cfg.color, -0.18));
+    root.setProperty('--orange-light', _shadeColor(cfg.color, 0.3));
+    root.setProperty('--orange-pale', _shadeColor(cfg.color, 0.85));
+    root.setProperty('--orange-rgb', _hexToRgbString(cfg.color));
+    // Degradado oscuro de los paneles de marca (hero, login, sidebar del
+    // admin): mismo tono que el color elegido, solo mucho más oscuro.
+    root.setProperty('--brand-dark-1', _shadeColor(cfg.color, -0.90));
+    root.setProperty('--brand-dark-2', _shadeColor(cfg.color, -0.68));
+    root.setProperty('--brand-dark-3', _shadeColor(cfg.color, -0.50));
+    root.setProperty('--brand-dark-4', _shadeColor(cfg.color, -0.35));
+  }
+  if (cfg.radius === false) {
+    root.setProperty('--radius-sm', '3px');
+    root.setProperty('--radius', '5px');
+    root.setProperty('--radius-lg', '8px');
+    root.setProperty('--radius-xl', '10px');
+  }
+}
+
 /**
- * Lee padron_tema_config (del servidor si hay conexión, si no de
- * localStorage) y sobrescribe las variables CSS del sitio. Debe
- * llamarse en cada página después de api-client.js.
+ * Versión SÍNCRONA: solo lee localStorage (sin red) y aplica de inmediato.
+ * Se llama en <head>, antes de pintar el <body>, para que no se vea ni un
+ * instante el color naranja original del sitio antes de que cargue el tema
+ * guardado — antes esto solo pasaba al final, después de api-client.js y de
+ * una llamada de red a /api/settings, por lo que SIEMPRE había un destello
+ * del color original en cada carga de página (reportado 2026-10-02).
+ */
+function aplicarTemaSincrono() {
+  try {
+    const raw = localStorage.getItem('padron_tema_config');
+    const cfg = raw ? JSON.parse(raw) : null;
+    if (cfg) _aplicarVariables(cfg);
+  } catch (e) { /* localStorage vacío o corrupto: se queda con el color por defecto */ }
+}
+
+/**
+ * Lee padron_tema_config del servidor (fuente de verdad) y sobrescribe las
+ * variables CSS del sitio, además de refrescar localStorage para que la
+ * próxima carga de página ya no tenga destello (ver aplicarTemaSincrono).
+ * Debe llamarse en cada página después de api-client.js.
  *
  * Acepta opcionalmente `configYaTraida` (el objeto que ya devolvió
  * apiGetSiteConfig()) para páginas que ya lo pidieron ellas mismas —
@@ -102,25 +143,5 @@ async function aplicarTemaVisual(configYaTraida) {
     } catch (e) { return; }
   }
   if (!cfg) return;
-
-  const root = document.documentElement.style;
-  if (cfg.color) {
-    root.setProperty('--orange', cfg.color);
-    root.setProperty('--orange-dark', _shadeColor(cfg.color, -0.18));
-    root.setProperty('--orange-light', _shadeColor(cfg.color, 0.3));
-    root.setProperty('--orange-pale', _shadeColor(cfg.color, 0.85));
-    root.setProperty('--orange-rgb', _hexToRgbString(cfg.color));
-    // Degradado oscuro de los paneles de marca (hero, login, sidebar del
-    // admin): mismo tono que el color elegido, solo mucho más oscuro.
-    root.setProperty('--brand-dark-1', _shadeColor(cfg.color, -0.90));
-    root.setProperty('--brand-dark-2', _shadeColor(cfg.color, -0.68));
-    root.setProperty('--brand-dark-3', _shadeColor(cfg.color, -0.50));
-    root.setProperty('--brand-dark-4', _shadeColor(cfg.color, -0.35));
-  }
-  if (cfg.radius === false) {
-    root.setProperty('--radius-sm', '3px');
-    root.setProperty('--radius', '5px');
-    root.setProperty('--radius-lg', '8px');
-    root.setProperty('--radius-xl', '10px');
-  }
+  _aplicarVariables(cfg);
 }

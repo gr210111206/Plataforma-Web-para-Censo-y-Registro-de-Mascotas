@@ -7,6 +7,10 @@
   <title>Panel de Asistente — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
   <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
+       se vea un destello del color naranja original (ver tema.js). -->
+  <script src="js/tema.js"></script>
+  <script>aplicarTemaSincrono();</script>
 </head>
 <body>
 
@@ -327,7 +331,6 @@
 
 <script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
-<script src="js/tema.js"></script>
 <!-- jsPDF/QRCode van al final y con defer: solo los necesitan "Acta"/"QR"
      en "Mascotas que he registrado" (mucho después en el flujo) — si
      tardan o fallan en cargar desde el CDN, ya no bloquean que el resto

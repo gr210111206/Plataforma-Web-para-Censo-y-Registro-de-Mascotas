@@ -2,6 +2,35 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02b] — Corrige el destello del color original al cambiar el tema visual
+
+### 🤔 Contexto
+El usuario reportó (con capturas) que al personalizar el color del sitio desde "Apariencia e íconos" → "Tema visual", cada vez que se carga cualquier página se alcanza a ver por una fracción de segundo el color naranja original del sitio, antes de que se aplique el color elegido. Pidió corregirlo en todas las páginas donde afecta.
+
+**Diagnóstico:** `aplicarTemaVisual()` (`web/js/tema.js`) es asíncrona — espera una llamada de red a `/api/settings` (o, si falla, lee `localStorage`) — y en las 5 páginas se llamaba **al final del body**, después de que el HTML ya se había pintado con los colores por defecto de `styles.css`. Ese hueco (red + posición tardía en el documento) es el destello: no era un bug de un solo lugar, sino el mismo patrón repetido en `index.html`, `login.html`, `dashboard.html`, `admin.html` y `asistente.html`.
+
+### 🔧 La solución: aplicar el color guardado de forma síncrona, antes de pintar el body
+- `web/js/tema.js`: se extrajo la lógica de "escribir las variables CSS en `<html>`" a una función nueva `_aplicarVariables(cfg)`, reutilizada tanto por la función síncrona nueva como por la asíncrona de siempre. Se agregó `aplicarTemaSincrono()`, que **solo lee `localStorage`** (sin red) y aplica el color/bordes de inmediato si ya existe una configuración guardada de una visita anterior.
+- En las 5 páginas (`index.html`, `login.html`, `dashboard.html`, `admin.html`, `asistente.html`): se movió `<script src="js/tema.js"></script>` de donde estaba (al final del `<body>`, junto a `api-client.js`) al `<head>`, justo después de la hoja de estilos, seguido de `<script>aplicarTemaSincrono();</script>`. Al ser scripts normales (sin `defer`/`async`) en `<head>`, el navegador los ejecuta y bloquea el resto del parseo **antes** de pintar cualquier contenido — así el color correcto ya está puesto en `<html>` desde antes del primer frame.
+- La llamada ya existente a `aplicarTemaVisual()` (asíncrona, contra el servidor) se dejó tal cual donde estaba en cada página — sigue sirviendo para refrescar `localStorage` por si el tema cambió desde otro dispositivo, pero ya no es la que evita el destello.
+
+### 🚫 Lo que NO se tocó
+- `web/mascota.html` (ficha pública de una mascota, por QR) no carga `tema.js` y no se vio afectada por este bug — pero tampoco aplica el color personalizado del admin en absoluto (usa siempre el naranja por defecto). Queda fuera de este arreglo porque es un gap distinto (falta de la función, no un destello); se deja anotado para una sesión futura si se pide.
+- No se tocó la lógica de **qué** colores se calculan (`_hexToHsl`/`_shadeColor`/etc.), solo se reorganizó **cuándo** y **con qué fuente de datos** (local vs. red) se aplican.
+
+### 🔎 Verificado
+- `grep` confirma que cada una de las 5 páginas carga `tema.js` una sola vez (ya no hay una carga duplicada entre `<head>` y el final del `<body>`).
+- Revisión manual del `<head>` resultante de las 5 páginas: el script y la llamada síncrona quedan antes de cualquier contenido visible del `<body>`.
+- Pendiente que el usuario confirme visualmente en el navegador que ya no ve el destello — no hay navegador disponible en este entorno para probarlo de primera mano.
+
+### 📂 Archivos modificados
+- `web/js/tema.js`
+- `web/index.html`
+- `web/login.html`
+- `web/dashboard.html`
+- `web/admin.html`
+- `web/asistente.html`
+
 ## 📅 [2026-10-02] — Ignora la carpeta `mobile-mcp/` en git
 
 ### 🔧 Cambios
