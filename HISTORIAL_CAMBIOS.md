@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02h] — El buscador de "Seguimiento de Mascotas" ahora busca también por dueño, características y ubicación
+
+### 🤔 Contexto
+La asesora del usuario revisó el panel admin y pidió que el buscador de "Seguimiento de Mascotas" permitiera buscar no solo por el nombre de la mascota, sino también por el dueño, características de la mascota y la ubicación.
+
+### 🔧 Cambios
+- **`web/api/mascotas.php`** (`GET`, filtro `?q=`): antes solo comparaba `m.nombre` (nombre de la mascota), `m.id` (folio), `d.nombre` (dueño) y `d.colonia`. Se amplió para comparar también `m.raza`, `m.color`, `m.sexo`, `m.senias_particulares` (características de la mascota), `d.telefono` (dato adicional del dueño) y `d.direccion` (ubicación, además de la colonia que ya estaba).
+- **`web/admin.html`**: se actualizó el placeholder/aria-label del campo de búsqueda de "Seguimiento" (`segSearch`) de "Buscar otra mascota..." a "Buscar por mascota, dueño, raza, color o colonia..." para que quede claro que ahora cubre más campos.
+
+### 🔎 Verificado
+- Contra la base de datos local, con sesión de admin real: búsquedas por raza (`labrador`), nombre de dueño (`Salvador Ruiz`), colonia (`Pedregal`), dirección (`Zaragoza`) y color (`Atigrado`) devuelven las mascotas correctas en cada caso.
+- `php -l` sin errores en `mascotas.php`.
+
+### 📂 Archivos modificados
+- `web/api/mascotas.php`
+- `web/admin.html`
+
 ## 📅 [2026-10-02g] — Ventana emergente avisando que falta confirmar el correo al crear una cuenta
 
 ### 🤔 Contexto

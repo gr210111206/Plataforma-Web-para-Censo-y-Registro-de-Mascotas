@@ -76,9 +76,13 @@ if ($method === 'GET') {
         $params[] = $_GET['colonia'];
     }
     if (!empty($_GET['q'])) {
+        // Cubre mascota (nombre/folio/raza/color/señas/sexo), dueño (nombre/
+        // teléfono) y ubicación (dirección/colonia) — a petición de la
+        // asesora, que pidió poder buscar también por dueño, características
+        // de la mascota y ubicación, no solo por el nombre de la mascota.
         $q        = '%' . $_GET['q'] . '%';
-        $where[]  = '(m.nombre LIKE ? OR m.id LIKE ? OR d.nombre LIKE ? OR d.colonia LIKE ?)';
-        $params   = array_merge($params, [$q, $q, $q, $q]);
+        $where[]  = '(m.nombre LIKE ? OR m.id LIKE ? OR m.raza LIKE ? OR m.color LIKE ? OR m.sexo LIKE ? OR m.senias_particulares LIKE ? OR d.nombre LIKE ? OR d.telefono LIKE ? OR d.direccion LIKE ? OR d.colonia LIKE ?)';
+        $params   = array_merge($params, [$q, $q, $q, $q, $q, $q, $q, $q, $q, $q]);
     }
 
     $baseSql = '
