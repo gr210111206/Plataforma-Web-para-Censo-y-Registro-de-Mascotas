@@ -41,6 +41,12 @@ if ($method === 'POST' && $action === 'register') {
     if (empty($telefono)) {
         jsonError('El teléfono de contacto es obligatorio.', 400);
     }
+    if (empty($direccion)) {
+        jsonError('El domicilio es obligatorio.', 400);
+    }
+    if (empty($colonia)) {
+        jsonError('La colonia es obligatoria.', 400);
+    }
     $passErr = validarPassword($password);
     if ($passErr) jsonError($passErr, 400);
 

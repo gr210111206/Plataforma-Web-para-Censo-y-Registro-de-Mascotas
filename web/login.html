@@ -235,16 +235,16 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="reg-user-domicilio">Domicilio <span style="font-weight:400; color:var(--gray-2);">(opcional)</span></label>
+            <label for="reg-user-domicilio">Domicilio *</label>
             <div class="combo" id="combo-reg-domicilio">
-              <input class="form-control" id="reg-user-domicilio" placeholder="Ej. Calle Morelos #45" autocomplete="off" />
+              <input class="form-control" id="reg-user-domicilio" placeholder="Ej. Calle Morelos #45" autocomplete="off" required />
               <div class="combo-list" id="combo-reg-domicilio-list"></div>
             </div>
           </div>
           <div class="form-group">
-            <label for="reg-user-colonia-input">Colonia <span style="font-weight:400; color:var(--gray-2);">(opcional)</span></label>
+            <label for="reg-user-colonia-input">Colonia *</label>
             <div class="combo" id="combo-reg-colonia">
-              <input class="form-control" id="reg-user-colonia-input" placeholder="Busca tu colonia…" autocomplete="off" />
+              <input class="form-control" id="reg-user-colonia-input" placeholder="Busca tu colonia…" autocomplete="off" required />
               <input type="hidden" id="reg-user-colonia" />
               <div class="combo-list" id="combo-reg-colonia-list"></div>
             </div>
@@ -281,7 +281,7 @@
       El <strong>H. Ayuntamiento Constitucional de El Grullo, Jalisco</strong> (Administración 2024–2027), con domicilio en Calle Álvaro Obregón No. 48, Colonia Centro, El Grullo, Jalisco, C.P. 48970, a través de la Dirección de Medio Ambiente en coordinación con la Dirección de Informática Municipal, es responsable del tratamiento de los datos personales que usted proporcione en la plataforma del Padrón Municipal de Mascotas.</p>
 
       <p><strong>2. Datos personales que se recaban</strong><br/>
-      Para crear tu cuenta y registrar a tus mascotas, se recaban: nombre completo, teléfono de contacto, correo electrónico, contraseña (almacenada de forma cifrada), y de forma opcional dirección y colonia. Al registrar una mascota también se recaban datos del animal (nombre, especie, raza, edad, fotografía, entre otros).</p>
+      Para crear tu cuenta y registrar a tus mascotas, se recaban: nombre completo, teléfono de contacto, correo electrónico, contraseña (almacenada de forma cifrada), domicilio y colonia. Al registrar una mascota también se recaban datos del animal (nombre, especie, raza, edad, fotografía, entre otros).</p>
 
       <p><strong>3. Finalidad del tratamiento</strong><br/>
       Tus datos se utilizan exclusivamente para: (a) crear y administrar tu cuenta ciudadana en el padrón; (b) vincular cada mascota registrada con su tutor responsable; (c) generar tu acta oficial de registro con folio único; (d) contactarte en caso de reportes relacionados con tu mascota (por ejemplo, si se encuentra extraviada); y (e) generar estadísticas agregadas y anónimas del censo municipal de mascotas. No se usan tus datos para fines de publicidad ni se comparten con terceros ajenos al Ayuntamiento.</p>
@@ -433,9 +433,14 @@ async function handleRegistroUsuario(e) {
   const direccion = document.getElementById('reg-user-domicilio')?.value.trim() || '';
   const colonia   = document.getElementById('reg-user-colonia')?.value || '';
 
-  if (!nombre)   { showToast('❌ Ingrese su nombre completo', 'error'); return; }
-  if (!email)    { showToast('❌ Ingrese su correo electrónico', 'error'); return; }
-  if (!telefono) { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
+  if (!nombre)    { showToast('❌ Ingrese su nombre completo', 'error'); return; }
+  if (!email)     { showToast('❌ Ingrese su correo electrónico', 'error'); return; }
+  if (!telefono)  { showToast('❌ El teléfono de contacto es obligatorio', 'error'); return; }
+  if (!direccion) { showToast('❌ El domicilio es obligatorio', 'error'); return; }
+  // La colonia se valida contra el valor OCULTO (el elegido de la lista), no
+  // el texto visible — si solo escribió sin seleccionar ninguna opción real,
+  // el campo oculto se queda vacío (ver initCombo) y debe rechazarse igual.
+  if (!colonia)   { showToast('❌ Selecciona tu colonia de la lista', 'error'); return; }
   if (pass.length < 8) { showToast('❌ La contraseña debe tener al menos 8 caracteres', 'error'); return; }
   if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
 

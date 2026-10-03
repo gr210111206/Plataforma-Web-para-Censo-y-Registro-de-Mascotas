@@ -3160,7 +3160,32 @@ async function guardarEdicionMascota(e) {
 /* ══════════════════════════════════════════════════ */
 /*  DOWNLOAD ACTA — admin (Seguimiento)               */
 /* ══════════════════════════════════════════════════ */
-function downloadActaAdmin(id) {
+/* Agrega la foto de la mascota (si tiene) arriba a la derecha del acta.
+   Se espera a que la imagen cargue (aunque ya venga en Base64, jsPDF
+   necesita conocer su ancho/alto reales) para no deformarla al encajarla
+   en un cuadro de máximo 38×38mm. Si no hay foto o falla al cargar, el
+   acta se genera igual, solo sin la imagen. */
+function _agregarFotoActaPDF(doc, fotoUrl, pageW) {
+  return new Promise((resolve) => {
+    if (!fotoUrl || fotoUrl.length < 10) { resolve(); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxW = 38, maxH = 38;
+        let w = img.naturalWidth || 1, h = img.naturalHeight || 1;
+        const ratio = Math.min(maxW / w, maxH / h);
+        w *= ratio; h *= ratio;
+        const formato = fotoUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(fotoUrl, formato, pageW - 14 - w, 30, w, h);
+      } catch (e) { /* imagen no compatible con jsPDF: el acta sigue sin ella */ }
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = fotoUrl;
+  });
+}
+
+async function downloadActaAdmin(id) {
   const pet = allPets.find(p => p.id === id);
   if (!pet) { showToast('No se encontró la mascota para generar el acta.', 'error'); return; }
 
@@ -3183,6 +3208,8 @@ function downloadActaAdmin(id) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.text(`Folio: ${id}`, 14, 36);
+
+  await _agregarFotoActaPDF(doc, pet.foto_url, pageW);
 
   const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : 'N/D');
   const rows = [

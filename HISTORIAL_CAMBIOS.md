@@ -2,6 +2,41 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02d] — Domicilio/colonia pasan a ser obligatorios al registrarse; el acta en PDF ya incluye la foto de la mascota
+
+### 🤔 Contexto
+Dos pedidos de seguimiento a la entrada anterior (2026-10-02c):
+1. El usuario vio los campos nuevos "Domicilio (opcional)"/"Colonia (opcional)" en "Crear Cuenta de Usuario" y pidió que fueran **obligatorios**, no opcionales.
+2. Pidió que, si la mascota ya tiene una foto cargada, el acta en PDF la incluya — antes el PDF era puro texto, sin importar si la mascota tenía fotografía o no.
+
+### 🔧 Cambios
+**1. Domicilio/colonia obligatorios (solo en el autoregistro de `login.html`):**
+- `web/login.html`: se quitó la leyenda "(opcional)" de ambas etiquetas, se agregó `*` (mismo estilo que los demás campos obligatorios del formulario) y `required` al campo de texto de Domicilio. `handleRegistroUsuario()` ahora rechaza el envío si falta el domicilio, y también si no se seleccionó una colonia real de la lista (se valida contra el input oculto que llena `initCombo`, no contra el texto visible — así no se cuela alguien que solo escribió texto libre sin elegir ninguna opción).
+- `web/api/auth.php` (`?action=register`): ahora exige `direccion`/`colonia` igual que ya exige `telefono` — devuelve 400 con "El domicilio es obligatorio."/"La colonia es obligatoria." si faltan, en vez de guardarlos como `NULL` silenciosamente.
+- Se actualizó el texto del Aviso de Privacidad (ya no dice "de forma opcional dirección y colonia").
+- **A propósito NO se tocó** `asistente.html` ("Nuevo ciudadano"): ahí sigue siendo opcional, porque el personal municipal puede estar registrando en campo a alguien (ej. adulto mayor) sin tener a la mano su domicilio completo — es un caso de uso distinto al autoregistro.
+
+**2. Foto de la mascota en el acta PDF:**
+- Se agregó la función `_agregarFotoActaPDF(doc, fotoUrl, pageW)` (duplicada en los 3 generadores de acta, mismo patrón que ya tenía el resto del código del PDF) en `dashboard.html`, `admin.html` y `asistente.html`. Cuando la mascota tiene `foto_url`, la imagen se dibuja arriba a la derecha del acta (máximo 38×38mm, conservando su proporción real en vez de estirarla/achatarla — se espera a que el navegador cargue la imagen para conocer su ancho/alto antes de insertarla). Si la mascota no tiene foto, o la imagen falla al cargar, el acta se genera igual, solo sin la imagen.
+- Las 3 funciones (`downloadActa` en `dashboard.html`/`asistente.html`, `downloadActaAdmin` en `admin.html`) pasaron a ser `async` para poder esperar la carga de la imagen antes de seguir dibujando el resto del acta. Se revisaron todos los `onclick="downloadActa(...)"` que las llaman — ninguno esperaba un valor de regreso, así que el cambio no afecta a quien las llama.
+
+### 🚫 Lo que NO se tocó
+- El domicilio/colonia de cuentas creadas por `asistente.html` sigue siendo opcional (ver arriba).
+- Las cuentas ya existentes sin domicilio/colonia no se obligan a completarlo retroactivamente — solo aplica a registros nuevos desde `login.html`.
+
+### 🔎 Verificado
+- `php -l` sin errores en `auth.php`.
+- `curl` directo a `POST /auth?action=register`: sin `direccion` → `{"ok":false,"error":"El domicilio es obligatorio."}`; sin `colonia` → `{"ok":false,"error":"La colonia es obligatoria."}`.
+- Revisión manual de los 3 generadores de PDF editados (llaves/paréntesis balanceados, mismo patrón en los 3 archivos).
+- Pendiente que el usuario pruebe en el navegador que el PDF sí trae la foto cuando la mascota tiene una — no hay navegador disponible en este entorno para generarlo de primera mano.
+
+### 📂 Archivos modificados
+- `web/api/auth.php`
+- `web/login.html`
+- `web/dashboard.html`
+- `web/admin.html`
+- `web/asistente.html`
+
 ## 📅 [2026-10-02c] — Pide domicilio/colonia al autoregistrarse y corrige que nunca se mostraba la dirección guardada
 
 ### 🤔 Contexto
