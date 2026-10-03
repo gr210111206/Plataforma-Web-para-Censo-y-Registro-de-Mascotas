@@ -353,6 +353,22 @@
   </div>
 </div>
 
+<!-- ── Modal: Cuenta creada, falta confirmar correo ── -->
+<div class="modal-overlay" id="modal-cuenta-creada">
+  <div class="modal" style="max-width:420px; text-align:center;">
+    <div class="modal-header">
+      <h2 class="modal-title">📧 Revisa tu correo</h2>
+      <button class="modal-close" onclick="closeModal('modal-cuenta-creada')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.9rem; color:var(--gray-2); margin-bottom:0;">Tu cuenta fue creada. Te enviamos un enlace de confirmación a <strong id="cuenta-creada-email"></strong> — ábrelo (revisa también la carpeta de spam) para poder iniciar sesión.</p>
+    </div>
+    <div class="modal-footer" style="justify-content:center;">
+      <button type="button" class="btn btn-primary" onclick="closeModal('modal-cuenta-creada')">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Modal: Restablecer contraseña (llega desde el enlace del correo, ?reset=TOKEN) ── -->
 <div class="modal-overlay" id="modal-restablecer">
   <div class="modal" style="max-width:420px;">
@@ -475,14 +491,16 @@ async function handleRegistroUsuario(e) {
   if (pass !== passConf) { showToast('❌ Las contraseñas no coinciden', 'error'); return; }
 
   try {
-    const data = await apiRegisterUser(nombre, email, telefono, pass, direccion, colonia);
+    await apiRegisterUser(nombre, email, telefono, pass, direccion, colonia);
     // Ya no inicia sesión sola: hay que confirmar el correo primero (ver
     // HISTORIAL_CAMBIOS.md 2026-10-02 — verificación de correo). Se manda
-    // a la pestaña de login en vez de a dashboard.html.
-    showToast(`✅ ${data.message}`, 'success');
+    // a la pestaña de login en vez de a dashboard.html, y se avisa con un
+    // modal (no un toast, que se puede perder de vista) que falta confirmar.
     document.getElementById('form-registro').reset();
     switchTab('login');
     document.getElementById('login-email').value = email;
+    document.getElementById('cuenta-creada-email').textContent = email;
+    openModal('modal-cuenta-creada');
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }

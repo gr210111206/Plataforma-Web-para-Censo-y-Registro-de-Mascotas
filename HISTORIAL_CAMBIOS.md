@@ -2,6 +2,18 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02g] — Ventana emergente avisando que falta confirmar el correo al crear una cuenta
+
+### 🤔 Contexto
+Tras la entrada anterior (verificación de correo al registrarse), el aviso de "revisa tu correo" solo salía como un toast (una notificación chiquita que desaparece sola) — el usuario pidió que en vez de eso fuera una ventana emergente (modal), como la de "Recuperar contraseña", para que no pase desapercibido.
+
+### 🔧 Cambios
+- **`web/login.html`**: se agregó el modal `modal-cuenta-creada` (mismo patrón visual que `modal-recuperar`/`modal-reenviar-verificacion`) con el mensaje "Revisa tu correo" y el correo de la cuenta recién creada en negrita.
+- `handleRegistroUsuario()`: en vez de `showToast('✅ ...')`, ahora llena el correo en el modal y lo abre con `openModal('modal-cuenta-creada')`. El resto del flujo sigue igual (limpia el formulario, cambia a la pestaña de inicio de sesión, precarga el correo en el campo de login).
+
+### 📂 Archivos modificados
+- `web/login.html`
+
 ## 📅 [2026-10-02f] — Corrige que la ventana del código QR no se cerraba con la "X" ni con "Cerrar"
 
 ### 🤔 Contexto
