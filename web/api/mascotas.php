@@ -102,12 +102,12 @@ if ($method === 'GET') {
         $pageSize = min(100, max(1, (int)($_GET['pageSize'] ?? 25)));
         $offset   = ($page - 1) * $pageSize;
 
-        $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.colonia $baseSql ORDER BY m.created_at DESC LIMIT $pageSize OFFSET $offset");
+        $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.direccion, d.colonia $baseSql ORDER BY m.created_at DESC LIMIT $pageSize OFFSET $offset");
         $stmt->execute($params);
         jsonOk(['rows' => $stmt->fetchAll(), 'total' => $total]);
     }
 
-    $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.colonia $baseSql ORDER BY m.created_at DESC");
+    $stmt = $db->prepare("SELECT m.*, d.nombre AS persona, d.telefono, d.direccion, d.colonia $baseSql ORDER BY m.created_at DESC");
     $stmt->execute($params);
     jsonOk($stmt->fetchAll());
 }
@@ -175,7 +175,7 @@ if ($method === 'POST') {
         "$folio.pdf",
     ]);
 
-    $created = $db->prepare('SELECT m.*, d.nombre AS persona, d.telefono, d.colonia FROM mascotas m JOIN duenos d ON m.dueno_id = d.id WHERE m.id = ?');
+    $created = $db->prepare('SELECT m.*, d.nombre AS persona, d.telefono, d.direccion, d.colonia FROM mascotas m JOIN duenos d ON m.dueno_id = d.id WHERE m.id = ?');
     $created->execute([$folio]);
 
     jsonOk($created->fetch(), 201);
@@ -231,7 +231,7 @@ if ($method === 'PUT' && $id) {
         registrarBitacora($user, 'mascota_editada_por_admin', "{$pet['nombre']} (folio $id)");
     }
 
-    $updated = $db->prepare('SELECT m.*, d.nombre AS persona, d.telefono, d.colonia FROM mascotas m JOIN duenos d ON m.dueno_id = d.id WHERE m.id = ?');
+    $updated = $db->prepare('SELECT m.*, d.nombre AS persona, d.telefono, d.direccion, d.colonia FROM mascotas m JOIN duenos d ON m.dueno_id = d.id WHERE m.id = ?');
     $updated->execute([$id]);
     jsonOk($updated->fetch());
 }

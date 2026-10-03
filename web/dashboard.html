@@ -1203,6 +1203,8 @@ function downloadActa(folio) {
     ['Fecha de registro', pet.fecha_registro || pet.created_at || 'N/D'],
     ['Propietario', session.nombre || pet.persona || '—'],
     ['Teléfono de contacto', session.telefono || pet.telefono || '—'],
+    ['Dirección', session.direccion || pet.direccion || '—'],
+    ['Colonia', session.colonia || pet.colonia || '—'],
   ];
 
   let y = 46;

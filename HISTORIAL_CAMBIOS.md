@@ -2,6 +2,49 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02c] — Pide domicilio/colonia al autoregistrarse y corrige que nunca se mostraba la dirección guardada
+
+### 🤔 Contexto
+El usuario reportó (con 4 capturas) que "Crear Cuenta de Usuario" (`login.html`) nunca pidió domicilio/colonia — a pesar de que el propio Aviso de Privacidad del sitio ya decía que se recababan "de forma opcional". Pidió revisar **todos los lugares donde debería aparecer la ubicación**, no solo el formulario.
+
+Auditoría completa de los 3 flujos de registro/edición que tocan `duenos.direccion`/`duenos.colonia`:
+
+| Flujo | ¿Pedía domicilio/colonia? |
+|---|---|
+| `asistente.html` → "Nuevo ciudadano" (`usuarios.php?action=buscar-o-crear`) | ✅ Sí, ya funcionaba |
+| `dashboard.html` → "Mi perfil" (editar después de crear la cuenta) | ✅ Sí, ya funcionaba |
+| `login.html` → "Crear Cuenta de Usuario" (autoregistro) | ❌ **No existían los campos ni en el HTML ni en el backend** |
+
+Y un segundo bug, independiente del anterior: **aunque** un ciudadano sí tuviera domicilio guardado (por `asistente.html` o por "Mi perfil"), `GET /api/mascotas.php` — el endpoint que alimenta "Mis mascotas" (`dashboard.html`), "Seguimiento"/"Datos" (`admin.html`) y la lista de `asistente.html` — nunca seleccionaba `duenos.direccion` en su SQL (solo `d.colonia`). Por eso la tarjeta de detalle de una mascota mostraba "DIRECCIÓN: —" aunque "Mi perfil" sí mostrara el domicilio real para esa misma cuenta: eran dos consultas distintas, y solo una de las dos traía el dato completo.
+
+### 🔧 Cambios
+- **`web/api/auth.php`** (`?action=register`): ahora acepta `direccion`/`colonia` (opcionales, `clean()`), los guarda en el `INSERT` y los regresa en la respuesta — antes el endpoint los ignoraba por completo aunque se le mandaran.
+- **`web/js/api-client.js`** (`apiRegisterUser`): acepta los 2 parámetros nuevos y los manda al backend; también los guarda en `padron_session` junto con el resto de la sesión.
+- **`web/login.html`**: se agregó una fila "Domicilio (opcional)" + "Colonia (opcional)" al formulario de registro, con el mismo buscador de colonias real de El Grullo que ya usan `dashboard.html`/`asistente.html` (`initCombo`/`initComboSugerencias`, catálogo de `js/el-grullo-data.js`) — reutilizando el mismo patrón visual en vez de inventar uno nuevo. `handleRegistroUsuario()` ahora lee y manda estos 2 campos.
+- **`web/api/mascotas.php`**: se agregó `d.direccion` junto a `d.colonia` en las 4 consultas autenticadas (listar propias/admin con y sin paginación, confirmación al crear, confirmación al editar). La vista **pública** por token (`?token=`, usada por el QR) se dejó intacta a propósito — su comentario ya decía explícitamente "NO se expone dirección/colonia (dato sensible)" y así debe seguir.
+- **`web/dashboard.html`, `web/admin.html`, `web/asistente.html`**: el acta en PDF ahora incluye renglones "Dirección" y "Colonia" (antes solo traía "Propietario" y "Teléfono de contacto") — en `dashboard.html` con la misma prioridad que ya tenían esos 2 campos (`session.X || pet.X || '—'`).
+
+### 🚫 Lo que NO se tocó
+- La vista pública `mascota.html` y el endpoint público `?token=` de `mascotas.php` — a propósito nunca exponen domicilio exacto ni colonia a un desconocido que escanee el QR, eso no cambió.
+- El modal "Datos de dueño"/"Domicilio" de `admin.html` (el que solo muestra colonia combinada, ej. "10 de Mayo, El Grullo, Jal.") no se tocó — es un resumen compacto distinto al modal de detalle con campos separados, y mostrar solo la colonia ahí (no la calle exacta) parece intencional, no un bug.
+- Las cuentas que ya existen con `direccion`/`colonia` vacíos (porque se registraron antes de este cambio) no se migran ni se completan automáticamente — pueden llenarlos ellos mismos desde "Mi perfil" cuando quieran.
+
+### 🔎 Verificado
+- `php -l` sin errores en `auth.php` y `mascotas.php`.
+- Prueba de extremo a extremo contra el servidor local: `POST /auth?action=register` con `direccion`/`colonia` → se guardan y regresan; `POST /mascotas.php` para esa cuenta nueva → la mascota creada ya trae `"direccion":"Calle Falsa 123","colonia":"10 de Mayo"` en la respuesta (antes esos campos no existían en el JSON).
+- `scripts/smoke_test.sh`: 24 verificaciones, mismas fallas preexistentes de la cuenta admin real (bloqueo temporal de intentos previos, no relacionado) — el CRUD de mascota de la cuenta ciudadana de prueba pasó completo.
+- Cuenta y mascota de prueba (`test.direccion.*@example.com`, `M-GRU-000000080`) borradas de la base local después de la prueba.
+- Pendiente que el usuario confirme visualmente en el navegador que el buscador de colonia en "Crear cuenta" se ve y filtra bien — no hay navegador disponible en este entorno para probarlo de primera mano.
+
+### 📂 Archivos modificados
+- `web/api/auth.php`
+- `web/api/mascotas.php`
+- `web/js/api-client.js`
+- `web/login.html`
+- `web/dashboard.html`
+- `web/admin.html`
+- `web/asistente.html`
+
 ## 📅 [2026-10-02b] — Corrige el destello del color original al cambiar el tema visual
 
 ### 🤔 Contexto

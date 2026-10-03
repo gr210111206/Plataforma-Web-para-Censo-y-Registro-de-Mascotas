@@ -22,10 +22,12 @@ $action = $_GET['action'] ?? '';
 if ($method === 'POST' && $action === 'register') {
     $body = getBody();
 
-    $nombre   = clean(trim($body['nombre'] ?? ''));
-    $email    = strtolower(trim($body['email'] ?? ''));
-    $password = $body['password'] ?? '';
-    $telefono = clean(trim($body['telefono'] ?? ''));
+    $nombre    = clean(trim($body['nombre'] ?? ''));
+    $email     = strtolower(trim($body['email'] ?? ''));
+    $password  = $body['password'] ?? '';
+    $telefono  = clean(trim($body['telefono'] ?? ''));
+    $direccion = clean(trim($body['direccion'] ?? ''));
+    $colonia   = clean(trim($body['colonia'] ?? ''));
 
     if (empty($nombre)) {
         jsonError('El nombre completo es obligatorio.', 400);
@@ -55,20 +57,22 @@ if ($method === 'POST' && $action === 'register') {
     $token = bin2hex(random_bytes(32));
 
     $ins = $db->prepare('
-        INSERT INTO duenos (nombre, email, password_hash, telefono, rol, token_sesion, token_creado_en)
-        VALUES (?, ?, ?, ?, "ciudadano", ?, NOW())
+        INSERT INTO duenos (nombre, email, password_hash, telefono, direccion, colonia, rol, token_sesion, token_creado_en)
+        VALUES (?, ?, ?, ?, ?, ?, "ciudadano", ?, NOW())
     ');
-    $ins->execute([$nombre, $email, $hash, $telefono, $token]);
+    $ins->execute([$nombre, $email, $hash, $telefono, $direccion ?: null, $colonia ?: null, $token]);
     $userId = $db->lastInsertId();
 
     jsonOk([
-        'token'    => $token,
-        'id'       => $userId,
-        'nombre'   => $nombre,
-        'email'    => $email,
-        'telefono' => $telefono,
-        'rol'      => 'ciudadano',
-        'message'  => 'Cuenta creada exitosamente.'
+        'token'     => $token,
+        'id'        => $userId,
+        'nombre'    => $nombre,
+        'email'     => $email,
+        'telefono'  => $telefono,
+        'direccion' => $direccion ?: null,
+        'colonia'   => $colonia ?: null,
+        'rol'       => 'ciudadano',
+        'message'   => 'Cuenta creada exitosamente.'
     ]);
 }
 
