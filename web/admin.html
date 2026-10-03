@@ -3269,7 +3269,7 @@ function verQRAdmin(id) {
       <div class="modal" style="max-width:340px; text-align:center;">
         <div class="modal-header">
           <h2 class="modal-title" id="qr-titulo">Código QR</h2>
-          <button class="modal-close" onclick="document.getElementById('modal-qr').classList.remove('open')" aria-label="Cerrar">✕</button>
+          <button class="modal-close" onclick="closeModal('modal-qr')" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; align-items:center; gap:16px;">
           <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
@@ -3277,13 +3277,18 @@ function verQRAdmin(id) {
           <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg> Abrir página pública</a>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-ghost" onclick="document.getElementById('modal-qr').classList.remove('open')">Cerrar</button>
+          <button class="btn btn-ghost" onclick="closeModal('modal-qr')">Cerrar</button>
           <button class="btn btn-primary" onclick="printQR()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg> Imprimir QR</button>
         </div>
       </div>`;
     document.body.appendChild(qrModal);
+    // Este modal se crea dinámicamente, ya corrido el
+    // querySelectorAll('.modal-overlay').forEach(...) de más abajo que
+    // engancha "clic en el fondo oscuro cierra" — por eso a este le faltaba
+    // ese comportamiento. Se engancha aquí a mano.
+    qrModal.addEventListener('click', e => { if (e.target === qrModal) closeModal('modal-qr'); });
   }
-  qrModal.classList.add('open');
+  openModal('modal-qr');
 
   const qrCanvas = document.getElementById('qr-canvas');
   qrCanvas.innerHTML = '';

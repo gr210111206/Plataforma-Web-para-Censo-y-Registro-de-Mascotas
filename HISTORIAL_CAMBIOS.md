@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02f] — Corrige que la ventana del código QR no se cerraba con la "X" ni con "Cerrar"
+
+### 🤔 Contexto
+El usuario reportó (con capturas, desde el panel ciudadano, QR de la mascota "MAX") que al abrir la ventana del código QR de una mascota, ni el botón "✕" ni el botón "Cerrar" la cerraban.
+
+### 🔧 Cambios
+- **`web/dashboard.html`, `web/admin.html`, `web/asistente.html`** (función `verQR`/equivalente): los dos botones de cerrar usaban `document.getElementById('modal-qr').classList.remove('open')` directamente en vez del helper compartido `closeModal('modal-qr')` que usa el resto de los modales del sitio. Se cambiaron ambos a `closeModal('modal-qr')`.
+- Se encontró además una inconsistencia real: este modal se crea de forma dinámica con JavaScript (`document.createElement`) la primera vez que se abre, **después** de que ya corrió — una sola vez, al cargar la página — el `querySelectorAll('.modal-overlay').forEach(...)` que engancha "clic en el fondo oscuro cierra el modal" a todos los demás modales (que sí existen desde el HTML inicial). Por eso el modal de QR, a diferencia de todos los otros, tampoco se cerraba haciendo clic afuera. Se agregó ese mismo listener a mano justo después de crear el modal, y se cambió el `classList.add('open')` por `openModal('modal-qr')` para que use el mismo mecanismo de apertura que el resto.
+
+### 🚫 Lo que NO se tocó
+- El diseño visual del modal ni la lógica de generación del QR — solo cómo se abre/cierra.
+
+### 🔎 Verificado
+- Revisión de código: se confirmó que `closeModal`/`openModal` existen y tienen la misma firma en los tres archivos (helpers ya usados por el resto de los modales de cada página).
+- No hay navegador disponible en este entorno para reproducir en vivo el síntoma exacto reportado (clic en "✕"/"Cerrar"); el cambio aplicado es correcto y consistente con el patrón del resto del sitio independientemente de si explica el 100% del síntoma — pendiente que el usuario confirme en producción tras desplegar.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`
+- `web/admin.html`
+- `web/asistente.html`
+
 ## 📅 [2026-10-02e] — Verificación de correo al autoregistrarse (evita cuentas con correos inventados/mal escritos)
 
 ### 🤔 Contexto
