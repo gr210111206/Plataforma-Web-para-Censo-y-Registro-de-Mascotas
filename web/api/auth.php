@@ -9,6 +9,8 @@
  * POST /api/auth.php?action=change-password  → Cambia la contraseña de la sesión actual (pide la actual)
  * POST /api/auth.php?action=solicitar-recuperacion  → Manda correo con enlace para restablecer contraseña (sin sesión)
  * POST /api/auth.php?action=restablecer-password    → Fija nueva contraseña a partir del token del correo (sin sesión)
+ * POST /api/auth.php?action=verificar-email         → Confirma el correo a partir del token del enlace (sin sesión)
+ * POST /api/auth.php?action=reenviar-verificacion   → Reenvía el correo de confirmación si aún no se ha verificado (sin sesión)
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -60,17 +62,35 @@ if ($method === 'POST' && $action === 'register') {
     }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $token = bin2hex(random_bytes(32));
+
+    // La cuenta NO inicia sesión sola al crearse (a diferencia de antes):
+    // queda con email_verificado = 0 hasta que confirme el enlace que se le
+    // manda por correo — login() más abajo rechaza entrar mientras tanto.
+    // Esto evita que alguien registre una cuenta con un correo inventado o
+    // mal escrito y la use de todos modos.
+    $verifToken = bin2hex(random_bytes(32));
 
     $ins = $db->prepare('
-        INSERT INTO duenos (nombre, email, password_hash, telefono, direccion, colonia, rol, token_sesion, token_creado_en)
-        VALUES (?, ?, ?, ?, ?, ?, "ciudadano", ?, NOW())
+        INSERT INTO duenos (nombre, email, password_hash, telefono, direccion, colonia, rol, email_verificado, verificacion_token)
+        VALUES (?, ?, ?, ?, ?, ?, "ciudadano", 0, ?)
     ');
-    $ins->execute([$nombre, $email, $hash, $telefono, $direccion ?: null, $colonia ?: null, $token]);
+    $ins->execute([$nombre, $email, $hash, $telefono, $direccion ?: null, $colonia ?: null, $verifToken]);
     $userId = $db->lastInsertId();
 
+    $link = BASE_URL . '/login.html?verificar=' . $verifToken;
+    // Respaldo para poder probar el flujo en local sin depender de que el
+    // correo real llegue — mismo patrón que solicitar-recuperacion.
+    error_log("Verificación de correo para $email → $link");
+
+    $cuerpo = '
+        <p>Hola ' . htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') . ',</p>
+        <p>Gracias por registrarte en el Padrón Municipal de Mascotas de El Grullo. Antes de poder iniciar sesión, confirma que este correo es tuyo dando clic en el siguiente enlace:</p>
+        <p><a href="' . $link . '">' . $link . '</a></p>
+        <p>Si tú no creaste esta cuenta, puedes ignorar este correo.</p>
+    ';
+    enviarCorreo($email, 'Confirma tu correo — Padrón de Mascotas El Grullo', $cuerpo);
+
     jsonOk([
-        'token'     => $token,
         'id'        => $userId,
         'nombre'    => $nombre,
         'email'     => $email,
@@ -78,7 +98,7 @@ if ($method === 'POST' && $action === 'register') {
         'direccion' => $direccion ?: null,
         'colonia'   => $colonia ?: null,
         'rol'       => 'ciudadano',
-        'message'   => 'Cuenta creada exitosamente.'
+        'message'   => 'Cuenta creada. Revisa tu correo (y la carpeta de spam) para confirmarla antes de iniciar sesión.'
     ]);
 }
 
@@ -101,7 +121,8 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
         $db   = getDB();
         $stmt = $db->prepare("
             SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin,
-                   password_hash, intentos_fallidos, (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > NOW()) AS bloqueado
+                   password_hash, intentos_fallidos, email_verificado,
+                   (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > NOW()) AS bloqueado
             FROM duenos WHERE email = ? AND activo = 1
         ");
         $stmt->execute([$email]);
@@ -125,6 +146,15 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
                 }
             }
             jsonError('Correo o contraseña incorrectos.', 401);
+        }
+
+        // Cuenta autoregistrada (login.html) que todavía no confirmó su
+        // correo — las creadas por un asistente/admin, o sembradas antes de
+        // este cambio, ya quedan con email_verificado = 1 (ver schema.sql) y
+        // no les afecta. Se revisa DESPUÉS de validar la contraseña, para no
+        // revelar aquí si el correo existe o no (ver solicitar-recuperacion).
+        if (!$user['email_verificado']) {
+            jsonError('Todavía no confirmas tu correo. Revisa tu bandeja de entrada (y spam), o pide que te reenviemos el enlace.', 403);
         }
 
         $token = bin2hex(random_bytes(32));
@@ -336,6 +366,69 @@ if ($method === 'POST' && $action === 'restablecer-password') {
     ')->execute([$hash, $user['id']]);
 
     jsonOk(['message' => 'Contraseña actualizada. Ya puedes iniciar sesión.']);
+}
+
+/* ── POST /api/auth.php?action=verificar-email ───────────── */
+/* Sin sesión a propósito: se dispara al dar clic en el enlace del correo,
+   antes de que la cuenta pueda iniciar sesión siquiera. */
+if ($method === 'POST' && $action === 'verificar-email') {
+    $body  = getBody();
+    $token = trim($body['token'] ?? '');
+
+    if (empty($token)) jsonError('Enlace inválido.', 400);
+
+    $db   = getDB();
+    $stmt = $db->prepare('SELECT id FROM duenos WHERE verificacion_token = ? AND activo = 1');
+    $stmt->execute([$token]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        jsonError('El enlace no es válido o esta cuenta ya fue confirmada antes.', 400);
+    }
+
+    $db->prepare('UPDATE duenos SET email_verificado = 1, verificacion_token = NULL WHERE id = ?')
+       ->execute([$user['id']]);
+
+    jsonOk(['message' => 'Correo confirmado. Ya puedes iniciar sesión.']);
+}
+
+/* ── POST /api/auth.php?action=reenviar-verificacion ─────── */
+/* Mismo patrón anti-enumeración que solicitar-recuperacion: responde
+   siempre el mismo mensaje, exista o no esa cuenta, y aunque ya esté
+   verificada — así nadie puede usar este formulario para averiguar qué
+   correos están registrados en el padrón. */
+if ($method === 'POST' && $action === 'reenviar-verificacion') {
+    $body  = getBody();
+    $email = strtolower(trim($body['email'] ?? ''));
+
+    $mensajeGenerico = 'Si ese correo está registrado y aún no se ha confirmado, se reenvió el enlace de confirmación. Revisa tu bandeja de entrada (y la carpeta de spam).';
+
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        jsonOk(['message' => $mensajeGenerico]);
+    }
+
+    $db   = getDB();
+    $stmt = $db->prepare('SELECT id, nombre FROM duenos WHERE email = ? AND activo = 1 AND email_verificado = 0');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if ($user) {
+        $verifToken = bin2hex(random_bytes(32));
+        $db->prepare('UPDATE duenos SET verificacion_token = ? WHERE id = ?')->execute([$verifToken, $user['id']]);
+
+        $link = BASE_URL . '/login.html?verificar=' . $verifToken;
+        error_log("Reenvío de verificación de correo para $email → $link");
+
+        $cuerpo = '
+            <p>Hola ' . htmlspecialchars($user['nombre'], ENT_QUOTES, 'UTF-8') . ',</p>
+            <p>Confirma tu correo del Padrón Municipal de Mascotas de El Grullo dando clic en el siguiente enlace:</p>
+            <p><a href="' . $link . '">' . $link . '</a></p>
+            <p>Si tú no pediste esto, puedes ignorar este correo.</p>
+        ';
+        enviarCorreo($email, 'Confirma tu correo — Padrón de Mascotas El Grullo', $cuerpo);
+    }
+
+    jsonOk(['message' => $mensajeGenerico]);
 }
 
 jsonError('Acción no reconocida.', 404);

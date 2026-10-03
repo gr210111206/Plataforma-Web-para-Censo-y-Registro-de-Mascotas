@@ -31,13 +31,16 @@ CREATE TABLE IF NOT EXISTS duenos (
   bloqueado_hasta   DATETIME NULL DEFAULT NULL,           -- login: bloqueo temporal tras 5 intentos fallidos
   reset_token        VARCHAR(64) DEFAULT NULL,            -- recuperación de contraseña: token aleatorio de un solo uso, enviado por correo
   reset_token_expira DATETIME NULL DEFAULT NULL,          -- vence 1 hora después de solicitarse; se compara con NOW() del lado de MySQL, mismo criterio que bloqueado_hasta
+  email_verificado     TINYINT(1)  NOT NULL DEFAULT 1,    -- DEFAULT 1 a propósito: cuentas sembradas (seed.sql) o creadas por un asistente/admin nunca pasaron por el flujo de verificación y no deben quedar bloqueadas; auth.php la pone en 0 explícitamente solo al autoregistrarse desde login.html
+  verificacion_token   VARCHAR(64) DEFAULT NULL,          -- confirmación de correo al autoregistrarse: token de un solo uso, enviado por correo (igual que reset_token, sin expiración — se puede reenviar)
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
   INDEX idx_rol   (rol),
   INDEX idx_token_sesion (token_sesion), -- se consulta en CADA request autenticado (requireAuth)
   INDEX idx_colonia (colonia),           -- filtrado en mascotas.php y agrupado en stats.php
-  INDEX idx_reset_token (reset_token)    -- se consulta en restablecer-password
+  INDEX idx_reset_token (reset_token),   -- se consulta en restablecer-password
+  INDEX idx_verificacion_token (verificacion_token) -- se consulta en verificar-email
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de mascotas ────────────────────────────

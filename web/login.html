@@ -173,6 +173,10 @@
           <a href="#" onclick="event.preventDefault(); openModal('modal-recuperar');" style="font-size:.83rem; color:var(--orange); font-weight:600;">¿Olvidaste tu contraseña?</a>
         </div>
 
+        <div style="text-align:center; margin-bottom:16px;">
+          <a href="#" onclick="event.preventDefault(); openModal('modal-reenviar-verificacion');" style="font-size:.8rem; color:var(--gray-2);">¿No confirmaste tu correo? Reenviar enlace</a>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-block">Acceder a mi portal →</button>
 
         <div class="form-divider">o</div>
@@ -323,6 +327,32 @@
   </div>
 </div>
 
+<!-- ── Modal: Reenviar correo de confirmación ── -->
+<div class="modal-overlay" id="modal-reenviar-verificacion">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Reenviar confirmación</h2>
+      <button class="modal-close" onclick="closeModal('modal-reenviar-verificacion')" aria-label="Cerrar">✕</button>
+    </div>
+    <form onsubmit="handleReenviarVerificacion(event)">
+      <div class="modal-body">
+        <p style="font-size:.85rem; color:var(--gray-2); margin-bottom:16px;">Escribe el correo con el que creaste tu cuenta. Si todavía no la has confirmado, te reenviamos el enlace.</p>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="reenviar-verif-email">Correo electrónico *</label>
+          <div class="input-group">
+            <span class="input-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></svg></span>
+            <input type="email" id="reenviar-verif-email" class="form-control" placeholder="tu@correo.com" required />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('modal-reenviar-verificacion')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="reenviar-verif-btn">Reenviar enlace</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ── Modal: Restablecer contraseña (llega desde el enlace del correo, ?reset=TOKEN) ── -->
 <div class="modal-overlay" id="modal-restablecer">
   <div class="modal" style="max-width:420px;">
@@ -446,12 +476,57 @@ async function handleRegistroUsuario(e) {
 
   try {
     const data = await apiRegisterUser(nombre, email, telefono, pass, direccion, colonia);
-    showToast(`🎉 ¡Cuenta creada con éxito! Bienvenido, ${data.nombre}`, 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 1200);
+    // Ya no inicia sesión sola: hay que confirmar el correo primero (ver
+    // HISTORIAL_CAMBIOS.md 2026-10-02 — verificación de correo). Se manda
+    // a la pestaña de login en vez de a dashboard.html.
+    showToast(`✅ ${data.message}`, 'success');
+    document.getElementById('form-registro').reset();
+    switchTab('login');
+    document.getElementById('login-email').value = email;
   } catch (err) {
     showToast(`❌ ${err.message}`, 'error');
   }
 }
+
+/* ── Reenviar correo de confirmación ── */
+async function handleReenviarVerificacion(e) {
+  e.preventDefault();
+  const email = document.getElementById('reenviar-verif-email').value.trim();
+  if (!email) { showToast('❌ Escribe tu correo electrónico', 'error'); return; }
+
+  const btn = document.getElementById('reenviar-verif-btn');
+  btn.disabled = true;
+  try {
+    const data = await apiReenviarVerificacion(email);
+    showToast(`✅ ${data.message}`, 'success');
+    closeModal('modal-reenviar-verificacion');
+    document.getElementById('reenviar-verif-email').value = '';
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* Si la URL trae ?verificar=TOKEN (el enlace que llegó por correo al
+   registrarse), confirma el correo de inmediato al cargar la página. */
+async function verificarCorreoDesdeURL() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('verificar');
+  if (!token) return;
+
+  try {
+    const data = await apiVerificarEmail(token);
+    showToast(`🎉 ${data.message}`, 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  } finally {
+    // Quita el ?verificar= de la URL: el enlace ya no sirve (de un solo uso),
+    // no debe quedar viéndose reusable en la barra de direcciones.
+    window.history.replaceState({}, '', 'login.html');
+  }
+}
+document.addEventListener('DOMContentLoaded', verificarCorreoDesdeURL);
 
 /* ── Combo: buscador desplegable reutilizable (ej. Colonia) ── mismo
    patrón que dashboard.html/asistente.html (ver poblarDireccionRegistro). */

@@ -54,26 +54,39 @@ async function _fetch(url, options = {}) {
    ══════════════════════════════════════════════ */
 
 /**
- * Registro de cuenta de usuario (nombre, email, telefono, password, y
- * opcionalmente direccion/colonia — igual que ya se le pedían a un
- * ciudadano registrado por un asistente, pero faltaban en esta
- * autoregistración, ver HISTORIAL_CAMBIOS.md 2026-10-02).
+ * Registro de cuenta de usuario (nombre, email, telefono, password,
+ * direccion, colonia). Ya NO inicia sesión sola: la cuenta queda sin
+ * confirmar hasta que la persona le da clic al enlace que le llega por
+ * correo (ver HISTORIAL_CAMBIOS.md 2026-10-02 — verificación de correo).
  */
 async function apiRegisterUser(nombre, email, telefono, password, direccion, colonia) {
-  const data = await _fetch(`${API_BASE_URL}/auth?action=register`, {
+  return _fetch(`${API_BASE_URL}/auth?action=register`, {
     method: 'POST',
     body: JSON.stringify({ nombre, email, telefono, password, direccion, colonia }),
   });
-  localStorage.setItem('padron_session', JSON.stringify({
-    token:     data.token,
-    nombre:    data.nombre,
-    email:     data.email,
-    telefono:  data.telefono,
-    direccion: data.direccion,
-    colonia:   data.colonia,
-    rol:       data.rol,
-  }));
-  return data;
+}
+
+/**
+ * Confirma el correo de una cuenta recién registrada, a partir del token
+ * que llegó en el enlace del correo.
+ */
+async function apiVerificarEmail(token) {
+  return _fetch(`${API_BASE_URL}/auth?action=verificar-email`, {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+}
+
+/**
+ * Pide que se reenvíe el correo de confirmación (si esa cuenta existe y
+ * todavía no se ha verificado). Responde el mismo mensaje en todos los
+ * casos, para no revelar si el correo existe.
+ */
+async function apiReenviarVerificacion(email) {
+  return _fetch(`${API_BASE_URL}/auth?action=reenviar-verificacion`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
 }
 
 /**

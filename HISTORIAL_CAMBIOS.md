@@ -2,6 +2,47 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02e] — Verificación de correo al autoregistrarse (evita cuentas con correos inventados/mal escritos)
+
+### 🤔 Contexto
+El usuario pidió revisar, al crear una cuenta, que el correo electrónico "sí exista" — para evitar que alguien registre una cuenta con un correo inventado o con errores de dedo. Antes de construir nada se le explicó por qué una verificación en vivo (preguntarle a Gmail/Outlook "¿existe este correo?" en el momento mismo del registro) no es confiable: la mayoría de los proveedores de correo bloquean o mienten a ese tipo de sondeo para no facilitar spam, así que daría falsos positivos/negativos todo el tiempo. Se le planteó la alternativa estándar — verificación por enlace de confirmación — y se le preguntó qué tan estricto debía ser mientras una cuenta nueva no confirma: **se eligió bloquear el inicio de sesión por completo** hasta que la persona le dé clic al enlace de su correo.
+
+### 🔧 Cambios
+- **`web/database/schema.sql`** (tabla `duenos`): se agregaron `email_verificado TINYINT(1) NOT NULL DEFAULT 1` y `verificacion_token VARCHAR(64) DEFAULT NULL` (+ índice). El `DEFAULT 1` es a propósito: una cuenta sembrada (`seed.sql`) o creada por un asistente/admin nunca pasa por este flujo y no debe quedar bloqueada — solo el autoregistro desde `login.html` la pone en `0` explícitamente. Migración aplicada en la base de datos local con `ALTER TABLE` (ver abajo el `ALTER` para producción).
+- **`web/api/auth.php`**:
+  - `?action=register`: ya NO inicia sesión sola a la cuenta recién creada (antes regresaba un `token` de sesión de una vez). Ahora genera un `verificacion_token` de un solo uso, lo guarda, y manda un correo con el enlace `login.html?verificar=TOKEN` (reutilizando `enviarCorreo()`, la misma función SMTP real de Titan que ya usa la recuperación de contraseña — sin esto habría que volver a resolver el mismo problema de entrega a Gmail que ya se resolvió en 2026-10-01e).
+  - `?action=login`: después de validar la contraseña (para no revelar por este medio si el correo existe), revisa `email_verificado` — si sigue en `0`, rechaza con 403 y un mensaje claro en vez de dejarla entrar.
+  - Nuevo `?action=verificar-email`: confirma la cuenta a partir del token del enlace (`email_verificado = 1`, borra el token para que el enlace no se reuse).
+  - Nuevo `?action=reenviar-verificacion`: por si el correo nunca llegó o se fue a spam — mismo patrón anti-enumeración que `solicitar-recuperacion` (responde siempre el mismo mensaje, exista o no esa cuenta, esté o no ya verificada).
+- **`web/js/api-client.js`**: `apiRegisterUser()` ya no guarda una sesión en `localStorage` (no hay token que guardar); nuevas `apiVerificarEmail(token)` y `apiReenviarVerificacion(email)`.
+- **`web/login.html`**: al registrarse, ya no manda a `dashboard.html` — muestra el mensaje de "revisa tu correo" y regresa a la pestaña de inicio de sesión con el correo precargado. Se agregó el link "¿No confirmaste tu correo? Reenviar enlace" (abre un modal nuevo, mismo patrón visual que "Recuperar contraseña") y la detección de `?verificar=TOKEN` en la URL (igual que ya existía para `?reset=TOKEN`): confirma el correo al cargar la página y limpia la URL después para que el enlace ya gastado no se vea reutilizable.
+
+### 🚫 Lo que NO se tocó
+- `asistente.html` ("Nuevo ciudadano"): esas cuentas se crean con `email_verificado = 1` por el `DEFAULT` de la columna — no pasan por este flujo, porque normalmente ni siquiera tienen correo (las registra el personal municipal en campo).
+- Cuentas que ya existían antes de este cambio (admin, demo, ciudadanos reales ya registrados): todas quedaron en `email_verificado = 1` por el mismo `DEFAULT` — nadie que ya tenía cuenta se queda bloqueado de golpe.
+- No se tocó qué pasa si alguien **cambia** su correo después, desde "Mi perfil" — se queda verificado sin volver a confirmar el nuevo correo. Es un hueco real pero distinto al que se pidió resolver hoy (ese era sobre el registro); se deja anotado para si se quiere cerrar en otra sesión.
+
+### 🔎 Verificado
+- `php -l` sin errores en `auth.php`.
+- Prueba de extremo a extremo contra el servidor local: registro → login antes de confirmar da `403` con el mensaje de "todavía no confirmas tu correo" → se confirma con el token real de la BD → login después de confirmar da `200` con sesión normal.
+- `error_log` confirma que el enlace de verificación se genera y que `enviarCorreo()` no reportó ningún fallo de envío (mismo SMTP de Titan ya verificado en producción).
+- `scripts/smoke_test.sh`: 24 verificaciones, mismas fallas preexistentes de la cuenta admin real (no relacionadas) — login de ciudadana y asistente (cuentas ya existentes, migradas a `email_verificado = 1`) siguen funcionando igual que antes.
+- Cuentas de prueba borradas de la base local después de probar.
+- Pendiente: aplicar esta misma migración en la base de datos de producción (HostGator) antes de desplegar este código — si se despliega el código sin la migración, `auth.php` fallará con "Unknown column" al intentar leer/escribir `email_verificado`/`verificacion_token`. SQL exacto a correr en phpMyAdmin de producción:
+  ```sql
+  ALTER TABLE duenos
+    ADD COLUMN email_verificado TINYINT(1) NOT NULL DEFAULT 1 AFTER reset_token_expira,
+    ADD COLUMN verificacion_token VARCHAR(64) DEFAULT NULL AFTER email_verificado,
+    ADD INDEX idx_verificacion_token (verificacion_token);
+  ```
+- Pendiente también que el usuario confirme en el navegador que el correo de confirmación llega y que el enlace funciona — no hay navegador disponible en este entorno para probarlo de primera mano.
+
+### 📂 Archivos modificados
+- `web/database/schema.sql`
+- `web/api/auth.php`
+- `web/js/api-client.js`
+- `web/login.html`
+
 ## 📅 [2026-10-02d] — Domicilio/colonia pasan a ser obligatorios al registrarse; el acta en PDF ya incluye la foto de la mascota
 
 ### 🤔 Contexto
