@@ -355,6 +355,22 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
   </div>
 </section>
 
+<!-- ── Modal: Artículo completo ── -->
+<div class="modal-overlay" id="modal-articulo">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="articulo-modal-titulo">Artículo</h2>
+      <button class="modal-close" onclick="closeModal('modal-articulo')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="articulo-modal-contenido" style="white-space:pre-line; line-height:1.8; color:var(--gray-1); margin-bottom:0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-articulo')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Footer (dinámico — editable desde panel admin) ── -->
 </main>
 
@@ -488,16 +504,42 @@ function renderEvents(events) {
 }
 
 /* ── Render Articles ── */
+let ARTICULOS_DATA = [];
 function renderArticles(articles) {
+  ARTICULOS_DATA = articles;
   const container = document.getElementById('articlesContainer');
-  container.innerHTML = articles.map(a => `
+  container.innerHTML = articles.map((a, i) => `
     <div class="article-card">
       <div class="article-title">${a.titulo}</div>
       <div class="article-excerpt">${a.contenido.substring(0, 100)}...</div>
-      <a href="#" class="article-link">Leer más <span>→</span></a>
+      <a href="#" class="article-link" onclick="event.preventDefault(); verArticulo(${i});">Leer más <span>→</span></a>
     </div>
   `).join('');
 }
+
+// El "Leer más" antes era un enlace muerto (href="#", sin manejador) que no
+// llevaba a ningún lado — la tarjeta siempre se quedaba truncada en 100
+// caracteres. Ahora abre un modal con el artículo completo.
+function verArticulo(i) {
+  const a = ARTICULOS_DATA[i];
+  if (!a) return;
+  document.getElementById('articulo-modal-titulo').textContent = a.titulo;
+  document.getElementById('articulo-modal-contenido').textContent = a.contenido;
+  openModal('modal-articulo');
+}
+
+/* ── Modal genérico ── */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
 
 /* ── Render FAQ: usa lo editado desde el admin si existe; si no, este
    contenido institucional fijo sirve de respaldo. ── */

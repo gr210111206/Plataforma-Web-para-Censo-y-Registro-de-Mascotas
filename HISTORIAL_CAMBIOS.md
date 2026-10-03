@@ -2,6 +2,32 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-02i] — Botón "Copiar enlace" en el QR y corrige el "Leer más" de los Tips de salud animal
+
+### 🤔 Contexto
+Dos observaciones de la asesora del usuario:
+1. En la ventana del código QR, pidió un botón para copiar el enlace al portapapeles, para poder pegarlo en Word u otro documento/aplicación (no solo abrirlo o imprimir el QR).
+2. En la portada pública, la sección "Tips de salud animal" muestra cada tarjeta recortada a ~100 caracteres con un enlace "Leer más →" que no mostraba el resto del texto.
+
+### 🔧 Cambios
+**1. Botón "Copiar enlace" en el modal de QR (`web/dashboard.html`, `web/admin.html`, `web/asistente.html`):**
+- Se agregó un botón junto a "Abrir página pública" que copia el enlace público de la mascota (el mismo `href` del QR) al portapapeles con `navigator.clipboard.writeText()`, con un respaldo (`document.execCommand('copy')` sobre un `<textarea>` oculto) para navegadores o contextos sin Clipboard API. Muestra un `showToast` de confirmación.
+- Se agregó la nueva función `copiarEnlaceQR()` igual en los tres archivos (mismo patrón ya usado para `printQR()`).
+
+**2. "Leer más" de los artículos en la portada (`web/index.html`):**
+- Causa real: el enlace "Leer más" tenía `href="#"` y **ningún manejador de clic** — no hacía absolutamente nada al dar clic (ni mostraba el resto del texto ni llevaba a otro lado), por eso el artículo se quedaba siempre cortado en el extracto de 100 caracteres.
+- Se agregó un modal (`modal-articulo`, mismo patrón visual que el resto del sitio) que muestra el título y el contenido completo del artículo. `renderArticles()` ahora guarda los artículos recibidos en `ARTICULOS_DATA` y cada "Leer más" llama a `verArticulo(i)`, que llena y abre el modal.
+- `index.html` no tenía antes ningún modal ni los helpers `openModal()`/`closeModal()` — se agregaron (mismo patrón que `login.html`/`dashboard.html`/`admin.html`/`asistente.html`), incluyendo el `querySelectorAll('.modal-overlay').forEach(...)` que engancha "clic en el fondo cierra el modal".
+
+### 🔎 Verificado
+- `copiarEnlaceQR()`: revisión de código — mismo elemento (`qr-link-btn`) que ya usa "Abrir página pública" para el enlace real, sin recalcularlo aparte.
+- "Leer más": revisión de código confirmando que antes no había `onclick` ni JS asociado al enlace (la causa raíz del reporte); el nuevo modal reutiliza clases CSS ya probadas en el resto del sitio.
+- No hay navegador disponible en este entorno para probar ambos cambios de primera mano — pendiente que el usuario confirme tras desplegar.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`, `web/admin.html`, `web/asistente.html` (botón copiar enlace QR)
+- `web/index.html` (modal de artículo completo)
+
 ## 📅 [2026-10-02h] — El buscador de "Seguimiento de Mascotas" ahora busca también por dueño, características y ubicación
 
 ### 🤔 Contexto

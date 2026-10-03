@@ -3275,6 +3275,7 @@ function verQRAdmin(id) {
           <div id="qr-canvas" style="padding:16px; background:white; border-radius:12px; border:2px solid var(--gray-4);"></div>
           <div id="qr-info" style="font-size:.82rem; color:var(--gray-1); text-align:center;"></div>
           <a id="qr-link-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg> Abrir página pública</a>
+          <button type="button" class="btn btn-ghost" onclick="copiarEnlaceQR()" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:6px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg> Copiar enlace</button>
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closeModal('modal-qr')">Cerrar</button>
@@ -3331,6 +3332,29 @@ function printQR() {
     </body></html>`);
   win.document.close();
   setTimeout(() => win.print(), 500);
+}
+
+async function copiarEnlaceQR() {
+  const link = document.getElementById('qr-link-btn').href;
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast('🔗 Enlace copiado — pégalo donde quieras', 'success');
+  } catch (err) {
+    // Respaldo para navegadores/contextos sin Clipboard API.
+    const temp = document.createElement('textarea');
+    temp.value = link;
+    temp.style.position = 'fixed';
+    temp.style.opacity = '0';
+    document.body.appendChild(temp);
+    temp.select();
+    try {
+      document.execCommand('copy');
+      showToast('🔗 Enlace copiado — pégalo donde quieras', 'success');
+    } catch (err2) {
+      showToast('No se pudo copiar — selecciona el enlace manualmente', 'error');
+    }
+    document.body.removeChild(temp);
+  }
 }
 
 /* ══════════════════════════════════════════════════ */
