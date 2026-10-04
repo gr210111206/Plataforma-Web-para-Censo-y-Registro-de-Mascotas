@@ -787,6 +787,12 @@
          del texto, y los dos botones se reparten el ancho entre sí. */
       .appearance-save-bar > div:last-child { width: 100%; }
       .appearance-save-bar > div:last-child > button { flex: 1; }
+      /* Contactos y Tema visual: formulario + vista previa en vivo, con
+         la columna de la vista previa a un ancho fijo en px (380/300) en
+         vez de 1fr — ese ancho fijo no cede en celular y aprieta todo.
+         !important porque el ancho de escritorio sigue viniendo del
+         style="" en línea (más específico que una regla externa). */
+      .cfg-grid-preview { grid-template-columns: 1fr !important; }
     }
 
     /* ── Cuadrículas de Configuración (Avisos, Eventos, Municipio, SEO,
@@ -1947,7 +1953,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
       <!-- TAB: Información de contactos / Footer editor -->
       <div class="config-panel" id="cfg-contactos">
-        <div style="display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start;">
+        <div class="cfg-grid-preview" style="display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start;">
 
           <!-- ── Formulario ── -->
           <div style="display:flex; flex-direction:column; gap:16px;">
@@ -2260,7 +2266,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
       <!-- ─────────────────────────────────────── -->
       <div class="config-panel" id="cfg-tema">
 
-        <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
+        <div class="cfg-grid-preview" style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
 
           <div style="display:flex; flex-direction:column; gap:16px;">
 

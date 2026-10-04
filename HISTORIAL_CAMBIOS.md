@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04j] — Revisión completa de "Configuración" en celular: 2 columnas con ancho fijo más corregidas
+
+### 🤔 Contexto
+A petición del usuario ("revisa todos los botones de configuración del sitio porque en celular está como movido"), se revisaron a fondo las 10 pestañas de "Configuración del Sitio" (Portada, Reglamento, Avisos, Eventos, Contactos, FAQ, Apariencia, Municipio, Tema, SEO) buscando el mismo tipo de problema de las dos entradas anteriores.
+
+### 🔧 Cambios
+- **`web/admin.html`**: se encontraron 2 casos más del mismo problema, esta vez con columnas de **ancho fijo en píxeles** en vez de fracciones iguales (por eso no los cubría el fix de `.cfg-grid-2`/`.cfg-grid-3` de la entrada anterior):
+  - **Contactos** (editor del footer): formulario + vista previa en vivo, columna derecha fija a `380px`.
+  - **Tema visual**: formulario de color + vista previa en vivo, columna derecha fija a `300px`.
+  - Se agregó la clase `cfg-grid-preview` a ambas, con `grid-template-columns: 1fr !important` en el `@media (max-width: 768px)` ya existente — el `!important` es necesario aquí porque el ancho de escritorio (380px/300px) sigue viniendo del `style=""` en línea de cada una, que por especificidad le gana a una regla externa sin él.
+- **Revisado y confirmado SIN problema** (no requirió cambios): el selector de tipo de ícono (Emoji/Imagen/GIF-URL/Ocultar) en Apariencia ya tenía `flex-wrap` desde antes; Reglamento es una sola columna; FAQ ya usa `.faq-mgmt-layout`, que ya colapsaba a 1 columna; las filas tipo "etiqueta + control" (`.setting-row`, `grid-template-columns:1fr auto`) se adaptan solas porque su segunda columna es de ancho automático, no fijo.
+
+### 🔎 Verificado
+- Revisión completa, pestaña por pestaña, del HTML de las 10 secciones de Configuración — no quedó ninguna cuadrícula de ancho fijo sin su colapso a 1 columna en celular.
+- No hay navegador disponible en este entorno — pendiente que el usuario lo confirme en el emulador tras desplegar.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-04i] — Corrige el botón "Guardar apariencia" que se salía de la pantalla en celular
 
 ### 🤔 Contexto
