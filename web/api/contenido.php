@@ -138,15 +138,19 @@ if ($method === 'POST' && $resource === 'articulos') {
         jsonError('El contenido no puede estar vacío.', 400);
     }
 
+    $fotoErr = validarFotoBase64($body['imagen'] ?? null);
+    if ($fotoErr) jsonError($fotoErr, 400);
+
     $db = getDB();
     $stmt = $db->prepare('
-        INSERT INTO articulos (titulo, contenido, imagen_icono, publicado)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO articulos (titulo, contenido, imagen_icono, imagen, publicado)
+        VALUES (?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         clean($titulo),
         $contenido,
         clean($body['imagen_icono'] ?? null) ?: '📄',
+        $body['imagen'] ?? null,
         isset($body['publicado']) ? (int)(bool)$body['publicado'] : 1,
     ]);
 
@@ -162,15 +166,27 @@ if ($method === 'PUT' && $resource === 'articulos' && $id) {
     $body = getBody();
     $db   = getDB();
 
+    if (array_key_exists('imagen', $body)) {
+        $fotoErr = validarFotoBase64($body['imagen']);
+        if ($fotoErr) jsonError($fotoErr, 400);
+    }
+
     $campos  = [];
     $params  = [];
-    $allowed = ['titulo', 'contenido', 'imagen_icono', 'publicado'];
+    $allowed = ['titulo', 'contenido', 'imagen_icono', 'imagen', 'publicado'];
 
     foreach ($allowed as $campo) {
         if (array_key_exists($campo, $body)) {
             $campos[] = "$campo = ?";
-            $params[] = $campo === 'publicado' ? (int)(bool)$body[$campo]
-                : ($campo === 'contenido' ? sanitizeArticleHtml($body[$campo]) : clean($body[$campo]));
+            if ($campo === 'publicado') {
+                $params[] = (int)(bool)$body[$campo];
+            } elseif ($campo === 'contenido') {
+                $params[] = sanitizeArticleHtml($body[$campo]);
+            } elseif ($campo === 'imagen') {
+                $params[] = $body[$campo] ?: null;
+            } else {
+                $params[] = clean($body[$campo]);
+            }
         }
     }
     if (!$campos) jsonError('No se recibieron campos para actualizar.');

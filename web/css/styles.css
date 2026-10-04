@@ -727,10 +727,17 @@ input, select, textarea { font-family: inherit; }
   background: var(--white);
   border: 1px solid var(--gray-4);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  overflow: hidden;
   transition: var(--transition);
 }
 .article-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--orange); }
+.article-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+.article-card-body { padding: 24px; }
 .article-icon {
   font-size: 2.2rem;
   margin-bottom: 14px;

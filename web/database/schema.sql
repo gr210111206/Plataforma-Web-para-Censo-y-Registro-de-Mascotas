@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS articulos (
   titulo       VARCHAR(200) NOT NULL,
   contenido    LONGTEXT     NOT NULL, -- puede traer imágenes Base64 incrustadas (insertImageInEditor); TEXT (~64KB) se quedaba corto, mismo bug que ya se corrigió en mascotas.foto_url
   imagen_icono VARCHAR(10)  DEFAULT '📄',
+  imagen       LONGTEXT     DEFAULT NULL, -- imagen de portada en Base64 (opcional), mismo patrón que campanas.imagen; se muestra arriba de la tarjeta en portada
   publicado    TINYINT(1)  NOT NULL DEFAULT 1,
   created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

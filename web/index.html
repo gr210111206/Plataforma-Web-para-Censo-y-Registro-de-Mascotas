@@ -363,6 +363,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
       <button class="modal-close" onclick="closeModal('modal-articulo')" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-body">
+      <img id="articulo-modal-imagen" src="" alt="" style="display:none; width:100%; max-height:220px; object-fit:cover; border-radius:var(--radius); margin-bottom:16px;" />
       <p id="articulo-modal-contenido" style="white-space:pre-line; line-height:1.8; color:var(--gray-1); margin-bottom:0;"></p>
     </div>
     <div class="modal-footer">
@@ -510,9 +511,12 @@ function renderArticles(articles) {
   const container = document.getElementById('articlesContainer');
   container.innerHTML = articles.map((a, i) => `
     <div class="article-card">
-      <div class="article-title">${a.titulo}</div>
-      <div class="article-excerpt">${a.contenido.substring(0, 100)}...</div>
-      <a href="#" class="article-link" onclick="event.preventDefault(); verArticulo(${i});">Leer más <span>→</span></a>
+      ${a.imagen ? `<img src="${a.imagen}" alt="${a.titulo}" class="article-image" />` : ''}
+      <div class="article-card-body">
+        <div class="article-title">${a.titulo}</div>
+        <div class="article-excerpt">${a.contenido.substring(0, 100)}...</div>
+        <a href="#" class="article-link" onclick="event.preventDefault(); verArticulo(${i});">Leer más <span>→</span></a>
+      </div>
     </div>
   `).join('');
 }
@@ -525,6 +529,9 @@ function verArticulo(i) {
   if (!a) return;
   document.getElementById('articulo-modal-titulo').textContent = a.titulo;
   document.getElementById('articulo-modal-contenido').textContent = a.contenido;
+  const img = document.getElementById('articulo-modal-imagen');
+  if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
+  else { img.removeAttribute('src'); img.style.display = 'none'; }
   openModal('modal-articulo');
 }
 

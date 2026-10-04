@@ -2,6 +2,35 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04] — Imagen de portada en los artículos / Tips de salud animal
+
+### 🤔 Contexto
+El usuario pidió poder agregar una imagen a los artículos (sección "Tips de salud animal") desde el panel admin, y que esa imagen se reflejara adaptada a la forma de la tarjeta en la portada pública — igual que ya pasa con el banner de los avisos/campañas.
+
+### 🔧 Cambios
+- **`web/database/schema.sql`** (tabla `articulos`): se agregó `imagen LONGTEXT DEFAULT NULL`, mismo patrón que `campanas.imagen`. Migración para producción (phpMyAdmin):
+  ```sql
+  ALTER TABLE articulos ADD COLUMN imagen LONGTEXT DEFAULT NULL AFTER imagen_icono;
+  ```
+- **`web/admin.html`** ("Nuevo artículo / Tip de cuidado"): se agregó un campo "Imagen de portada (opcional)" con la misma zona de arrastrar/soltar que ya usan los avisos (`banner-drop`, `previewBanner()`, `handleDrop()` — de hecho `handleDrop()` ya traía una referencia a `art-img`/`art-banner-prev` sin usar, dejada a medias de una versión anterior; ahora sí está conectada). `saveArticulo()` manda la imagen si hay una en la vista previa; `editarArticulo()` la precarga al editar; `resetArticulo()` la limpia.
+- **`web/api/contenido.php`** (`POST`/`PUT` de `?resource=articulos`): acepta y valida `imagen` con `validarFotoBase64()` (mismo helper que ya usan las campañas — exige JPG/PNG/WEBP y un tamaño máximo), y la guarda/actualiza en la tabla.
+- **`web/css/styles.css`** (`.article-card`): se reestructuró para que la imagen (si existe) ocupe todo el ancho de la tarjeta arriba (`.article-image`, `object-fit:cover`, 140px de alto) y el resto del contenido quede en un contenedor `.article-card-body` con el padding de siempre — mismo patrón que ya usa `.campaign-card`/`.campaign-banner`. Si el artículo no tiene imagen, la tarjeta se ve exactamente igual que antes.
+- **`web/index.html`**: `renderArticles()` ahora pinta la imagen (si existe) arriba de cada tarjeta; el modal de "artículo completo" (agregado el 2026-10-02) también la muestra, arriba del texto.
+- Se actualizó también la lista de artículos propia del admin (`renderAdminArtList()`) para usar la misma estructura `.article-card-body` y mostrar la miniatura, por consistencia.
+
+### 🔎 Verificado
+- Contra la base de datos local: `POST` de un artículo con imagen válida (JPEG en Base64) → se guarda y el `GET` público la devuelve; `PUT` con una imagen inválida (no es `data:image/...;base64,`) se rechaza con 400; `PUT` sin tocar `imagen` deja la imagen existente intacta.
+- `php -l` sin errores en `contenido.php`.
+- No hay navegador disponible en este entorno para confirmar visualmente cómo se ve la tarjeta — pendiente que el usuario lo revise tras desplegar.
+- Pendiente aplicar la migración (`ALTER TABLE` de arriba) en producción antes de desplegar este código — si se despliega sin la migración, `contenido.php` fallará con "Unknown column" al leer/escribir `imagen` en `articulos`.
+
+### 📂 Archivos modificados
+- `web/database/schema.sql`
+- `web/api/contenido.php`
+- `web/admin.html`
+- `web/css/styles.css`
+- `web/index.html`
+
 ## 📅 [2026-10-02i] — Botón "Copiar enlace" en el QR y corrige el "Leer más" de los Tips de salud animal
 
 ### 🤔 Contexto
