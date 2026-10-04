@@ -202,6 +202,8 @@ if ($method === 'POST' && $action === 'update-profile') {
 
     $campos = [];
     $params = [];
+    $correoCambio = false;
+    $nuevoEmail   = null;
 
     // Correo: es el identificador con el que se inicia sesión (columna
     // UNIQUE), así que además de limpiarlo hay que validar formato y que
@@ -214,9 +216,24 @@ if ($method === 'POST' && $action === 'update-profile') {
             $chk = $db->prepare('SELECT id FROM duenos WHERE email = ? AND id != ?');
             $chk->execute([$nuevoEmail, $user['id']]);
             if ($chk->fetch()) jsonError('Ese correo electrónico ya está en uso por otra cuenta.', 400);
+            $correoCambio = true;
         }
         $campos[] = 'email = ?';
         $params[] = $nuevoEmail;
+    }
+
+    // Si de verdad cambia a un correo distinto, hay que volver a confirmarlo
+    // — si no, quedaba marcado "verificado" sin que nadie hubiera probado
+    // que el nuevo correo es real/le pertenece a quien lo puso (ver
+    // HISTORIAL_CAMBIOS.md). No afecta la sesión actual, que sigue
+    // funcionando igual — solo bloquea un futuro login hasta confirmarlo,
+    // mismo criterio que el registro nuevo.
+    $verifToken = null;
+    if ($correoCambio) {
+        $verifToken = bin2hex(random_bytes(32));
+        $campos[] = 'email_verificado = 0';
+        $campos[] = 'verificacion_token = ?';
+        $params[] = $verifToken;
     }
 
     // Foto de perfil: Base64 (mismo patrón que mascotas.foto_url). El
@@ -242,9 +259,25 @@ if ($method === 'POST' && $action === 'update-profile') {
     $params[] = $user['id'];
     $db->prepare('UPDATE duenos SET ' . implode(', ', $campos) . ' WHERE id = ?')->execute($params);
 
-    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol FROM duenos WHERE id = ?');
+    if ($correoCambio) {
+        $link = BASE_URL . '/login.html?verificar=' . $verifToken;
+        error_log("Verificación de correo (cambio de email) para $nuevoEmail → $link");
+        $cuerpo = '
+            <p>Hola ' . htmlspecialchars($user['nombre'], ENT_QUOTES, 'UTF-8') . ',</p>
+            <p>Confirmaste un nuevo correo para tu cuenta del Padrón Municipal de Mascotas de El Grullo. Antes de poder volver a iniciar sesión con este correo, confirma que es tuyo dando clic en el siguiente enlace:</p>
+            <p><a href="' . $link . '">' . $link . '</a></p>
+            <p>Si tú no hiciste este cambio, contacta al Ayuntamiento lo antes posible.</p>
+        ';
+        enviarCorreo($nuevoEmail, 'Confirma tu nuevo correo — Padrón de Mascotas El Grullo', $cuerpo);
+    }
+
+    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, email_verificado FROM duenos WHERE id = ?');
     $updated->execute([$user['id']]);
-    jsonOk($updated->fetch());
+    $datos = $updated->fetch();
+    if ($correoCambio) {
+        $datos['message'] = 'Datos actualizados. Revisa tu nuevo correo (y la carpeta de spam) para confirmarlo — lo vas a necesitar la próxima vez que inicies sesión.';
+    }
+    jsonOk($datos);
 }
 
 /* ── POST /api/auth.php?action=change-password ──────────── */

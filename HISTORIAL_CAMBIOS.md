@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04g] — Cambiar de correo desde "Mi perfil" ahora vuelve a pedir confirmación
+
+### 🤔 Contexto
+Revisión de seguridad a petición del usuario (base de datos, API, flujo de login/verificación de correo). Se confirmó que la mayoría de los hallazgos de auditorías anteriores ya estaban resueltos — este fue el único hueco real que seguía abierto: si alguien cambiaba el correo de una cuenta desde "Mi perfil" (`?action=update-profile`), el nuevo correo quedaba marcado como `email_verificado = 1` sin que nadie hubiera confirmado que de verdad le pertenece a esa persona — el mecanismo de verificación (agregado el 2026-10-02) solo cubría el autoregistro nuevo, no un cambio de correo posterior.
+
+### 🔧 Cambios
+- **`web/api/auth.php`** (`?action=update-profile`): cuando el correo que se manda es distinto al que ya tenía la cuenta, además de validarlo y de que no esté en uso por otra cuenta (como ya hacía), ahora también genera un `verificacion_token` nuevo, pone `email_verificado = 0`, y manda un correo de confirmación al nuevo correo (mismo patrón y plantilla que el registro). La sesión actual **no** se cierra — la persona sigue dentro, solo necesitará confirmar el correo antes de volver a iniciar sesión más adelante. La respuesta incluye un `message` distinto avisando esto.
+- **`web/dashboard.html`, `web/js/admin/admin-init.js`, `web/asistente.html`** ("Mi perfil" → Guardar cambios): el toast de éxito ahora usa el `message` que manda el servidor cuando viene (el aviso de "revisa tu nuevo correo"), en vez de siempre mostrar el genérico "Perfil actualizado correctamente".
+
+### 🔎 Verificado
+- Extremo a extremo contra la base de datos local: cambiar el correo de una cuenta → `email_verificado` pasa a `0` y se genera `verificacion_token` → intentar iniciar sesión con el correo nuevo da `403` ("Todavía no confirmas tu correo") → confirmar con el token real → iniciar sesión funciona de nuevo con normalidad.
+- `php -l` sin errores en `auth.php`.
+- Revisión completa de `schema.sql` y los 8 archivos de `web/api/*.php`: prepared statements en el 100% de las consultas, sanitización (`clean()`/`sanitizeArticleHtml()`) en todos los puntos de entrada, límite de intentos de login, cabeceras de seguridad activas en todo el sitio (no solo la API), `scripts/backup_db.php` ya existe y está bien diseñado (fuera de `public_html`). No se encontraron más huecos de seguridad reales — solo quedan pendientes de confirmar por el usuario (contraseña del admin sembrado, si el cron del respaldo ya está agendado en cPanel) y mejoras menores no urgentes (CSP en modo Report-Only, sin límite de intentos en registro/recuperación).
+
+### 📂 Archivos modificados
+- `web/api/auth.php`
+- `web/dashboard.html`
+- `web/js/admin/admin-init.js`
+- `web/asistente.html`
+
 ## 📅 [2026-10-04f] — Se separa el JavaScript de `admin.html` en archivos propios (`web/js/admin/`)
 
 ### 🤔 Contexto

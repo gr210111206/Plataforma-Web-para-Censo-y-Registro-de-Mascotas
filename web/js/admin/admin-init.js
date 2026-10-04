@@ -56,7 +56,9 @@ async function saveProfile() {
     window._pendingAvatarFoto = null;
     applyCurrentUserToUI();
     localStorage.setItem('padron_session', JSON.stringify({ ...JSON.parse(localStorage.getItem('padron_session') || '{}'), ...updated }));
-    showToast('Perfil actualizado correctamente', 'success');
+    // Si el correo cambió, el servidor manda un aviso distinto (hay que
+    // volver a confirmarlo) — se muestra tal cual en vez del genérico.
+    showToast(updated.message || 'Perfil actualizado correctamente', 'success');
   } catch (err) {
     showToast(`${err.message}`, 'error');
   }
