@@ -10,6 +10,7 @@
  * POST /api/usuarios?action=promover-admin  → Convierte una cuenta existente en admin (solo superadmin)
  * POST /api/usuarios?action=revocar-admin   → Le quita el rol admin a una cuenta, vuelve a ciudadano (solo superadmin)
  * POST /api/usuarios?action=buscar-o-crear  → Buscar por teléfono o crear ciudadano sin correo (admin y asistente)
+ * POST /api/usuarios?action=editar-cuenta   → Edita nombre/teléfono/dirección/colonia de una cuenta (solo superadmin)
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -370,6 +371,46 @@ if ($method === 'POST' && $action === 'buscar-o-crear') {
         'colonia'   => $colonia ?: null,
         'activo'    => 1,
     ]);
+}
+
+/* ── POST ?action=editar-cuenta — el superadmin edita los datos de
+   perfil (nombre, teléfono, dirección, colonia) de una cuenta de
+   Ciudadano o Asistente. A propósito NO toca correo ni contraseña —
+   eso sigue siendo "asignar-correo" (solo si todavía no tiene) o lo
+   que la propia persona cambia desde "Mi perfil"; dejar que un admin
+   reasigne el correo/contraseña de una cuenta ajena abriría una vía
+   de robo de cuenta. Mismo criterio de "solo superadmin" que
+   promover-admin/revocar-admin — el usuario pidió explícitamente que
+   fuera el superadmin quien pudiera ver y editar estos datos. ── */
+if ($method === 'POST' && $action === 'editar-cuenta') {
+    $yo = requireSuperAdmin();
+    $db = getDB();
+
+    $body      = getBody();
+    $id        = (int)($body['id'] ?? 0);
+    $nombre    = clean(trim($body['nombre'] ?? ''));
+    $telefono  = clean(trim($body['telefono'] ?? ''));
+    $direccion = clean(trim($body['direccion'] ?? ''));
+    $colonia   = clean(trim($body['colonia'] ?? ''));
+
+    if ($id <= 0) jsonError('Falta el id de la cuenta.', 400);
+    if (empty($nombre))   jsonError('El nombre completo es obligatorio.', 400);
+    if (empty($telefono)) jsonError('El teléfono de contacto es obligatorio.', 400);
+
+    $stmt = $db->prepare('SELECT id, nombre, rol FROM duenos WHERE id = ? AND rol IN ("ciudadano", "asistente")');
+    $stmt->execute([$id]);
+    $cuenta = $stmt->fetch();
+    if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
+
+    $db->prepare('UPDATE duenos SET nombre = ?, telefono = ?, direccion = ?, colonia = ? WHERE id = ?')
+       ->execute([$nombre, $telefono, $direccion ?: null, $colonia ?: null, $id]);
+
+    registrarBitacora($yo, 'cuenta_editada_admin',
+        "{$cuenta['nombre']} (id {$cuenta['id']}, {$cuenta['rol']})");
+
+    $updated = $db->prepare('SELECT id, nombre, email, telefono, direccion, colonia, rol, activo FROM duenos WHERE id = ?');
+    $updated->execute([$id]);
+    jsonOk($updated->fetch());
 }
 
 jsonError('Método o ruta no soportada.', 405);

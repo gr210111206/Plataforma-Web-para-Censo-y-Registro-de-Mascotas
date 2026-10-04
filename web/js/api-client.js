@@ -338,6 +338,18 @@ async function apiSetUsuarioActivo(id, activo) {
 }
 
 /**
+ * Edita nombre/teléfono/dirección/colonia de una cuenta de Ciudadano o
+ * Asistente. Requiere sesión de SUPERADMIN — el servidor responde 403
+ * si la llama un admin normal.
+ */
+async function apiEditarCuentaUsuario(id, data) {
+  return _fetch(`${API_BASE_URL}/usuarios?action=editar-cuenta`, {
+    method: 'POST',
+    body: JSON.stringify({ id, ...data }),
+  });
+}
+
+/**
  * Crea una cuenta con correo y contraseña (puede iniciar sesión).
  * Requiere sesión de admin. rol debe ser 'ciudadano' o 'asistente'
  * (el servidor rechaza cualquier otro valor, incluido 'admin').

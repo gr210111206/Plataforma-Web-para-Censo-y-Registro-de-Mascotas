@@ -1349,6 +1349,53 @@
       </div>
     </div>
 
+    <!-- Modal: Ver / editar cuenta ciudadana (solo superadmin) -->
+    <div class="modal-overlay" id="modal-ver-usuario">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title" id="vu-titulo">Cuenta ciudadana</h2>
+          <button class="modal-close" onclick="closeModal('modal-ver-usuario')" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <form id="form-ver-usuario" onsubmit="guardarEdicionUsuario(event)">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label for="vu-nombre">Nombre completo *</label>
+                <input type="text" id="vu-nombre" class="form-control" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="vu-email">Correo electrónico</label>
+                  <input type="text" id="vu-email" class="form-control" disabled style="background:var(--surface); color:var(--gray-2);" />
+                </div>
+                <div class="form-group">
+                  <label for="vu-telefono">Teléfono de contacto *</label>
+                  <input type="text" id="vu-telefono" class="form-control" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="vu-direccion">Domicilio</label>
+                  <input type="text" id="vu-direccion" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="vu-colonia">Colonia</label>
+                  <input type="text" id="vu-colonia" class="form-control" />
+                </div>
+              </div>
+              <div style="font-size:.78rem; color:var(--gray-2);">
+                El correo no se puede editar desde aquí — solo la propia persona puede cambiarlo desde "Mi perfil", o se le asigna uno nuevo con "Agregar correo" si todavía no tiene.
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" onclick="closeModal('modal-ver-usuario')">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:6px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════ -->
     <!-- SECCIÓN: NUEVO ARTÍCULO                    -->
     <!-- ══════════════════════════════════════════ -->
@@ -3416,6 +3463,9 @@ function renderUsuariosTable(data, total) {
         </td>
         <td>
           <div class="row-actions">
+            ${esSuperAdmin(currentUser)
+              ? `<button class="btn-icon info" onclick="verEditarUsuario(${u.id})" title="Ver y editar datos">${ICON_EYE}</button>`
+              : ''}
             ${u.activo == 1
               ? `<button class="btn-icon danger" onclick="toggleUsuarioActivo(${u.id}, true)" title="Desactivar cuenta">${ICON_BAN}</button>`
               : `<button class="btn-icon success" onclick="toggleUsuarioActivo(${u.id}, false)" title="Activar cuenta">${ICON_CHECK_CIRCLE}</button>`}
@@ -3451,6 +3501,48 @@ async function toggleUsuarioActivo(id, estaActivo) {
     await apiSetUsuarioActivo(id, !estaActivo);
     loadUsuariosTable();
     showToast(estaActivo ? 'Cuenta desactivada' : 'Cuenta reactivada', 'success');
+  } catch (err) {
+    showToast(`${err.message}`, 'error');
+  }
+}
+
+/* ── Ver / editar cuenta ciudadana (solo superadmin) ── */
+let editingUsuarioId = null;
+
+function verEditarUsuario(id) {
+  const u = allUsuarios.find(x => x.id === id);
+  if (!u) return;
+  editingUsuarioId = id;
+  document.getElementById('vu-titulo').textContent = u.nombre;
+  document.getElementById('vu-nombre').value    = u.nombre || '';
+  document.getElementById('vu-email').value     = u.email || 'Sin correo';
+  document.getElementById('vu-telefono').value  = u.telefono || '';
+  document.getElementById('vu-direccion').value = u.direccion || '';
+  document.getElementById('vu-colonia').value   = u.colonia || '';
+  openModal('modal-ver-usuario');
+}
+
+async function guardarEdicionUsuario(e) {
+  e.preventDefault();
+  if (!editingUsuarioId) return;
+
+  const nombre   = document.getElementById('vu-nombre').value.trim();
+  const telefono = document.getElementById('vu-telefono').value.trim();
+  if (!nombre)   { showToast('El nombre completo es obligatorio', 'error'); return; }
+  if (!telefono) { showToast('El teléfono de contacto es obligatorio', 'error'); return; }
+
+  const datos = {
+    nombre, telefono,
+    direccion: document.getElementById('vu-direccion').value.trim() || null,
+    colonia:   document.getElementById('vu-colonia').value.trim() || null,
+  };
+
+  try {
+    await apiEditarCuentaUsuario(editingUsuarioId, datos);
+    closeModal('modal-ver-usuario');
+    editingUsuarioId = null;
+    loadUsuariosTable();
+    showToast('Cuenta actualizada', 'success');
   } catch (err) {
     showToast(`${err.message}`, 'error');
   }

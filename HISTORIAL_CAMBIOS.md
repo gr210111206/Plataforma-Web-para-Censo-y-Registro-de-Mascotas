@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04c] — El superadmin puede ver y editar los datos de una cuenta ciudadana
+
+### 🤔 Contexto
+El usuario pidió que, desde "Cuentas Ciudadanas", el superadmin pudiera ver y editar los datos de una persona registrada (antes la única acción disponible en esa tabla era activar/desactivar la cuenta).
+
+### 🔧 Cambios
+- **`web/api/usuarios.php`**: nueva acción `POST ?action=editar-cuenta` que edita `nombre`, `telefono`, `direccion` y `colonia` de una cuenta de Ciudadano o Asistente. Reservada a **superadmin** (`requireSuperAdmin()`), mismo criterio que ya usan `promover-admin`/`revocar-admin` — el usuario pidió explícitamente que fuera el superadmin quien tuviera este permiso, no cualquier admin. A propósito **no** permite tocar correo ni contraseña desde aquí (eso sigue siendo "Agregar correo", solo si la cuenta todavía no tiene, o lo que la propia persona cambia desde "Mi perfil") para no abrir una vía de robo de cuenta. Queda registrado en la bitácora de auditoría (`cuenta_editada_admin`).
+- **`web/js/api-client.js`**: nueva `apiEditarCuentaUsuario(id, data)`.
+- **`web/admin.html`** ("Cuentas Ciudadanas"): nuevo botón (ícono de ojo, visible solo si quien tiene la sesión es superadmin) que abre el modal "Ver / editar cuenta" con nombre, correo (de solo lectura), teléfono, domicilio y colonia. Nuevas funciones `verEditarUsuario(id)` y `guardarEdicionUsuario(event)`.
+
+### 🔎 Verificado
+- Contra la base de datos local: edición completa de una cuenta (nombre con acentos, teléfono, domicilio, colonia) se guarda correctamente y aparece en la bitácora con el nombre real del superadmin que la hizo.
+- Un admin normal (no superadmin) que intenta llamar `?action=editar-cuenta` recibe `403 — Acceso denegado. Se requiere ser superadmin.`
+- `php -l` sin errores en `usuarios.php`.
+- No hay navegador disponible en este entorno para probar el modal visualmente — pendiente que el usuario lo confirme tras desplegar.
+
+### 📂 Archivos modificados
+- `web/api/usuarios.php`
+- `web/js/api-client.js`
+- `web/admin.html`
+
 ## 📅 [2026-10-04b] — Corrige que los PNG con transparencia se vuelven negros al subir una foto
 
 ### 🤔 Contexto
