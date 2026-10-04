@@ -30,6 +30,7 @@ La plataforma está diseñada con una arquitectura ligera, rápida y modular sin
 3. **Base de Datos MySQL (`web/database/`):**
    - **Esquema (`schema.sql`):** Tablas principales (`duenos`, `mascotas`, `campanas`, `articulos`, `bitacora`, `site_config`, `folio_counter`). ⚠️ No existen tablas `vacunas` ni `avisos` como tal: la vacunación es solo el booleano `mascotas.vacunado`, y los "avisos"/campañas del panel viven en la propia tabla `campanas` (ver §3.B).
    - **Datos Semilla (`seed.sql`):** Registros iniciales de prueba y cuenta administrativa.
+   - **Migraciones (`migrations/`):** cada `ALTER TABLE` que se corre a mano en phpMyAdmin (local o producción) sobre una base que ya existía se guarda aquí como archivo nuevo y numerado — además de reflejarse en `schema.sql` y documentarse en `HISTORIAL_CAMBIOS.md`. Ver `migrations/README.md`.
 
 ---
 
@@ -115,8 +116,9 @@ Anteproyecto/
     │   ├── contenido.php           # Campañas/avisos y artículos
     │   └── settings.php            # Configuración del sitio (site_config)
     └── database/
-        ├── schema.sql             # Estructura DDL de base de datos MySQL
-        └── seed.sql               # Datos iniciales para desarrollo y pruebas
+        ├── schema.sql             # Estructura DDL de base de datos MySQL (completa y actual)
+        ├── seed.sql               # Datos iniciales para desarrollo y pruebas
+        └── migrations/            # Historial de ALTER TABLE ya aplicados, en orden (ver migrations/README.md)
 ```
 
 ---

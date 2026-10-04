@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04d] — Carpeta `migrations/` para no perder el historial de cambios a la base de datos
+
+### 🤔 Contexto
+Cada cambio de esquema de este proyecto se venía aplicando a mano en phpMyAdmin (local y producción), con el `ALTER TABLE` exacto solo documentado en prosa dentro de `HISTORIAL_CAMBIOS.md` — sin ningún archivo `.sql` real guardado en el repo. Si algún día hay que reconstruir la base desde cero, o alguien más retoma el proyecto, esos `ALTER TABLE` ya aplicados no estaban en ningún lado como archivo ejecutable.
+
+### 🔧 Cambios
+- Nueva carpeta **`web/database/migrations/`**, con `README.md` explicando la convención (`NNNN_YYYY-MM-DD_descripcion.sql`, nunca editar un archivo ya aplicado en producción, siempre junto con el cambio en `schema.sql` y la entrada de changelog).
+- Se "rellenaron" con los dos `ALTER TABLE` que ya se habían aplicado esta semana pero solo vivían en texto dentro del changelog:
+  - `0001_2026-10-02_add_email_verificacion.sql` (verificación de correo).
+  - `0002_2026-10-04_add_articulos_imagen.sql` (imagen de portada de artículos).
+- **`CLAUDE.md`**: se documentó la carpeta nueva en la sección de Base de Datos y en el árbol de estructura del proyecto.
+
+### 🚫 Lo que NO se tocó
+- No se reconstruyó el historial completo de cambios de esquema desde el inicio del proyecto — se empezó desde los dos cambios más recientes. `schema.sql` sigue siendo la fuente de verdad de la estructura completa.
+
+### 📂 Archivos modificados
+- `web/database/migrations/README.md` (nuevo)
+- `web/database/migrations/0001_2026-10-02_add_email_verificacion.sql` (nuevo)
+- `web/database/migrations/0002_2026-10-04_add_articulos_imagen.sql` (nuevo)
+- `CLAUDE.md`
+
 ## 📅 [2026-10-04c] — El superadmin puede ver y editar los datos de una cuenta ciudadana
 
 ### 🤔 Contexto
