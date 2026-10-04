@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04i] — Corrige el botón "Guardar apariencia" que se salía de la pantalla en celular
+
+### 🤔 Contexto
+Siguiendo la prueba en el emulador (entrada anterior), el usuario encontró con otra captura que en "Apariencia e íconos" el botón "Guardar apariencia" quedaba cortado, empujado fuera del borde derecho de la pantalla.
+
+### 🔧 Cambios
+- **`web/admin.html`** (`.appearance-save-bar`): a diferencia de las demás barras de "Guardar"/"Restablecer" del panel (que solo tienen los 2 botones en su propia fila), esta barra además trae un texto de ayuda ("Tip: Los GIFs animados son compatibles...") compartiendo la misma fila con los botones (`justify-content:space-between`, sin `flex-wrap`) — en celular, sin espacio para encogerse, el botón "Guardar apariencia" se salía del contenedor.
+- Se agregó `flex-wrap: wrap` a la barra, y en el `@media (max-width: 768px)` ya existente se bajó el grupo de botones a su propia fila completa (abajo del texto), con los dos botones repartiéndose el ancho entre sí — mismo criterio que ya usan `.cfg-grid-2`/`.cfg-grid-3` (entrada anterior) para este mismo tipo de problema.
+
+### 🔎 Verificado
+- Revisión de código del cambio (acotado, sin tocar el resto del layout de escritorio, que sigue con el texto y los botones en la misma fila).
+- No hay navegador disponible en este entorno — pendiente que el usuario lo confirme en el emulador tras desplegar.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-04h] — Corrige cuadrículas de "Configuración" que se veían apretadas en celular
 
 ### 🤔 Contexto

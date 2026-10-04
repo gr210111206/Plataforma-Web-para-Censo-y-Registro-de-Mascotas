@@ -778,6 +778,15 @@
          escritorio — en celular quedaban apretadas, con texto/botones
          encimados (reportado con captura real desde el emulador). */
       .cfg-grid-2, .cfg-grid-3 { grid-template-columns: 1fr; }
+      /* A diferencia de las demás barras de "Guardar"/"Restablecer" del
+         panel (que solo tienen los 2 botones), .appearance-save-bar
+         además trae un texto de ayuda en la misma fila — en celular, sin
+         poder encogerse, el botón "Guardar apariencia" quedaba empujado
+         fuera de la pantalla (reportado con captura real desde el
+         emulador). Se baja el grupo de botones a su propia fila, abajo
+         del texto, y los dos botones se reparten el ancho entre sí. */
+      .appearance-save-bar > div:last-child { width: 100%; }
+      .appearance-save-bar > div:last-child > button { flex: 1; }
     }
 
     /* ── Cuadrículas de Configuración (Avisos, Eventos, Municipio, SEO,
@@ -887,6 +896,7 @@
       border-radius: var(--radius-lg);
       padding: 14px 20px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
