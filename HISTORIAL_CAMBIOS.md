@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04f] — Se separa el JavaScript de `admin.html` en archivos propios (`web/js/admin/`)
+
+### 🤔 Contexto
+`admin.html` tenía todo su JavaScript (~2,900 líneas) metido en un único `<script>` inline, mezclado con el HTML y el CSS del archivo. Esto se identificó como el problema de fondo tras probar "Graphify" (entrada anterior): cualquier herramienta de mapeo de código, y en la práctica también Claude Code al buscar una función específica, trata un `.html` como "documento", no como código — además de ser más difícil de mantener y con más riesgo de romper algo al editar en medio de miles de líneas.
+
+### 🔧 Cambios
+- Se dividió el `<script>` inline de `admin.html` en **16 archivos** dentro de `web/js/admin/`, agrupados por sección del panel: `admin-core.js` (utilidades compartidas: tablas, paginación, navegación del sidebar), `admin-dashboard.js` (mapa y gráficas de "Datos"), `admin-mascotas.js` (Seguimiento), `admin-usuarios.js` (Cuentas Ciudadanas), `admin-roles.js`, `admin-bitacora.js`, `admin-articulos.js` (editor WYSIWYG), `admin-config-core.js`/`admin-config-contenido.js`/`admin-config-shared.js`/`admin-config-footer.js`/`admin-config-portada.js`/`admin-config-apariencia.js`/`admin-config-site.js` (las pestañas de "Configuración"), `admin-init.js` (protección de la página + carga de datos reales) y `admin-bootstrap.js`.
+- **División 100% mecánica, sin tocar ninguna línea de lógica** — se usó `sed` para cortar por los límites de sección que el propio archivo ya traía marcados con comentarios (`/* ══════ */`), y se verificó con un `diff` que el contenido reconstruido es idéntico, carácter por carácter, al `<script>` original. Cada archivo resultante se validó por separado con `node --check` (JS válido).
+- ⚠️ **Único ajuste real de comportamiento**: la llamada `initAdmin();` (y las 2 líneas que la acompañaban) se movieron a un archivo nuevo, `admin-bootstrap.js`, cargado **al final de todos los demás**. Causa: dentro de un único `<script>`, el *hoisting* de JavaScript hace que no importe en qué orden estén las funciones — pero al separar en varios `<script src>`, cada uno es su propio programa y el hoisting ya no cruza entre archivos. `initAdmin()` llama a `primeConfigFromServer()` (definida en `admin-config-site.js`, el archivo más tardío), que a su vez llama a `buildIconSelectors()` (`admin-config-apariencia.js`) — si `admin-bootstrap.js` no cargara al final, el panel admin habría tronado con "function is not defined" apenas cargara la página.
+
+### 🔎 Verificado
+- `diff` entre el contenido original y la reconstrucción de los 16 archivos (en su orden original, con `admin-bootstrap.js` reinsertado en su posición de origen): **0 diferencias**.
+- `node --check` sin errores en los 16 archivos nuevos.
+- Revisión manual de todas las llamadas a nivel superior (no dentro de una función) del script original, para confirmar que ninguna otra, aparte de `initAdmin()`, dependiera de una función definida más adelante en el archivo.
+- No hay navegador disponible en este entorno para abrir el panel admin y confirmarlo de primera mano — pendiente que el usuario lo pruebe a fondo tras desplegar (entrar a cada pestaña: Datos, Seguimiento, Usuarios, Roles, Bitácora, Artículo, Configuración, Mi perfil).
+
+### 📂 Archivos modificados
+- `web/admin.html` (el `<script>` inline se reemplazó por 16 `<script src="js/admin/...">`)
+- `web/js/admin/` (carpeta nueva, 16 archivos)
+- `CLAUDE.md` (documentada la carpeta nueva y la regla de orden de carga)
+
 ## 📅 [2026-10-04e] — Se probó "Graphify" (mapa de código por IA) y se descartó por ahora; limpieza de `.gitignore`
 
 ### 🤔 Contexto

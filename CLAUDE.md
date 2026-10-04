@@ -21,6 +21,7 @@ La plataforma está diseñada con una arquitectura ligera, rápida y modular sin
    - **HTML5 Semántico:** Estructura limpia y accesible (`index.html`, `login.html`, `dashboard.html`, `mascota.html`, `admin.html`, `asistente.html`).
    - **CSS Vanilla Moderno (`web/css/styles.css`):** Sistema de diseño con variables CSS (`--orange`, `--dark`, `--surface`), glassmorphism, degradados, animaciones micro-interactivas y diseño 100% responsivo.
    - **JavaScript Vanilla Modular (`web/js/`):** `api-client.js` (cliente HTTP para todas las APIs), `el-grullo-data.js` (colonias/calles reales), `tema.js` (aplica el tema visual configurado desde el panel admin). No hay build step ni framework.
+   - **`web/js/admin/`:** el JS de `admin.html` (antes ~2,900 líneas en un solo `<script>` inline) está dividido en 16 archivos por sección (`admin-usuarios.js`, `admin-mascotas.js`, `admin-config-*.js`, etc.), cargados en orden con `<script src>`. ⚠️ **`admin-bootstrap.js` siempre debe ser el último** en cargar — contiene la llamada real a `initAdmin()`, que depende de funciones definidas en archivos de configuración más tardíos (`admin-config-site.js`, `admin-config-apariencia.js`); cada `<script src>` es su propio programa, así que a diferencia de un único `<script>` inline, el *hoisting* de funciones ya no cruza entre archivos.
 
 2. **Backend e Integración de Datos (APIs PHP):**
    - Ubicación: `web/api/`
