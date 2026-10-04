@@ -129,3 +129,4 @@ Cualquier modificación realizada en el código fuente, hojas de estilo, scripts
 2. Título de la mejora o corrección.
 3. Lista detallada de modificaciones realizadas.
 4. Archivos creados o modificados.
+

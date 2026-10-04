@@ -40,3 +40,11 @@ backups_remac/
 
 # Herramienta externa clonada aparte (github.com/mobile-next/mobile-mcp) — tiene su propio repo, no es parte del proyecto
 mobile-mcp/
+
+# Herramientas de terceros descargadas/clonadas para probar, no son parte del proyecto
+Herramienras/
+graphify/
+graphify-out/
+
+# Integración de graphify (probada y descartada por ahora — ver HISTORIAL_CAMBIOS.md)
+.claude/

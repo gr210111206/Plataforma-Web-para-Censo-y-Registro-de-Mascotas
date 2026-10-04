@@ -2,6 +2,35 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04e] — Se probó "Graphify" (mapa de código por IA) y se descartó por ahora; limpieza de `.gitignore`
+
+### 🤔 Contexto
+Un compañero del usuario le recomendó Graphify (herramienta de terceros que convierte el código en un "mapa" navegable) diciendo que le ayudó en su propio proyecto de residencia. Se clonó el repo (`Graphify-Labs/graphify`) y se instaló el CLI para probarlo de verdad contra este proyecto antes de decidir si valía la pena adoptarlo.
+
+### 🔬 Prueba real (no solo lectura de documentación)
+Se corrió `graphify extract web --code-only` (modo gratis/local, sin API) sobre `web/`. Resultado:
+- Solo 88 nodos / 133 conexiones en todo el proyecto.
+- **7 de los 8 archivos de `web/api/*.php`** (`auth.php`, `mascotas.php`, `usuarios.php`, `contenido.php`, `bitacora.php`, `settings.php`) **no aportaron ningún nodo** — la herramienta solo mapea funciones/clases con nombre, y esos archivos son scripts planos con bloques `if ($method === 'POST' && $action === '...')` en vez de funciones separadas.
+- **Ninguno de los `.html`** (`admin.html`, `dashboard.html`, `login.html`, `asistente.html`, `index.html`, `mascota.html`) se mapeó — Graphify los trata como "documentos", no como código, y ahí vive la mayoría de la lógica real del sistema (todo el JS del panel admin).
+- Lo único que se mapeó bien fue `api-client.js`, `tema.js` y `helpers.php` — los únicos archivos del proyecto con funciones nombradas de verdad.
+
+### 🤔 Decisión
+Con este proyecto en su forma actual (PHP en scripts planos + todo el JS metido dentro de archivos `.html` gigantes), Graphify no aporta un mapa útil — no por ser mala herramienta, sino porque no es la forma de código que sabe mapear bien. Se decidió **no** dejar su integración permanente activa:
+- Se revirtió la sección "## graphify" que el instalador había agregado a `CLAUDE.md` — esa sección le indicaba a futuras sesiones de Claude Code "usar el mapa antes que leer los archivos", lo cual habría sido contraproducente con un mapa tan incompleto.
+- La carpeta `.claude/` (que el instalador creó con el skill y los hooks) se dejó en disco pero fuera de git.
+- El CLI de `graphify` (instalado vía `uv tool install graphifyy`) se queda instalado en la máquina por si más adelante se separa el JS de `admin.html`/`dashboard.html` en archivos propios (la mejora real pendiente) y entonces sí vale la pena retomarlo.
+
+### 🔧 Limpieza de `.gitignore`
+Se agregaron reglas para que estas carpetas de herramientas externas, sueltas en el escritorio del proyecto, nunca se suban por accidente:
+- `Herramienras/` (otro framework de terceros, "ECC", descargado para revisar por separado).
+- `graphify/` (código fuente clonado de la herramienta).
+- `graphify-out/` (la salida del experimento: `graph.json`, `graph.html`, etc.).
+- `.claude/` (la integración de graphify descartada arriba).
+
+### 📂 Archivos modificados
+- `.gitignore`
+- `CLAUDE.md` (revertido a su versión anterior a la instalación de graphify)
+
 ## 📅 [2026-10-04d] — Carpeta `migrations/` para no perder el historial de cambios a la base de datos
 
 ### 🤔 Contexto
