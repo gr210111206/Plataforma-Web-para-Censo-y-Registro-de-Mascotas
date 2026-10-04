@@ -3123,7 +3123,10 @@ function previewFotoEditarMascota(input) {
       }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const optimized = canvas.toDataURL('image/jpeg', 0.85);
 
       pendingFotoEditarMascota = optimized;
@@ -3821,7 +3824,10 @@ function insertImageInEditor(input) {
       }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const optimized = canvas.toDataURL('image/jpeg', 0.82);
 
       document.getElementById('wysiwygEditor').focus();
@@ -4528,7 +4534,13 @@ function previewBanner(input, prevId) {
       }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      // JPEG no tiene canal alpha: si la imagen de origen (ej. un PNG con
+      // transparencia) no se rellena antes, el lienzo deja esas zonas en
+      // negro (su color de fondo por defecto) en vez de blanco.
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const optimized = canvas.toDataURL('image/jpeg', 0.85);
       el.innerHTML = `<img src="${optimized}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
     };
@@ -4689,7 +4701,10 @@ function changeAvatar(input) {
       }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const optimized = canvas.toDataURL('image/jpeg', 0.85);
 
       window._pendingAvatarFoto = optimized;

@@ -2,6 +2,29 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04b] — Corrige que los PNG con transparencia se vuelven negros al subir una foto
+
+### 🤔 Contexto
+El usuario reportó (con captura) que al subir como imagen de portada de un artículo un PNG con fondo transparente, el fondo transparente se mostraba **negro** en vez de transparente/blanco.
+
+### 🔧 Cambios
+- Causa real: todo el sitio optimiza las fotos subidas redimensionándolas en el navegador con un `<canvas>` y exportándolas como **JPEG** (`canvas.toDataURL('image/jpeg', …)`) antes de guardarlas — JPEG no tiene canal alfa (transparencia). Un `<canvas>` recién creado no tiene ningún color de fondo propio; al "aplanar" a JPEG, esas zonas sin pintar se guardan como negro puro en vez de blanco.
+- Se agregó `ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);` **antes** de `drawImage()` en las 8 funciones del sitio que procesan fotos de este modo, para que cualquier zona transparente del PNG de origen quede blanca (no negra) en el JPEG final:
+  - `web/admin.html`: imagen de portada de artículo/aviso (`previewBanner`), foto al editar mascota desde el panel, imagen insertada en el editor de artículos (`insertImageInEditor`), foto de perfil del admin.
+  - `web/dashboard.html`: foto de perfil, foto al registrar/editar mascota.
+  - `web/asistente.html`: foto de perfil, foto al registrar mascota.
+- **No se tocó** la subida de `imagen` de campañas/avisos vía `previewBanner()` — ya quedó cubierta porque es la misma función que usan ahora los artículos.
+
+### 🚫 Lo que NO se arregla solo
+- Las fotos que ya se guardaron **antes** de este cambio (como el artículo "¿Con qué frecuencia debo vacunar a mi perro?" de la captura) ya tienen el fondo negro "horneado" en el archivo guardado — este fix solo evita el problema en subidas nuevas. Hay que volver a subir/reemplazar esas imágenes ya guardadas después de desplegar.
+
+### 🔎 Verificado
+- Revisión de código: las 8 funciones comparten exactamente el mismo patrón (`canvas.getContext('2d').drawImage(...)` seguido de `toDataURL('image/jpeg', …)`), confirmando que el bug no era exclusivo de artículos sino de cualquier foto subida en el sitio.
+- No hay navegador disponible en este entorno para probar visualmente con un PNG real — pendiente que el usuario lo confirme tras desplegar, volviendo a subir la imagen del artículo de prueba.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/dashboard.html`, `web/asistente.html`
+
 ## 📅 [2026-10-04] — Imagen de portada en los artículos / Tips de salud animal
 
 ### 🤔 Contexto
