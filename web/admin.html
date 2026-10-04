@@ -772,7 +772,18 @@
       .padron-table-mini { flex: none; max-height: 50vh; }
       .seguimiento-layout { grid-template-columns: 1fr; }
       .faq-mgmt-layout { grid-template-columns: 1fr; }
+      /* Mismo problema que .seguimiento-layout/.faq-mgmt-layout: varias
+         pestañas de Configuración (Avisos, Eventos, Municipio, SEO,
+         Portada) usan cuadrículas de 2-3 columnas fijas pensadas para
+         escritorio — en celular quedaban apretadas, con texto/botones
+         encimados (reportado con captura real desde el emulador). */
+      .cfg-grid-2, .cfg-grid-3 { grid-template-columns: 1fr; }
     }
+
+    /* ── Cuadrículas de Configuración (Avisos, Eventos, Municipio, SEO,
+       Portada) — ver el colapso a 1 columna en el media query de arriba ── */
+    .cfg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
+    .cfg-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
 
     /* ── Icon Selector (Apariencia) ── */
     .icon-sel-grid {
@@ -1630,7 +1641,7 @@
             <p style="font-size:.78rem; color:var(--gray-2); margin-bottom:12px;">
               Estos contadores muestran automáticamente los datos reales del padrón (mascotas, familias y vacunadas). Solo llena un número aquí si quieres <b>forzar manualmente</b> un valor distinto al real.
             </p>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+            <div class="cfg-grid-3" style="gap:16px;">
               <div>
                 <label style="font-weight:600; font-size:.82rem;">Contador 1 (Número — opcional)</label>
                 <input type="number" id="edit-stat-1-num" class="form-control" placeholder="Automático" style="margin-bottom:8px;" />
@@ -1714,7 +1725,7 @@
               <textarea id="edit-proc-desc" class="form-control" rows="2">Registrar a tu mascota es completamente gratuito y tarda menos de 5 minutos. Solo necesitas tu correo y teléfono de contacto.</textarea>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div class="cfg-grid-3" style="gap:16px; margin-bottom:16px;">
               <div style="background:var(--surface); padding:14px; border-radius:var(--radius);">
                 <strong style="font-size:.85rem; display:block; margin-bottom:8px;">Paso 1 (Detalle)</strong>
                 <input type="text" id="edit-step-1-title" class="form-control" value="Ingresa tus datos" style="margin-bottom:6px;" placeholder="Título paso 1" />
@@ -1835,7 +1846,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
       <!-- TAB: Avisos y promociones -->
       <div class="config-panel" id="cfg-avisos">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+        <div class="cfg-grid-2" style="gap:24px; align-items:start;">
           <!-- Formulario -->
           <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
             <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg> Avisos y promociones</h3>
@@ -1888,7 +1899,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
       <!-- TAB: Eventos próximos -->
       <div class="config-panel" id="cfg-eventos">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+        <div class="cfg-grid-2" style="gap:24px;">
           <div style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px;">
             <h3 style="font-size:1rem; margin-bottom:16px; font-weight:700; display:flex; align-items:center; gap:8px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg> Nuevo evento</h3>
             <div class="form-group" style="margin-bottom:14px;">
@@ -2202,7 +2213,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           </div>
           <div class="setting-rows">
             <div class="setting-row-full">
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div class="cfg-grid-2" style="gap:16px;">
 
                 <!-- Logo upload -->
                 <div>
@@ -2387,7 +2398,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
       <!-- ─────────────────────────────────────── -->
       <div class="config-panel" id="cfg-seo">
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+        <div class="cfg-grid-2" style="gap:20px; align-items:start;">
 
           <!-- Left: form -->
           <div style="display:flex; flex-direction:column; gap:16px;">

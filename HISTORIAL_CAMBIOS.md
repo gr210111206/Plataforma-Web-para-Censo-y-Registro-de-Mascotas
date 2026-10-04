@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-04h] — Corrige cuadrículas de "Configuración" que se veían apretadas en celular
+
+### 🤔 Contexto
+Probando el panel admin en el emulador Android, el usuario encontró (con captura real) que la pestaña "Avisos y promociones" de Configuración se veía apretada en el celular — el formulario y la lista de avisos publicados, pensados como dos columnas lado a lado en escritorio, se comprimían una junto a la otra en pantallas angostas. Al revisar el código se encontró que era el mismo problema en **6 lugares** de "Configuración", no solo en Avisos: Portada (contadores y pasos), Avisos, Eventos, Municipio (logo/escudo) y SEO — todos usaban `display:grid; grid-template-columns:1fr 1fr` (o `1fr 1fr 1fr`) fijo, sin colapsar a una columna en pantallas angostas, a diferencia de `.form-row` y otros layouts del sitio que sí ya tenían ese ajuste.
+
+### 🔧 Cambios
+- **`web/admin.html`**: se crearon dos clases nuevas, `.cfg-grid-2` y `.cfg-grid-3`, que reemplazan el `grid-template-columns` que antes estaba escrito directo en cada `style=""` — mismo patrón ya usado por `.form-row`/`.seguimiento-layout`/`.faq-mgmt-layout` en este archivo. Se agregó `.cfg-grid-2, .cfg-grid-3 { grid-template-columns: 1fr; }` al `@media (max-width: 768px)` que ya existía, para que colapsen a una sola columna en celular.
+- Se aplicaron las clases nuevas en los 6 lugares: Contenidos de Portada (Contadores del hero, Pasos del proceso), Avisos y promociones, Eventos, Municipio (Logotipo y escudo oficial), SEO y metadatos.
+
+### 🔎 Verificado
+- Revisión de código confirmando que no quedó ningún `grid-template-columns:1fr 1fr` suelto en `admin.html`.
+- No hay navegador disponible en este entorno para confirmar visualmente — pendiente que el usuario lo revise en el emulador/celular tras desplegar.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-04g] — Cambiar de correo desde "Mi perfil" ahora vuelve a pedir confirmación
 
 ### 🤔 Contexto
