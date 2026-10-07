@@ -15,38 +15,17 @@ function handleDrop(e, inputId) {
 }
 function previewBanner(input, prevId) {
   const file = input.files ? input.files[0] : null;
-  const el   = typeof input === 'string' ? null : document.getElementById(prevId);
-  if (!file || !el) return;
+  if (!file) return;
   if (file.size > 5 * 1024 * 1024) { showToast('La imagen no debe superar 5 MB', 'error'); return; }
 
+  // Antes esto recortaba directo al centro (object-fit:cover) sin que la
+  // persona pudiera elegir qué parte de la foto se ve — si lo importante
+  // de la imagen no estaba justo en el centro, se cortaba. Ahora se abre
+  // el recortador (arrastrar + zoom, ver admin-image-crop.js) y el
+  // recorte final se escribe en el preview hasta que la persona confirma.
   const reader = new FileReader();
-  reader.onload = e => {
-    // Redimensiona en el navegador antes de guardar (mismo patrón que
-    // fotos de mascota/perfil) — antes esto guardaba la foto tal cual,
-    // sin límite, directo a site_config como JSON sin ningún tope.
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 1200;
-      let w = img.width, h = img.height;
-      if (w > maxDim || h > maxDim) {
-        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-        else       { w = Math.round((w * maxDim) / h); h = maxDim; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      // JPEG no tiene canal alpha: si la imagen de origen (ej. un PNG con
-      // transparencia) no se rellena antes, el lienzo deja esas zonas en
-      // negro (su color de fondo por defecto) en vez de blanco.
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
-      const optimized = canvas.toDataURL('image/jpeg', 0.85);
-      el.innerHTML = `<img src="${optimized}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
-    };
-    img.onerror = () => showToast('No se pudo procesar la imagen', 'error');
-    img.src = e.target.result;
-  };
+  reader.onload = e => openImageCropper(e.target.result, prevId);
+  reader.onerror = () => showToast('No se pudo leer la imagen', 'error');
   reader.readAsDataURL(file);
 }
 

@@ -2620,7 +2620,37 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
   </div><!-- /dashboard-main -->
 </div>
 
-<!-- ── Modal: Mascotas registradas en una colonia (clic en el mapa) ── -->
+<!-- Modal: Ajustar imagen (arrastrar + zoom) antes de usarla como banner/
+     portada — pedido por el usuario tras ver que object-fit:cover siempre
+     recorta centrado, sin importar qué parte de la foto es la importante;
+     referencia: el editor de avatar de Discord. Comparte este modal el
+     banner de Avisos y la imagen de portada de Artículos (los dos pasan
+     por previewBanner() en admin-config-shared.js). -->
+<div class="modal-overlay" id="modal-image-crop">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Ajustar imagen</h2>
+      <button class="modal-close" onclick="cancelImageCrop()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="crop-stage" style="position:relative; width:100%; aspect-ratio:2.5/1; overflow:hidden; border-radius:var(--radius); background:var(--surface); border:1px solid var(--gray-4); cursor:grab; touch-action:none;">
+        <img id="crop-img" alt="" draggable="false" style="position:absolute; left:0; top:0; transform-origin:0 0; user-select:none; pointer-events:none;" />
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+        <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; flex-shrink:0; color:var(--gray-2);"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></svg>
+        <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" style="flex:1; accent-color:var(--orange);" oninput="updateCropZoom(this.value)" />
+        <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px; flex-shrink:0; color:var(--gray-2);"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></svg>
+      </div>
+      <div style="font-size:.78rem; color:var(--gray-2); margin-top:8px; text-align:center;">Arrastra la imagen para acomodarla, usa el control para acercar o alejar.</div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" onclick="resetImageCrop()">Reiniciar</button>
+      <button type="button" class="btn btn-ghost" onclick="cancelImageCrop()">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="applyImageCrop()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-mapa-colonia">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
@@ -2655,6 +2685,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 <script src="js/admin/admin-config-core.js"></script>
 <script src="js/admin/admin-config-contenido.js"></script>
 <script src="js/admin/admin-config-shared.js"></script>
+<script src="js/admin/admin-image-crop.js"></script>
 <script src="js/admin/admin-init.js"></script>
 <script src="js/admin/admin-config-footer.js"></script>
 <script src="js/admin/admin-config-portada.js"></script>

@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07] — Recortador de imagen (arrastrar + zoom) para el banner de Avisos y la portada de Artículos
+
+### 🤔 Contexto
+El usuario notó que la imagen de portada de un artículo se veía mal recortada en la tarjeta pública — no era un bug de CSS: `object-fit:cover` siempre recorta centrado, y si lo importante de la foto no está justo al centro, se corta mal de todos modos. Pidió algo como el editor de avatar de Discord: poder arrastrar y hacer zoom a la imagen antes de guardarla, para elegir a mano qué parte se usa.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`** (nuevo): modal de recorte interactivo — arrastrar con el puntero (mouse o dedo, vía Pointer Events) para reposicionar la imagen, control deslizante para acercar/alejar (de 1× = la imagen ya cubre todo el recuadro, hasta 3×), con "Reiniciar"/"Cancelar"/"Aplicar". Al aplicar, recorta exactamente lo que se ve en el recuadro a un canvas de 1200×480px (mismo relleno blanco contra transparencia que ya usaban las demás fotos del sitio) y lo deja listo en el mismo lugar donde antes quedaba el recorte automático.
+- **`web/js/admin/admin-config-shared.js`** (`previewBanner()`): ya no recorta directo al centro — ahora abre el recortador nuevo y espera a que la persona confirme. Como esta función ya era compartida entre "Avisos y promociones" y la imagen de portada de "Nuevo artículo", el recortador quedó disponible en los dos de una vez, sin duplicar nada.
+- **`web/admin.html`**: nuevo modal `modal-image-crop` (recuadro de recorte en proporción 2.5:1, igual que el alto fijo de la tarjeta de artículo en la portada pública) y su `<script src>` correspondiente.
+
+### 🔎 Verificado
+- `node --check` sin errores en `admin-image-crop.js` y `admin-config-shared.js`.
+- Revisión de código del cálculo de recorte (coordenadas de pantalla → coordenadas reales de la imagen) y de que no hay colisión de nombres de función/variable con el resto de los archivos de `web/js/admin/`.
+- No hay navegador disponible en este entorno para probar el arrastre/zoom de verdad — pendiente confirmarlo en el emulador tras desplegar.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js` (nuevo)
+- `web/js/admin/admin-config-shared.js`
+- `web/admin.html`
+
 ## 📅 [2026-10-04j] — Revisión completa de "Configuración" en celular: 2 columnas con ancho fijo más corregidas
 
 ### 🤔 Contexto
