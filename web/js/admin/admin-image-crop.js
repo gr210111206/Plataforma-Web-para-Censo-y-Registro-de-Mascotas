@@ -236,4 +236,38 @@ document.addEventListener('DOMContentLoaded', () => {
   stage.addEventListener('pointerup', endDrag);
   stage.addEventListener('pointercancel', endDrag);
   stage.addEventListener('pointerleave', () => { if (dragging) endDrag(); });
+
+  // Manijas de esquina: jalarlas hacia afuera/adentro cambia el zoom,
+  // anclado al centro del recuadro — mismo mecanismo que ya usa el slider
+  // (updateCropZoom), solo que impulsado por la distancia que se arrastró
+  // en vez del valor del input. Así se sienten como si "estiraran" el
+  // recorte en vez de ser nada más decorativas.
+  ['tl', 'tr', 'bl', 'br'].forEach(corner => {
+    const handle = document.getElementById(`crop-handle-${corner}`);
+    if (!handle) return;
+    let handleDragging = false, startDist = 1, startZoom = 1;
+
+    handle.addEventListener('pointerdown', e => {
+      if (!cropState) return;
+      e.stopPropagation(); // que no dispare también el arrastre de imagen del recuadro
+      handleDragging = true;
+      handle.setPointerCapture(e.pointerId);
+      const rect = stage.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      startDist = Math.hypot(e.clientX - cx, e.clientY - cy) || 1;
+      startZoom = cropState.zoomFactor;
+    });
+    handle.addEventListener('pointermove', e => {
+      if (!handleDragging || !cropState) return;
+      const rect = stage.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy) || 1;
+      const newZoom = Math.min(3, Math.max(1, startZoom * (dist / startDist)));
+      document.getElementById('crop-zoom').value = newZoom;
+      updateCropZoom(newZoom);
+    });
+    const endHandleDrag = () => { handleDragging = false; };
+    handle.addEventListener('pointerup', endHandleDrag);
+    handle.addEventListener('pointercancel', endHandleDrag);
+  });
 });

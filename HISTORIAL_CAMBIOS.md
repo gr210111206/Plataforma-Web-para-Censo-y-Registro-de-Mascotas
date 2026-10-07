@@ -2,6 +2,24 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07h] — Las esquinas del recortador de imagen ahora son manijas arrastrables
+
+### 🤔 Contexto
+El usuario vio las marcas de esquina de la entrada anterior y notó que eran solo decorativas — esperaba poder "agarrarlas" para cambiar el tamaño del recorte, como una manija real.
+
+### 🔧 Cambios
+- **`web/admin.html`**: las 4 marcas de esquina de `#crop-stage` pasaron de un solo `<div>` decorativo a 4 `<span>` independientes (`crop-handle-tl/tr/bl/br`), cada uno con un área de arrastre de 22×22px (el trazo visible sigue siendo de 16px, el área alrededor es más fácil de agarrar con el mouse) y cursor de redimensionar (`nwse-resize`/`nesw-resize` según la esquina).
+- **`web/js/admin/admin-image-crop.js`**: se agregó el manejo de arrastre de las 4 manijas — al jalar una esquina hacia afuera o hacia adentro, se calcula qué tanto cambió la distancia al centro del recuadro desde que empezó el arrastre, y ese cambio se traduce a zoom (misma función `updateCropZoom()` que ya usa el slider, así que queda anclado al centro igual que siempre). `e.stopPropagation()` en el `pointerdown` de cada manija evita que también se dispare el arrastre de la imagen del recuadro al mismo tiempo.
+
+### 🔎 Verificado
+- `node --check` sin errores.
+- Revisado a mano que la posición visual de las 4 marcas no cambió al anidarlas dentro de su propio `<span>` de 22×22px (las coordenadas internas se ajustaron para que el trazo visible caiga exactamente donde antes).
+- Sin navegador disponible en este entorno — pendiente que el usuario lo pruebe.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+- `web/js/admin/admin-image-crop.js`
+
 ## 📅 [2026-10-07g] — Marcas de esquina decorativas en el recortador de imagen
 
 ### 🤔 Contexto
