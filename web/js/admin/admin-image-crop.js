@@ -7,6 +7,11 @@
 /* ══════════════════════════════════════════════════ */
 let cropState = null;
 
+// Para que el recuadro de análisis sea rápido sin importar qué tan grande
+// sea la foto original (un celular fácil da 3000px+ de lado), se dibuja
+// primero a esta escala reducida nada más para detectar bordes.
+const CONTENT_SCAN_MAX = 220;
+
 function openImageCropper(dataUrl, targetPrevId) {
   const probe = new Image();
   probe.onload = () => {
@@ -32,24 +37,94 @@ function openImageCropper(dataUrl, targetPrevId) {
       offsetX: 0,
       offsetY: 0,
     };
-    // Zoom mínimo (1) = la imagen cubre todo el recuadro sin dejar huecos,
-    // igual que object-fit:cover — a partir de ahí el usuario acerca más.
+    // Zoom mínimo (1) = la imagen completa (con todo y márgenes) cubre el
+    // recuadro sin dejar huecos, igual que object-fit:cover — el usuario
+    // siempre puede volver hasta aquí con el control deslizante.
     cropState.baseScale = Math.max(cropState.stageW / cropState.naturalW, cropState.stageH / cropState.naturalH);
+    // Muchos íconos/logos traen de fábrica bastante relleno blanco o
+    // transparente alrededor del dibujo real (como este caso: un ícono de
+    // puente con medio recuadro en blanco debajo de los arcos). Cubrir el
+    // recuadro con la imagen completa es "correcto" mostrando lo que sea
+    // que tenga la imagen — pero no es lo que casi siempre se quiere de
+    // entrada. Se detectan esos márgenes y se arranca ya enfocado en el
+    // contenido real; el usuario sigue pudiendo alejar el zoom hasta 1
+    // para ver la imagen completa si así la prefiere.
+    cropState.content = detectContentBounds(probe, cropState.naturalW, cropState.naturalH);
 
     document.getElementById('crop-img').src = dataUrl;
-    document.getElementById('crop-zoom').value = 1;
-    centerCropImage();
-    applyCropTransform();
+    applyAutoFrame();
   };
   probe.onerror = () => showToast('No se pudo procesar la imagen', 'error');
   probe.src = dataUrl;
 }
 
-function centerCropImage() {
+// Analiza la imagen a baja resolución para encontrar el rectángulo que
+// envuelve el contenido "real" (lo que no es fondo blanco/transparente).
+// Devuelve coordenadas ya convertidas a píxeles naturales, o null si no
+// hay un margen claro que recortar (ej. una foto normal sin bordes).
+function detectContentBounds(img, naturalW, naturalH) {
+  try {
+    const scale = Math.min(1, CONTENT_SCAN_MAX / Math.max(naturalW, naturalH));
+    const w = Math.max(1, Math.round(naturalW * scale));
+    const h = Math.max(1, Math.round(naturalH * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+
+    const isBackground = (r, g, b, a) => a < 16 || (r > 243 && g > 243 && b > 243);
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        if (isBackground(data[i], data[i+1], data[i+2], data[i+3])) continue;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+
+    if (maxX < 0 || maxY < 0) return null; // imagen toda en blanco/transparente: no hay nada que enfocar
+    const contentW = maxX - minX + 1, contentH = maxY - minY + 1;
+    // Si el contenido ya ocupa casi todo el lienzo (foto normal, sin
+    // márgenes de sobra) no vale la pena forzar un zoom automático.
+    if (contentW > w * 0.96 && contentH > h * 0.96) return null;
+
+    return {
+      x: minX / scale, y: minY / scale,
+      w: contentW / scale, h: contentH / scale,
+    };
+  } catch (e) {
+    return null; // cualquier falla de lectura del canvas: se sigue con la imagen completa, sin romper el recortador
+  }
+}
+
+// Calcula el zoom/posición inicial: si se detectaron márgenes de sobra,
+// arranca ya acercado y centrado en el contenido real; si no, el
+// comportamiento de siempre (imagen completa centrada, zoom mínimo).
+function applyAutoFrame() {
   const s = cropState;
-  const displayScale = s.baseScale * s.zoomFactor;
-  s.offsetX = (s.stageW - s.naturalW * displayScale) / 2;
-  s.offsetY = (s.stageH - s.naturalH * displayScale) / 2;
+  let zoom = 1, cx = s.naturalW / 2, cy = s.naturalH / 2;
+
+  if (s.content) {
+    const contentCoverScale = Math.max(s.stageW / s.content.w, s.stageH / s.content.h);
+    // El slider llega hasta 3x — no tiene sentido forzar un zoom inicial
+    // más allá de eso (se vería pixelado); el usuario puede seguir
+    // acercando a mano si de verdad lo necesita.
+    zoom = Math.min(3, Math.max(1, contentCoverScale / s.baseScale));
+    cx = s.content.x + s.content.w / 2;
+    cy = s.content.y + s.content.h / 2;
+  }
+
+  s.zoomFactor = zoom;
+  document.getElementById('crop-zoom').value = zoom;
+  const displayScale = s.baseScale * zoom;
+  s.offsetX = s.stageW / 2 - cx * displayScale;
+  s.offsetY = s.stageH / 2 - cy * displayScale;
+  clampCropOffset();
+  applyCropTransform();
 }
 
 function applyCropTransform() {
@@ -96,10 +171,7 @@ function updateCropZoom(val) {
 
 function resetImageCrop() {
   if (!cropState) return;
-  cropState.zoomFactor = 1;
-  document.getElementById('crop-zoom').value = 1;
-  centerCropImage();
-  applyCropTransform();
+  applyAutoFrame();
 }
 
 function cancelImageCrop() {

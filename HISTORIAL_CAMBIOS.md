@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07e] — El recortador de imagen ahora enfoca el contenido real, no el margen en blanco
+
+### 🤔 Contexto
+Después del fix del `max-width` (entrada anterior), el usuario probó de nuevo con un ícono de prueba (un puente, con bastante blanco dibujado debajo de los arcos) y seguía viendo el recuadro "mal". Revisando la captura con cuidado: el recuadro sí estaba lleno de borde a borde — ya no era el bug del hueco. El problema era otro: al abrir el recortador en zoom mínimo (object-fit:cover de la imagen completa), lo que se veía de entrada era, en parte, el propio relleno blanco que ya traía ese ícono — no un defecto del recortador, sino el contenido real del archivo. Muchos íconos/logos traen ese tipo de margen de fábrica.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`**: se agregó `detectContentBounds()`, que dibuja la imagen a baja resolución (máx. 220px de lado, para que sea rápido sin importar el tamaño real de la foto) y recorre los píxeles para encontrar el rectángulo que envuelve el contenido que no es fondo blanco/transparente (umbral: alfa < 16 o RGB > 243,243,243). Si encuentra un margen real (el contenido ocupa menos del 96% del lienzo en cualquier eje), `openImageCropper()` ya no arranca en el zoom mínimo centrado en la imagen completa — arranca con `applyAutoFrame()`, que calcula el zoom/posición necesarios para que ese contenido real cubra el recuadro desde un inicio, centrado. El control de zoom (1×–3×) sigue funcionando igual que antes para ajustar a mano; "Reiniciar" ahora vuelve a este mismo encuadre automático en vez de a la imagen completa sin recortar. Para fotos normales (sin márgenes, que es la mayoría de lo que se sube) el comportamiento no cambia: `detectContentBounds()` devuelve `null` y todo sigue igual que antes.
+- Se quitó `centerCropImage()` (ya sin uso — `applyAutoFrame()` cubre ese caso cuando no hay contenido que recortar).
+
+### 🔎 Verificado
+- `node --check` sin errores.
+- Revisado a mano: para una imagen sin márgenes (ej. una foto normal que llena todo su lienzo), `contentW`/`contentH` salen ≥96% del lienzo analizado y la función devuelve `null` → se usa el mismo camino de siempre (zoom 1, imagen completa centrada), sin cambio de comportamiento.
+- Sin navegador disponible en este entorno para confirmar visualmente — pendiente que el usuario lo pruebe.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js`
+
 ## 📅 [2026-10-07d] — Corrige que el recortador de imagen no llenaba bien el recuadro (tercera causa)
 
 ### 🤔 Contexto
