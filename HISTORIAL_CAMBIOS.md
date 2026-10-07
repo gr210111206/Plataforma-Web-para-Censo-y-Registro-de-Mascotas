@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07i] — Revierte el auto-zoom al contenido: el recortador siempre arranca centrado
+
+### 🤔 Contexto
+El usuario pidió que, al abrir el recortador, la imagen siempre empiece centrada y "lista para editar" — se le preguntó directo entre mantener el auto-zoom al contenido (entrada 2026-10-07e) mejorándolo, o quitarlo del todo y volver siempre a la imagen completa centrada en zoom mínimo, dejando que la persona decida manualmente. Eligió quitarlo: el auto-zoom (pensado para íconos con mucho margen blanco) a veces enfocaba una zona que no era la más representativa de la imagen (ver la prueba del ícono del puente), y prefiere un punto de partida predecible sobre uno que la herramienta adivina.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`**: se quitó `detectContentBounds()` y el auto-zoom al contenido agregado en la entrada 2026-10-07e. `openImageCropper()` vuelve a arrancar siempre en zoom mínimo con la imagen completa centrada (mismo cálculo que `resetImageCrop()`, que ahora hacen lo mismo — `openImageCropper()` llama a `resetImageCrop()` directo en vez de duplicar el centrado).
+
+### 🔎 Verificado
+- `node --check` sin errores.
+- Confirmado que ya no queda ninguna referencia a `detectContentBounds`/`applyAutoFrame`/`cropState.content` en el archivo.
+- Sin navegador disponible en este entorno — pendiente que el usuario lo pruebe.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js`
+
 ## 📅 [2026-10-07h] — Las esquinas del recortador de imagen ahora son manijas arrastrables
 
 ### 🤔 Contexto
