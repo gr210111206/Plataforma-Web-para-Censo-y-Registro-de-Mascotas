@@ -2,6 +2,20 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07f] — Íconos de alejar/acercar del recortador de imagen
+
+### 🤔 Contexto
+El usuario confirmó que el recortador ya funciona bien y notó, de paso, que los dos íconos a los lados del control de zoom eran el mismo ícono genérico de "imagen" repetido — no comunicaban que ese control acerca/aleja.
+
+### 🔧 Cambios
+- **`web/admin.html`**: los dos `<svg>` junto al slider `#crop-zoom` ahora son una lupa con signo "−" (alejar, a la izquierda) y una lupa con signo "+" (acercar, a la derecha), en vez del mismo ícono de imagen repetido dos veces.
+
+### 🔎 Verificado
+- Revisión visual del SVG a mano (coordenadas de los íconos estándar de lupa con +/−).
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-07e] — El recortador de imagen ahora enfoca el contenido real, no el margen en blanco
 
 ### 🤔 Contexto
