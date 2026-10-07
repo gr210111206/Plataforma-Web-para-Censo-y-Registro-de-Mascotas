@@ -8,9 +8,14 @@
 let cropState = null;
 
 function openImageCropper(dataUrl, targetPrevId) {
-  const stage = document.getElementById('crop-stage');
   const probe = new Image();
   probe.onload = () => {
+    // El modal debe abrirse ANTES de medir el recuadro: .modal-overlay
+    // empieza en display:none, y un elemento oculto siempre mide 0x0 con
+    // getBoundingClientRect() — eso dejaba la imagen escalada a 0px
+    // (invisible) y el recorte final inválido (vista previa rota).
+    openModal('modal-image-crop');
+    const stage = document.getElementById('crop-stage');
     const rect = stage.getBoundingClientRect();
     cropState = {
       targetPrevId,
@@ -30,7 +35,6 @@ function openImageCropper(dataUrl, targetPrevId) {
     document.getElementById('crop-zoom').value = 1;
     centerCropImage();
     applyCropTransform();
-    openModal('modal-image-crop');
   };
   probe.onerror = () => showToast('No se pudo procesar la imagen', 'error');
   probe.src = dataUrl;

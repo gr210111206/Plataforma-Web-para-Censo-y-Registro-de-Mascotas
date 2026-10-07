@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07b] — Corrige que el recortador de imagen se veía en blanco y el recorte salía roto
+
+### 🤔 Contexto
+El usuario probó el recortador de imagen de la entrada anterior (minutos después de desplegarlo) y reportó, con capturas, que el recuadro de "Ajustar imagen" aparecía completamente vacío al seleccionar una foto, y que después de darle "Aplicar" la vista previa del banner quedaba como imagen rota.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`**: `openImageCropper()` medía el tamaño del recuadro (`#crop-stage`, con `getBoundingClientRect()`) **antes** de abrir el modal — en ese momento `.modal-overlay` todavía estaba en `display:none` (se abre hasta `openModal()`), y un elemento oculto siempre mide 0×0 con ese método. Con el recuadro midiendo 0×0, la imagen se escalaba a 0px de ancho/alto (por eso no se veía nada) y, al recortar, las coordenadas salían `NaN`/división entre cero, produciendo un recorte inválido (de ahí la vista previa rota). Se invirtió el orden: ahora `openModal('modal-image-crop')` se llama primero, y el recuadro se mide ya visible, con su tamaño real.
+
+### 🔎 Verificado
+- `node --check` sin errores.
+- Revisado el cálculo a mano: con el recuadro ya visible, `getBoundingClientRect()` devuelve el ancho/alto reales del `<div>` (no 0), así que `baseScale` y el recorte final quedan con números válidos.
+- No hay navegador disponible en este entorno — pendiente que el usuario lo vuelva a probar tras desplegar.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js`
+
 ## 📅 [2026-10-07] — Recortador de imagen (arrastrar + zoom) para el banner de Avisos y la portada de Artículos
 
 ### 🤔 Contexto
