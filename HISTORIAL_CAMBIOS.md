@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07c] — Corrige que el recortador de imagen no llenaba bien el recuadro (segunda causa)
+
+### 🤔 Contexto
+El fix anterior sí resolvió que la imagen apareciera, pero el usuario probó de nuevo (con capturas) y la imagen seguía sin llenar todo el recuadro — se veía encogida hacia la izquierda, con una franja gris vacía a la derecha. De paso compartió una referencia (documentación técnica, MIT, del recortador de imágenes de la app de escritorio VRCX) con el patrón general de este tipo de herramienta (recuadro de proporción fija + zoom + arrastrar), que confirmó que el diseño ya iba por buen camino — el problema seguía siendo de implementación, no de diseño.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`**: la causa real era más sutil que la del fix anterior. `.modal` tiene una animación de entrada (`@keyframes modal-in` en `styles.css`: `transform: scale(.95) → scale(1)`). `getBoundingClientRect()` **sí incluye las transformaciones CSS en curso** en el resultado — así que, aunque el modal ya estaba abierto (`display:flex`, el fix anterior), medía el recuadro justo en el primer instante de esa animación de "encogido" (`scale(.95)`), no su tamaño real ya asentado. Se cambió la medición a `offsetWidth`/`offsetHeight`, que reportan el tamaño real del layout **sin verse afectados por `transform`** — así no importa en qué momento exacto de la animación se mida.
+
+### 🔎 Verificado
+- `node --check` sin errores.
+- Confirmado que ya no queda ningún uso de `getBoundingClientRect()` en el archivo.
+- No hay navegador disponible en este entorno — pendiente que el usuario lo vuelva a probar tras desplegar.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js`
+
 ## 📅 [2026-10-07b] — Corrige que el recortador de imagen se veía en blanco y el recorte salía roto
 
 ### 🤔 Contexto

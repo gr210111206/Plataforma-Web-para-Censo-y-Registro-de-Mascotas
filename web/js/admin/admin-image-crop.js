@@ -11,18 +11,23 @@ function openImageCropper(dataUrl, targetPrevId) {
   const probe = new Image();
   probe.onload = () => {
     // El modal debe abrirse ANTES de medir el recuadro: .modal-overlay
-    // empieza en display:none, y un elemento oculto siempre mide 0x0 con
-    // getBoundingClientRect() — eso dejaba la imagen escalada a 0px
-    // (invisible) y el recorte final inválido (vista previa rota).
+    // empieza en display:none, y un elemento oculto siempre mide 0x0.
     openModal('modal-image-crop');
     const stage = document.getElementById('crop-stage');
-    const rect = stage.getBoundingClientRect();
+    // offsetWidth/offsetHeight, NO getBoundingClientRect(): el modal tiene
+    // una animación de entrada (transform: scale(.95) → scale(1), ver
+    // @keyframes modal-in en styles.css) y getBoundingClientRect() SÍ
+    // incluye esa transformación en curso — medía el recuadro todavía
+    // encogido al primer instante de la animación. offsetWidth/Height
+    // reportan el tamaño real del layout, sin verse afectados por
+    // transform, así que no importa en qué momento de la animación se
+    // llame a esto.
     cropState = {
       targetPrevId,
       naturalW: probe.naturalWidth,
       naturalH: probe.naturalHeight,
-      stageW: rect.width,
-      stageH: rect.height,
+      stageW: stage.offsetWidth,
+      stageH: stage.offsetHeight,
       zoomFactor: 1,
       offsetX: 0,
       offsetY: 0,
