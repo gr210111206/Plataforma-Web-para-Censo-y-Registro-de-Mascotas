@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07g] — Marcas de esquina decorativas en el recortador de imagen
+
+### 🤔 Contexto
+El usuario (voz a texto, mensaje largo) pidió que el recuadro de recorte tuviera "cuadritos en las esquinas" como las capturas de referencia que había compartido antes. Se le preguntó directo con dos opciones: (a) mantener el sistema actual de arrastrar+zoom y solo agregar marcas decorativas en las esquinas para que se vea más claramente como herramienta de recorte, o (b) rediseñar el control completo a un recuadro de selección con manijas reales y arrastrables sobre la imagen fija (como el recorte de Fotos de Windows). Eligió la opción (a).
+
+### 🔧 Cambios
+- **`web/admin.html`**: se agregaron 4 marcas de esquina (estilo visor de cámara / herramienta de recorte de Photoshop) dentro de `#crop-stage`, en una capa `pointer-events:none` para no interferir con arrastrar la imagen. Es puramente visual — no cambia la mecánica de arrastrar+zoom que ya existía, ni afecta el recorte que se genera al dar "Aplicar" (que sigue leyendo directo de `#crop-img`, no de esta capa).
+
+### 🔎 Verificado
+- Revisión de que la nueva capa de marcas no contribuye al tamaño de `#crop-stage` (es `position:absolute` con `inset:0`) y no afecta `openImageCropper()`/`applyImageCrop()`, que miden/leen otros elementos.
+- Sin navegador disponible en este entorno — pendiente que el usuario lo vea.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-07f] — Íconos de alejar/acercar del recortador de imagen
 
 ### 🤔 Contexto
