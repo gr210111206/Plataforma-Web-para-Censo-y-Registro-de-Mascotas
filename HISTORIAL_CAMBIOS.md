@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-07d] — Corrige que el recortador de imagen no llenaba bien el recuadro (tercera causa)
+
+### 🤔 Contexto
+El usuario probó el fix anterior (medir con `offsetWidth`/`offsetHeight` en vez de `getBoundingClientRect()`) en PC de escritorio y la imagen seguía sin llenar el recuadro. El cálculo en JS (`baseScale`, `offsetX`/`offsetY`) ya era correcto, pero nunca se reflejaba bien en pantalla.
+
+### 🔧 Cambios
+- **`web/admin.html`**: la causa real era una regla CSS global, `img { max-width: 100%; }` (`styles.css:83`), pensada para que las imágenes normales del sitio no se desborden de su contenedor. `#crop-img` necesita justo lo contrario a propósito: para poder cubrir el recuadro y luego arrastrar/hacer zoom, el `<img>` tiene que poder renderizarse **más grande** que `#crop-stage` (eso es lo que permite que sobre tela para recortar). Esa regla global recortaba en silencio el ancho visual del `<img>` de vuelta al 100% del recuadro cada vez que la imagen necesitaba desbordarse horizontalmente para cubrirlo — la vista en pantalla ya no coincidía con lo que el JS pensaba que medía, dejando un hueco visible. Se agregó `max-width:none; max-height:none;` al estilo en línea de `#crop-img` para que esta regla global no le aplique a este elemento en particular.
+
+### 🔎 Verificado
+- Revisado que ningún otro elemento del flujo del recortador (las vistas previas ya aplicadas en `#aviso-prev`/`#art-banner-prev`) depende de `max-width:100%` — esas sí usan `width:100%` fijo y no necesitan desbordarse, así que no les afecta el cambio.
+- No hay navegador disponible en este entorno — pendiente que el usuario lo vuelva a probar.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-07c] — Corrige que el recortador de imagen no llenaba bien el recuadro (segunda causa)
 
 ### 🤔 Contexto
