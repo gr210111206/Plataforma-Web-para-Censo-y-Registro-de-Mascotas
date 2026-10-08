@@ -84,8 +84,8 @@ if ($method === 'POST' && $action === 'register') {
 
     $cuerpo = '
         <p>Hola ' . htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') . ',</p>
-        <p>Gracias por registrarte en el Padrón Municipal de Mascotas de El Grullo. Antes de poder iniciar sesión, confirma que este correo es tuyo dando clic en el siguiente enlace:</p>
-        <p><a href="' . $link . '">' . $link . '</a></p>
+        <p>Gracias por registrarte en el Padrón Municipal de Mascotas de El Grullo. Antes de poder iniciar sesión, confirma que este correo es tuyo:</p>
+        ' . botonCorreo($link, 'Confirmar mi correo') . '
         <p>Si tú no creaste esta cuenta, puedes ignorar este correo.</p>
     ';
     enviarCorreo($email, 'Confirma tu correo — Padrón de Mascotas El Grullo', $cuerpo);
@@ -264,8 +264,8 @@ if ($method === 'POST' && $action === 'update-profile') {
         error_log("Verificación de correo (cambio de email) para $nuevoEmail → $link");
         $cuerpo = '
             <p>Hola ' . htmlspecialchars($user['nombre'], ENT_QUOTES, 'UTF-8') . ',</p>
-            <p>Confirmaste un nuevo correo para tu cuenta del Padrón Municipal de Mascotas de El Grullo. Antes de poder volver a iniciar sesión con este correo, confirma que es tuyo dando clic en el siguiente enlace:</p>
-            <p><a href="' . $link . '">' . $link . '</a></p>
+            <p>Confirmaste un nuevo correo para tu cuenta del Padrón Municipal de Mascotas de El Grullo. Antes de poder volver a iniciar sesión con este correo, confirma que es tuyo:</p>
+            ' . botonCorreo($link, 'Confirmar mi nuevo correo') . '
             <p>Si tú no hiciste este cambio, contacta al Ayuntamiento lo antes posible.</p>
         ';
         enviarCorreo($nuevoEmail, 'Confirma tu nuevo correo — Padrón de Mascotas El Grullo', $cuerpo);
@@ -348,8 +348,8 @@ if ($method === 'POST' && $action === 'solicitar-recuperacion') {
 
         $cuerpo = '
             <p>Hola ' . htmlspecialchars($user['nombre'], ENT_QUOTES, 'UTF-8') . ',</p>
-            <p>Pediste recuperar el acceso a tu cuenta del Padrón Municipal de Mascotas de El Grullo. Da clic en el siguiente enlace para elegir una nueva contraseña (válido por 1 hora):</p>
-            <p><a href="' . $link . '">' . $link . '</a></p>
+            <p>Pediste recuperar el acceso a tu cuenta del Padrón Municipal de Mascotas de El Grullo. Elige una nueva contraseña (el enlace es válido por 1 hora):</p>
+            ' . botonCorreo($link, 'Elegir nueva contraseña') . '
             <p>Si tú no pediste esto, puedes ignorar este correo — tu contraseña actual sigue funcionando igual.</p>
         ';
         enviarCorreo($email, 'Recupera tu contraseña — Padrón de Mascotas El Grullo', $cuerpo);
@@ -454,8 +454,8 @@ if ($method === 'POST' && $action === 'reenviar-verificacion') {
 
         $cuerpo = '
             <p>Hola ' . htmlspecialchars($user['nombre'], ENT_QUOTES, 'UTF-8') . ',</p>
-            <p>Confirma tu correo del Padrón Municipal de Mascotas de El Grullo dando clic en el siguiente enlace:</p>
-            <p><a href="' . $link . '">' . $link . '</a></p>
+            <p>Confirma tu correo del Padrón Municipal de Mascotas de El Grullo:</p>
+            ' . botonCorreo($link, 'Confirmar mi correo') . '
             <p>Si tú no pediste esto, puedes ignorar este correo.</p>
         ';
         enviarCorreo($email, 'Confirma tu correo — Padrón de Mascotas El Grullo', $cuerpo);

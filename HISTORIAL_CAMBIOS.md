@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-08] — Diseño profesional para los correos del sistema (confirmación y recuperación)
+
+### 🤔 Contexto
+El usuario compartió una captura del correo real de "Recupera tu contraseña" recibido en Gmail — texto plano sin ningún estilo (sin encabezado, sin color, el enlace como URL pelona) y pidió que se viera más profesional. Los 4 correos que manda el sistema (confirmar cuenta nueva, confirmar cambio de correo, reenviar confirmación, recuperar contraseña) compartían ese mismo problema: `enviarCorreo()` (`helpers.php`) manda el `$cuerpoHtml` tal cual al servidor SMTP de Titan, sin ningún envoltorio — cada llamada en `auth.php` armaba nada más unos `<p>` sueltos.
+
+### 🔧 Cambios
+- **`web/api/config/helpers.php`**: se agregaron dos funciones nuevas, reutilizables por cualquier correo del sistema:
+  - `envolverCorreoHtml()`: arma el documento HTML completo del correo — encabezado con el nombre institucional (fondo naranja de marca, `--orange` `#F27A00`), tarjeta blanca para el contenido y pie con el aviso de "no respondas". Estilos en línea en cada etiqueta (nunca un bloque `<style>`, que varios clientes de correo como Outlook de escritorio ignoran o recortan) y diseño con tablas (`role="presentation"`), el patrón estándar para que un correo HTML se vea igual en todos los clientes.
+  - `botonCorreo($url, $texto)`: botón de llamada a la acción con los colores de marca, más el enlace plano debajo por si el botón no se alcanza a ver en algún cliente.
+  - `enviarCorreo()` ahora envuelve automáticamente cualquier `$cuerpoHtml` que reciba con `envolverCorreoHtml()` antes de mandarlo — cambiar el diseño del correo es cambiarlo en un solo lugar, no en cada llamada.
+- **`web/api/auth.php`**: los 4 correos (registro, cambio de correo, reenvío de confirmación, recuperación de contraseña) cambiaron su `<p><a href="...">...</a></p>` suelto por `botonCorreo($link, 'texto del botón')`, con el texto del botón describiendo la acción real de cada uno ("Confirmar mi correo", "Elegir nueva contraseña", etc.).
+- No se agregó ninguna librería externa — sigue siendo PHP nativo puro, mismo criterio que ya tenía `enviarCorreo()` (ver `LIBRERIAS_Y_LICENCIAS.md`).
+
+### 🔎 Verificado
+- `php -l` sin errores en `helpers.php` y `auth.php`.
+- Se renderizó el HTML final con PHP por línea de comandos (llamando `envolverCorreoHtml()`/`botonCorreo()` directo, sin mandar correo real) para confirmar que las etiquetas cierran bien y la estructura de tablas queda correcta.
+- Pendiente que el usuario dispare de nuevo el flujo de "Olvidé mi contraseña" en producción y confirme cómo se ve ya en Gmail.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`
+- `web/api/auth.php`
+
 ## 📅 [2026-10-07i] — Revierte el auto-zoom al contenido: el recortador siempre arranca centrado
 
 ### 🤔 Contexto

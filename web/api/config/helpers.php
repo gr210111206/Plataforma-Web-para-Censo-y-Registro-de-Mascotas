@@ -341,6 +341,54 @@ function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
    nativo sin paquetes externos (ver LIBRERIAS_Y_LICENCIAS.md).
    Nunca lanza excepción: un correo que no sale no debe tumbar la
    respuesta de la API (mismo criterio que registrarBitacora()). */
+/* Envoltorio visual de los correos del sistema: cabecera con el nombre
+   institucional, tarjeta blanca para el contenido y pie con el aviso de
+   "no respondas". Estilos en línea en cada etiqueta (no en <style>) porque
+   varios clientes de correo (sobre todo Outlook de escritorio) ignoran o
+   recortan los bloques <style> — así se ve igual en todos lados. La usa
+   enviarCorreo() para cualquier correo que mande el sistema, así que
+   cambiar el diseño es cambiarlo aquí una sola vez. */
+function envolverCorreoHtml(string $cuerpoHtml): string {
+    return '<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#F8F8F8; font-family:Arial, Helvetica, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8F8F8;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background:#FFFFFF; border-radius:12px; overflow:hidden; border:1px solid #E0E0E0;">
+        <tr><td style="background:#F27A00; padding:22px 32px;">
+          <span style="color:#FFFFFF; font-size:17px; font-weight:bold; font-family:Arial, Helvetica, sans-serif;">Padrón Municipal de Mascotas &middot; El Grullo</span>
+        </td></tr>
+        <tr><td style="padding:32px; color:#1A1A1A; font-size:15px; line-height:1.6; font-family:Arial, Helvetica, sans-serif;">
+          ' . $cuerpoHtml . '
+        </td></tr>
+        <tr><td style="padding:18px 32px; background:#F8F8F8; border-top:1px solid #E0E0E0;">
+          <span style="color:#7A7A7A; font-size:12px; font-family:Arial, Helvetica, sans-serif;">H. Ayuntamiento Constitucional de El Grullo, Jalisco &middot; Este es un correo automático, no respondas a esta dirección.</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>';
+}
+
+/* Botón de llamada a la acción para los correos (confirmar correo,
+   restablecer contraseña, etc.) — con el enlace plano debajo por si el
+   botón no se alcanza a ver bien en algún cliente de correo. */
+function botonCorreo(string $url, string $texto): string {
+    $urlEsc = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    $textoEsc = htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+    return '
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0;">
+          <tr><td style="border-radius:8px; background:#F27A00;">
+            <a href="' . $urlEsc . '" style="display:inline-block; padding:14px 28px; color:#FFFFFF; font-size:15px; font-weight:bold; text-decoration:none; border-radius:8px; font-family:Arial, Helvetica, sans-serif;">' . $textoEsc . '</a>
+          </td></tr>
+        </table>
+        <p style="font-size:12px; color:#7A7A7A; word-break:break-all; margin:0 0 4px;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+        <p style="font-size:12px; margin:0;"><a href="' . $urlEsc . '" style="color:#F27A00;">' . $urlEsc . '</a></p>
+    ';
+}
+
 function enviarCorreo(string $para, string $asunto, string $cuerpoHtml): bool {
     $smtp = @stream_socket_client(
         'ssl://' . MAIL_SMTP_HOST . ':' . MAIL_SMTP_PORT,
@@ -405,7 +453,7 @@ function enviarCorreo(string $para, string $asunto, string $cuerpoHtml): bool {
              . "MIME-Version: 1.0\r\n"
              . "Content-Type: text/html; charset=UTF-8\r\n"
              . "\r\n"
-             . $cuerpoHtml;
+             . envolverCorreoHtml($cuerpoHtml);
     // Dot-stuffing (RFC 5321): una línea que empiece con "." se duplica,
     // para que no se confunda con el "." final que cierra el mensaje.
     $mensaje = preg_replace('/^\./m', '..', $mensaje);
