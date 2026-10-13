@@ -202,9 +202,20 @@ function clean(?string $val): ?string {
    Nunca lanza excepción y, si Google no responde, deja pasar la
    petición en vez de tumbar el login de todo el sitio por una falla
    de un servicio externo — el bloqueo por intentos fallidos sigue
-   funcionando igual como segunda capa. */
+   funcionando igual como segunda capa.
+   Mismo criterio si el NAVEGADOR nunca llegó a generar un token (ej.
+   un bloqueador de anuncios o extensión de privacidad impide que cargue
+   el script de Google, o no hay internet en ese momento): se deja pasar
+   en vez de rechazar — un ciudadano real con un bloqueador de anuncios
+   no debería quedarse sin poder iniciar sesión en el sitio del
+   Ayuntamiento por culpa de un script de un tercero. El captcha es una
+   capa adicional, no la única — el bloqueo por intentos fallidos sigue
+   protegiendo igual aunque esta capa no pueda evaluarse. */
 function verificarRecaptcha(string $token, string $accionEsperada): bool {
-    if ($token === '') return false;
+    if ($token === '') {
+        error_log('verificarRecaptcha(): no llegó token del navegador (se deja pasar la petición)');
+        return true;
+    }
 
     $contexto = stream_context_create([
         'http' => [

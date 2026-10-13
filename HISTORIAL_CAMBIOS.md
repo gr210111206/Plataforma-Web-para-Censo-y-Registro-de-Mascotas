@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-12b] — 🔴 Corrige que reCAPTCHA podía bloquear el login por completo
+
+### 🤔 Contexto
+El usuario probó el login en local minutos después de desplegar la entrada anterior y ya no lo dejaba entrar, sin que apareciera siquiera el logo de reCAPTCHA en la página — señal de que el script de Google nunca llegó a cargar en ese navegador (bloqueador de anuncios, extensión de privacidad, o cualquier falla de red al pedirlo). `verificarRecaptcha('', ...)` rechazaba de inmediato cualquier petición sin token, así que un navegador que por lo que sea no pudo cargar el script de Google dejaba a esa persona sin poder iniciar sesión — nada menos que en el sitio del Ayuntamiento. Esto ya estaba en producción desde la entrada anterior, así que se corrige de inmediato.
+
+### 🔧 Cambios
+- **`web/api/config/helpers.php`**: `verificarRecaptcha()` ahora deja pasar la petición (devuelve `true`) cuando el token llega vacío, con el mismo criterio que ya aplicaba cuando Google no respondía — un tercero (el script de reCAPTCHA) no debe poder tumbar el acceso al sitio si no carga, por cualquier motivo que sea ajeno al Ayuntamiento. El captcha sigue rechazando de verdad cualquier token que SÍ llegue pero que Google marque como inválido o de puntaje bajo — solo cambia qué pasa cuando no hay token en absoluto. El bloqueo de 5 intentos fallidos sigue siendo la protección real contra fuerza bruta en ese caso.
+
+### 🔎 Verificado
+- `php -l` sin errores.
+- `verificarRecaptcha('', 'login')` → ahora `true` (antes `false`), confirmado por línea de comandos contra el archivo real.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`
+
 ## 📅 [2026-10-12] — reCAPTCHA v3 en login, registro y recuperar contraseña
 
 ### 🤔 Contexto
