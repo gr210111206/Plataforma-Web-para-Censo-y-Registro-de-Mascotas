@@ -2,6 +2,24 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-12c] — Corrige un carácter equivocado en la Site Key de reCAPTCHA
+
+### 🤔 Contexto
+Con el fix anterior el login ya no se bloqueaba sin token, pero el usuario probó en Chrome limpio (sin bloqueadores) y seguía sin aparecer el badge de reCAPTCHA. La consola mostró el error real: `Uncaught Error: Invalid site key or not loaded`. Comparando carácter por carácter la Site Key que el usuario pegó originalmente en el chat (copiada con el botón "COPIAR CLAVE DE SITIO" de Google, la fuente confiable) contra la que terminó en el código, había una sola letra distinta: donde el usuario pegó una "l" minúscula (`...WLE0lyvFuWj...`), el código tenía una "I" mayúscula (`...WLE0IyvFuWj...`) — un error de transcripción al redactar el código a mano en vez de copiar el texto pegado tal cual, agravado porque esa llave mezcla mayúsculas y minúsculas casi idénticas a simple vista. Con la llave equivocada, Google rechazaba cualquier intento de generar un token — por eso nunca aparecía el badge ni se generaba el `recaptcha_token`, aunque el script sí cargaba bien (`typeof grecaptcha` ya daba `"object"`).
+
+### 🔧 Cambios
+- Corregido el único carácter (`I` → `l`) en los 3 archivos que tenían la Site Key: **`web/api/config/database.php`** (gitignored, no se sube), **`web/js/api-client.js`** y **`web/login.html`**. La Secret Key no tenía el error, solo la Site Key.
+
+### 🔎 Verificado
+- `grep` confirmó que no queda ninguna referencia a la Site Key vieja (con "I" mayúscula) en el repositorio.
+- `php -l` y `node --check` sin errores.
+- Pendiente: falta corregir también `database.php` en el servidor de producción (gitignored, no viaja con el deploy) y volver a probar el login ahí.
+
+### 📂 Archivos modificados
+- `web/api/config/database.php` (gitignored)
+- `web/js/api-client.js`
+- `web/login.html`
+
 ## 📅 [2026-10-12b] — 🔴 Corrige que reCAPTCHA podía bloquear el login por completo
 
 ### 🤔 Contexto

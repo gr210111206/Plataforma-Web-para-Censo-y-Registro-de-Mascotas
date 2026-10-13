@@ -24,7 +24,7 @@ const API_BASE_URL = window.location.origin +
 // en el frontend. Debe coincidir con el "render=" del <script> de Google
 // cargado en login.html — es la misma llave en local y en producción
 // (registrada para mascota-elgrullo.com y localhost a la vez).
-const RECAPTCHA_SITE_KEY = '6Lc6aewtAAAAABAFuKrWLE0IyvFuWjylgaIx6UjS';
+const RECAPTCHA_SITE_KEY = '6Lc6aewtAAAAABAFuKrWLE0lyvFuWjylgaIx6UjS';
 
 /* ══════════════════════════════════════════════
    HELPERS INTERNOS
