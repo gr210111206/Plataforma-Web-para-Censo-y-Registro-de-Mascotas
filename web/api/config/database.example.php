@@ -39,6 +39,16 @@ define('MAIL_SMTP_PORT', 465);
 define('MAIL_SMTP_PASS', 'contraseña-del-buzón-no-responder');
 
 /**
+ * reCAPTCHA v3 (login, registro y recuperar contraseña — ver
+ * verificarRecaptcha() en helpers.php). Créalas gratis en
+ * https://www.google.com/recaptcha/admin/create — tipo "Basado en una
+ * puntuación (v3)", registrando tanto tu dominio real como "localhost"
+ * (para poder probarlo en local también) en la misma llave.
+ */
+define('RECAPTCHA_SITE_KEY', 'tu-site-key-de-recaptcha');
+define('RECAPTCHA_SECRET_KEY', 'tu-secret-key-de-recaptcha');
+
+/**
  * Orígenes permitidos para CORS. Rellena con el/los dominio(s) reales
  * desde donde se sirve el sitio (ver setCorsHeaders() en helpers.php).
  */

@@ -405,6 +405,12 @@
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- reCAPTCHA v3: invisible, sin casilla ni acertijo — protege login,
+     registro y recuperar contraseña (ver _getRecaptchaToken() en
+     api-client.js y verificarRecaptcha() en helpers.php). La site key del
+     "render=" es pública, debe coincidir con RECAPTCHA_SITE_KEY en
+     api-client.js. async/defer para no bloquear la carga de la página. -->
+<script src="https://www.google.com/recaptcha/api.js?render=6Lc6aewtAAAAABAFuKrWLE0IyvFuWjylgaIx6UjS" async defer></script>
 <script src="js/el-grullo-data.js"></script>
 <script src="js/api-client.js"></script>
 <script>

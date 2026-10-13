@@ -31,6 +31,10 @@ if ($method === 'POST' && $action === 'register') {
     $direccion = clean(trim($body['direccion'] ?? ''));
     $colonia   = clean(trim($body['colonia'] ?? ''));
 
+    if (!verificarRecaptcha($body['recaptcha_token'] ?? '', 'registro')) {
+        jsonError('No se pudo verificar que la solicitud viene de una persona. Recarga la página e inténtalo de nuevo.', 400);
+    }
+
     if (empty($nombre)) {
         jsonError('El nombre completo es obligatorio.', 400);
     }
@@ -108,6 +112,10 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
 
     // Login estándar: Email / Usuario + Contraseña
     if (!empty($body['email']) && !empty($body['password'])) {
+        if (!verificarRecaptcha($body['recaptcha_token'] ?? '', 'login')) {
+            jsonError('No se pudo verificar que la solicitud viene de una persona. Recarga la página e inténtalo de nuevo.', 400);
+        }
+
         $email = strtolower(trim($body['email']));
         $pass  = $body['password'];
 
@@ -323,6 +331,10 @@ if ($method === 'POST' && $action === 'change-password') {
 if ($method === 'POST' && $action === 'solicitar-recuperacion') {
     $body  = getBody();
     $email = strtolower(trim($body['email'] ?? ''));
+
+    if (!verificarRecaptcha($body['recaptcha_token'] ?? '', 'recuperar_password')) {
+        jsonError('No se pudo verificar que la solicitud viene de una persona. Recarga la página e inténtalo de nuevo.', 400);
+    }
 
     $mensajeGenerico = 'Si ese correo está registrado, se envió un enlace de recuperación. Revisa tu bandeja de entrada (y la carpeta de spam).';
 

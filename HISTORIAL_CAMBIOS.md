@@ -2,6 +2,34 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-12] — reCAPTCHA v3 en login, registro y recuperar contraseña
+
+### 🤔 Contexto
+El usuario preguntó si valía la pena agregar un captcha para prevenir posibles brechas de seguridad. El bloqueo de 5 intentos fallidos (`duenos.intentos_fallidos`/`bloqueado_hasta`) ya protege una cuenta a la vez, pero no detiene un ataque que prueba contraseñas contra muchas cuentas distintas, ni registros automatizados masivos, ni abuso del endpoint de recuperación de contraseña (que manda correos reales por SMTP — spamearlo gasta la cuota real del buzón de Titan). Se decidió reCAPTCHA v3 (invisible, por puntaje, sin casilla ni acertijo) en vez de v2, y se generaron las llaves en la consola de Google para el sitio "Padrón Mascotas El Grullo", registradas para `mascota-elgrullo.com` y `localhost` a la vez.
+
+### 🔧 Cambios
+- **`web/api/config/helpers.php`**: nueva función `verificarRecaptcha($token, $accionEsperada)` — manda el token a `https://www.google.com/recaptcha/api/siteverify` (vía `file_get_contents()` con `stream_context_create()`, sin librerías externas) y valida `success`, que la `action` declarada coincida con la esperada (para que un token de una acción no sirva para otra) y que el puntaje sea ≥ 0.5. Si Google no responde, **deja pasar la petición** en vez de tumbar el login de todo el sitio por una falla externa — mismo criterio de resiliencia que ya usa `enviarCorreo()`; el bloqueo por intentos fallidos sigue funcionando igual como segunda capa.
+- **`web/api/config/database.php`** (gitignored, no se sube) y **`database.example.php`** (plantilla): constantes `RECAPTCHA_SITE_KEY`/`RECAPTCHA_SECRET_KEY`.
+- **`web/api/auth.php`**: se llama a `verificarRecaptcha()` al inicio de `register`, `login` y `solicitar-recuperacion`, antes de tocar la base de datos.
+- **`web/js/api-client.js`**: constante pública `RECAPTCHA_SITE_KEY` (la Site Key no es secreta, a diferencia de la Secret Key que solo vive en el servidor) y helper `_getRecaptchaToken(action)` que envuelve `grecaptcha.execute()` — si el script de Google no cargó (sin internet, bloqueador de contenido), devuelve `null` y deja que el servidor decida. `apiRegisterUser()`, `apiLoginUser()` y `apiSolicitarRecuperacion()` ahora piden su token y lo mandan como `recaptcha_token` en el body.
+- **`web/login.html`**: se agregó el `<script>` de Google (`async defer`, con `render=` apuntando a la Site Key) — única página donde viven los 3 formularios.
+- **`web/.htaccess`**: el CSP (todavía en modo Report-Only) ahora incluye `https://www.google.com`/`https://www.gstatic.com` en `script-src`/`frame-src`/`connect-src`, para que cuando algún día se active en serio no tumbe el captcha en silencio.
+
+### 🔎 Verificado
+- `php -l` sin errores en los 4 archivos PHP tocados; `node --check` sin errores en `api-client.js`.
+- Prueba real desde este entorno: `verificarRecaptcha('token-falso-de-prueba', 'login')` contra la API real de Google — contestó `success: false` (esperado, el token era falso) sin errores de PHP, confirmando que la conexión saliente HTTPS funciona y que las llaves están bien cargadas.
+- Confirmado con `git status` que `database.php` (con la Secret Key real) sigue sin aparecer — sigue gitignored.
+- Pendiente: probar el flujo completo (login/registro/recuperación reales) desde el navegador, con el checkbox invisible de verdad.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`
+- `web/api/config/database.php` (gitignored)
+- `web/api/config/database.example.php`
+- `web/api/auth.php`
+- `web/js/api-client.js`
+- `web/login.html`
+- `web/.htaccess`
+
 ## 📅 [2026-10-08] — Diseño profesional para los correos del sistema (confirmación y recuperación)
 
 ### 🤔 Contexto

@@ -188,6 +188,47 @@ function clean(?string $val): ?string {
     return trim(htmlspecialchars($val, ENT_QUOTES, 'UTF-8'));
 }
 
+/* ── Verificación de reCAPTCHA v3 ───────────────────────────
+   Protege login, registro y recuperación de contraseña contra bots:
+   fuerza bruta repartida entre muchas cuentas distintas (el bloqueo de
+   5 intentos de auth.php solo protege una cuenta a la vez), registros
+   automatizados masivos, y abuso del envío de correos de recuperación
+   (enviarCorreo() manda de verdad por SMTP, así que spamear esa acción
+   también gasta la cuota real del buzón). v3 es invisible: no hay
+   casilla ni acertijo, el navegador manda un token y Google regresa un
+   puntaje de 0 (seguro que es un bot) a 1 (seguro que es humano) junto
+   con la acción que se declaró al pedirlo, que aquí se compara contra
+   la esperada para que un token de una acción no sirva para otra.
+   Nunca lanza excepción y, si Google no responde, deja pasar la
+   petición en vez de tumbar el login de todo el sitio por una falla
+   de un servicio externo — el bloqueo por intentos fallidos sigue
+   funcionando igual como segunda capa. */
+function verificarRecaptcha(string $token, string $accionEsperada): bool {
+    if ($token === '') return false;
+
+    $contexto = stream_context_create([
+        'http' => [
+            'method'  => 'POST',
+            'header'  => 'Content-Type: application/x-www-form-urlencoded',
+            'content' => http_build_query([
+                'secret'   => RECAPTCHA_SECRET_KEY,
+                'response' => $token,
+            ]),
+            'timeout' => 8,
+        ],
+    ]);
+    $respuesta = @file_get_contents('https://www.google.com/recaptcha/api/siteverify', false, $contexto);
+    if ($respuesta === false) {
+        error_log('verificarRecaptcha(): no se pudo contactar a Google (se deja pasar la petición)');
+        return true;
+    }
+
+    $resultado = json_decode($respuesta, true);
+    if (!($resultado['success'] ?? false)) return false;
+    if (($resultado['action'] ?? '') !== $accionEsperada) return false;
+    return (float)($resultado['score'] ?? 0) >= 0.5;
+}
+
 /* ── Sanitizar HTML del editor de artículos (contenido.php) ──────
    articulos.contenido es la ÚNICA columna del proyecto que necesita
    guardar HTML de verdad (el editor WYSIWYG de admin.html genera

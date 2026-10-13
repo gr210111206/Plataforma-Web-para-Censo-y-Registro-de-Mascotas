@@ -19,6 +19,13 @@
 const API_BASE_URL = window.location.origin +
   window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/api';
 
+// Site key de reCAPTCHA v3 — NO es secreta (a diferencia de la Secret Key,
+// que solo vive en el servidor, ver database.php), por eso puede ir aquí
+// en el frontend. Debe coincidir con el "render=" del <script> de Google
+// cargado en login.html — es la misma llave en local y en producción
+// (registrada para mascota-elgrullo.com y localhost a la vez).
+const RECAPTCHA_SITE_KEY = '6Lc6aewtAAAAABAFuKrWLE0IyvFuWjylgaIx6UjS';
+
 /* ══════════════════════════════════════════════
    HELPERS INTERNOS
    ══════════════════════════════════════════════ */
@@ -49,6 +56,22 @@ async function _fetch(url, options = {}) {
   return json.data;
 }
 
+/**
+ * Pide a reCAPTCHA v3 un token para la acción indicada (login, registro,
+ * recuperar_password — deben coincidir exactamente con lo que espera cada
+ * endpoint en auth.php). Si el script de Google no cargó (ej. sin
+ * internet, o un bloqueador de contenido), devuelve null y el servidor
+ * decide qué hacer sin token — no rompe el formulario por eso.
+ */
+function _getRecaptchaToken(action) {
+  if (typeof grecaptcha === 'undefined') return Promise.resolve(null);
+  return new Promise(resolve => {
+    grecaptcha.ready(() => {
+      grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }).then(resolve).catch(() => resolve(null));
+    });
+  });
+}
+
 /* ══════════════════════════════════════════════
    AUTENTICACIÓN
    ══════════════════════════════════════════════ */
@@ -60,9 +83,10 @@ async function _fetch(url, options = {}) {
  * correo (ver HISTORIAL_CAMBIOS.md 2026-10-02 — verificación de correo).
  */
 async function apiRegisterUser(nombre, email, telefono, password, direccion, colonia) {
+  const recaptcha_token = await _getRecaptchaToken('registro');
   return _fetch(`${API_BASE_URL}/auth?action=register`, {
     method: 'POST',
-    body: JSON.stringify({ nombre, email, telefono, password, direccion, colonia }),
+    body: JSON.stringify({ nombre, email, telefono, password, direccion, colonia, recaptcha_token }),
   });
 }
 
@@ -96,9 +120,10 @@ async function apiReenviarVerificacion(email) {
  * al cerrar la pestaña/navegador, sin importar cuánto le quede al token).
  */
 async function apiLoginUser(email, password, remember = false) {
+  const recaptcha_token = await _getRecaptchaToken('login');
   const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, recaptcha_token }),
   });
   const session = JSON.stringify({
     token:         data.token,
@@ -169,9 +194,10 @@ async function apiChangePassword(actual, nueva) {
  * responde con el mismo mensaje exista o no esa cuenta registrada.
  */
 async function apiSolicitarRecuperacion(email) {
+  const recaptcha_token = await _getRecaptchaToken('recuperar_password');
   return _fetch(`${API_BASE_URL}/auth?action=solicitar-recuperacion`, {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, recaptcha_token }),
   });
 }
 
