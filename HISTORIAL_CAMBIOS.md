@@ -2,6 +2,24 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-16b] — 2 bugs encontrados probando todos los botones de dashboard.html (Ciudadano)
+
+### 🤔 Contexto
+Siguiendo con la ronda de pruebas (ya se probaron `index.html` y `asistente.html`), se inició sesión como Ciudadano (`maria@demo.com`) en el emulador Android y se probó cada botón de `dashboard.html`: mascotas (Ver/Editar/QR/Acta), campañas, artículos, mi perfil, acciones rápidas y cerrar sesión. La mayoría funcionaba bien; se encontraron 2 problemas.
+
+### 🔧 Cambios
+- **`web/dashboard.html` — artículos sin forma de leer el contenido completo**: a diferencia de la portada pública (que desde hace rato abre un modal con "Leer más"), la tarjeta de artículo del dashboard solo mostraba el resumen cortado en "..." sin ninguna forma de ver el resto — ni siquiera estando ya loggeado. Se agregó `dashArticulosData` (mismo patrón que `myPets`), se hizo clicable la tarjeta (`onclick="verDashArticulo(i)"`) y se agregó el modal `modal-dash-articulo` con el mismo diseño que `modal-articulo` de `index.html`.
+- **`web/css/styles.css` — `.sidebar-bottom` sin padding inferior**: "Cerrar sesión" (el último elemento del menú lateral, en `dashboard.html`, `asistente.html` y `admin.html` — los tres comparten esta clase) quedaba pegado al borde real de la pantalla, sin ningún margen — en el emulador costó 3 intentos tocarlo de forma confiable, por quedar muy cerca de donde Android dibuja su barra de navegación. Se agregó `padding-bottom: max(16px, env(safe-area-inset-bottom))`, que además respeta la zona seguridad que reportan navegadores en celulares con gestos (ej. iPhone).
+
+### 🔎 Verificado
+- Probado en vivo en el emulador Android contra producción antes de corregir (confirmando ambos problemas con capturas/intentos reales).
+- `node --check` sin errores en los bloques `<script>` de `dashboard.html` tras el cambio.
+- El CSS es compartido por 3 páginas (`dashboard.html`, `asistente.html`, `admin.html`) — el fix de `.sidebar-bottom` corrige el mismo problema en las tres a la vez sin tocar cada una por separado.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`
+- `web/css/styles.css`
+
 ## 📅 [2026-10-16] — 3 bugs encontrados probando todos los botones de index.html
 
 ### 🤔 Contexto

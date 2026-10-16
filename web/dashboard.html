@@ -574,6 +574,23 @@
   </div>
 </div>
 
+<!-- ── Modal: Artículo completo (mismo patrón que index.html) ── -->
+<div class="modal-overlay" id="modal-dash-articulo">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="dash-articulo-modal-titulo">Artículo</h2>
+      <button class="modal-close" onclick="closeModal('modal-dash-articulo')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <img id="dash-articulo-modal-imagen" src="" alt="" style="display:none; width:100%; max-height:220px; object-fit:cover; border-radius:var(--radius); margin-bottom:16px;" />
+      <p id="dash-articulo-modal-contenido" style="white-space:pre-line; line-height:1.8; color:var(--gray-1); margin-bottom:0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-dash-articulo')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -592,6 +609,7 @@
 let session = {};
 let myPets = [];
 let currentPetIndex = null;
+let dashArticulosData = [];
 
 /* Íconos de línea por especie (reemplazan los emojis 🐕🐈🐇🦜🐾) */
 const SPECIES_ICONS = {
@@ -902,12 +920,28 @@ function renderDashCampaigns(campanas) {
 }
 
 function renderDashArticles(articulos) {
-  document.getElementById('dashArticlesContainer').innerHTML = articulos.map(a => `
-    <div class="article-card">
+  dashArticulosData = articulos;
+  document.getElementById('dashArticlesContainer').innerHTML = articulos.map((a, i) => `
+    <div class="article-card" style="cursor:pointer;" onclick="verDashArticulo(${i})">
       <span class="article-icon">${a.imagen_icono}</span>
       <div class="article-title">${a.titulo}</div>
       <div class="article-excerpt">${a.contenido.substring(0, 110)}...</div>
     </div>`).join('');
+}
+
+// Antes esta tarjeta no tenía forma de leer el artículo completo, a
+// diferencia de "Leer más" en la portada pública (verArticulo() en
+// index.html) — solo se veía el resumen cortado en "...". Mismo patrón
+// de modal, reutilizando el componente genérico openModal()/closeModal().
+function verDashArticulo(i) {
+  const a = dashArticulosData[i];
+  if (!a) return;
+  document.getElementById('dash-articulo-modal-titulo').textContent = a.titulo;
+  document.getElementById('dash-articulo-modal-contenido').textContent = a.contenido;
+  const img = document.getElementById('dash-articulo-modal-imagen');
+  if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
+  else { img.removeAttribute('src'); img.style.display = 'none'; }
+  openModal('modal-dash-articulo');
 }
 
 /* ══════════════════════════════════════════════════ */
