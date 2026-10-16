@@ -2,6 +2,24 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-16] — 3 bugs encontrados probando todos los botones de index.html
+
+### 🤔 Contexto
+El usuario pidió probar todos los botones de la portada pública. Se levantó el emulador Android (Pixel_Prueba) y se navegó mascota-elgrullo.com en producción botón por botón: hero, pasos, campañas, artículos, marco normativo, FAQ, CTA final y footer. La mayoría funcionaba bien (registro, login, "Leer más" de artículos con su modal, el acordeón de FAQ); se encontraron 3 bugs reales.
+
+### 🔧 Cambios
+- **`web/index.html` — `renderCampaigns()`**: el botón "Ver más →" de las 3 campañas activas tenía `href="login.html"` fijo — un visitante público no debería necesitar iniciar sesión para leer una campaña. Se quitó el botón: la tarjeta ya muestra el título, la descripción completa y las fechas, así que no había ningún detalle adicional real que mostrar (la tabla `campanas` no tiene ningún campo extra más allá de lo que ya se ve en la tarjeta — a diferencia de los artículos, que sí truncan el contenido y abren un modal con el resto).
+- **`web/index.html` — menú móvil**: al elegir una opción del menú hamburguesa (Campañas, Consejos, Reglamento, FAQ…) el scroll suave sí funcionaba, pero el menú se quedaba abierto tapando el contenido después. Causa: el listener de scroll suave (`a[href^="#"]`) nunca llamaba a la función que cierra el menú — solo `toggleNav()` (el propio botón hamburguesa) lo hacía. Se agregó `closeNav()` y se llama también desde ese listener.
+- **`web/index.html` — enlace de dirección del footer**: el ícono de ubicación ("📍 El Grullo, Jalisco") tenía `href="#"` fijo — no llevaba a ningún lado, ni con dirección configurada desde el panel admin. Ahora apunta a una búsqueda de Google Maps (`google.com/maps/search/?api=1&query=...`) construida con la dirección configurada (`cfg.contactos.direccion`), o con el nombre del Ayuntamiento si no hay nada configurado — corregido tanto en el HTML estático de respaldo como en el render dinámico que trae `settings.php`.
+
+### 🔎 Verificado
+- Probado en vivo en el emulador Android contra producción: los 3 "Ver más" de campañas, el menú móvil en 2 enlaces distintos, confirmando la causa exacta del código antes de corregir.
+- Los 3 fixes son solo HTML/JS de `index.html` — se revisaron todos los bloques `<script>` inline con `node` (sintaxis válida) después de los cambios.
+- Pendiente: el usuario vuelva a probar en vivo tras desplegar.
+
+### 📂 Archivos modificados
+- `web/index.html`
+
 ## 📅 [2026-10-12c] — Corrige un carácter equivocado en la Site Key de reCAPTCHA
 
 ### 🤔 Contexto
