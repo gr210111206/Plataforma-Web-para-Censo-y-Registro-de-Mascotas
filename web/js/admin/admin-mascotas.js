@@ -103,7 +103,7 @@ async function changeEstatus(id) {
   const pet = allPets.find(m => m.id === id);
   if (!pet) return;
   const next = pet.estatus === 'Alta' ? 'Baja' : 'Alta';
-  if (!confirm(`¿Cambiar el estatus de "${pet.nombre}" a "${next}"?`)) return;
+  if (!(await confirmarAccion(`¿Cambiar el estatus de "${pet.nombre}" a "${next}"?`))) return;
   try {
     await apiActualizarMascota(id, { estatus: next });
     loadSeguimiento();

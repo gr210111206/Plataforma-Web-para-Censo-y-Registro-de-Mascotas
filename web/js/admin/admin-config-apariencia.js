@@ -264,8 +264,8 @@ function saveAppearance() {
 }
 
 // ── Reset all to defaults ─────────────────────────
-function resetAppearance() {
-  if (!confirm('¿Restablecer todos los íconos e imágenes a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
+async function resetAppearance() {
+  if (!(await confirmarAccion('¿Restablecer todos los íconos e imágenes a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   appearanceState = {};
   localStorage.removeItem('padron_appearance_config');
   buildIconSelectors(); // re-render with defaults

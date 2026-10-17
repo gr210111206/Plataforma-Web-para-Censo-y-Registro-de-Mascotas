@@ -38,8 +38,8 @@ function saveMunicipio() {
   showToast('Datos del municipio guardados correctamente', 'success');
 }
 
-function resetMunicipio() {
-  if (!confirm('¿Restablecer los datos del municipio a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
+async function resetMunicipio() {
+  if (!(await confirmarAccion('¿Restablecer los datos del municipio a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   localStorage.removeItem('padron_municipio_config');
   showToast('Datos del municipio restablecidos', 'info');
 }
@@ -173,8 +173,8 @@ function saveTema() {
   showToast('Tema aplicado en todo el sitio.', 'success');
 }
 
-function resetTema() {
-  if (!confirm('¿Restablecer el tema visual (color y fuente) al predeterminado? Este cambio se aplica de inmediato en todo el sitio público, sin necesidad de guardar.')) return;
+async function resetTema() {
+  if (!(await confirmarAccion('¿Restablecer el tema visual (color y fuente) al predeterminado? Este cambio se aplica de inmediato en todo el sitio público, sin necesidad de guardar.', { danger: true, textoAceptar: 'Restablecer' }))) return;
   localStorage.removeItem('padron_tema_config');
   pushConfigToServer('padron_tema_config', {});
   _currentColor = '#F27A00';

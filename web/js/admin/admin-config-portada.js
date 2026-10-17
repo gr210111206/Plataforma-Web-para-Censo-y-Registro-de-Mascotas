@@ -64,8 +64,8 @@ function loadSiteContentConfig() {
   } catch(e) {}
 }
 
-function resetSiteContentConfig() {
-  if (!confirm('¿Restablecer todos los contenidos de la Portada a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar, y la página se va a recargar.')) return;
+async function resetSiteContentConfig() {
+  if (!(await confirmarAccion('¿Restablecer todos los contenidos de la Portada a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar, y la página se va a recargar.'))) return;
   localStorage.removeItem('padron_site_content');
   showToast('Contenidos de portada restablecidos a valores por defecto', 'info');
   setTimeout(() => location.reload(), 800);

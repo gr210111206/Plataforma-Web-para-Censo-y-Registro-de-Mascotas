@@ -93,8 +93,8 @@ function saveSiteConfig() {
 }
 
 // ── Reset to defaults ─────────────────────────────
-function resetSiteConfig() {
-  if (!confirm('¿Restablecer identidad del sitio y contactos a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
+async function resetSiteConfig() {
+  if (!(await confirmarAccion('¿Restablecer identidad del sitio y contactos a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   const defaults = {
     'cfg-nombre':     'Padrón de Mascotas',
     'cfg-header-sub': 'H. Ayuntamiento de El Grullo · 2024-2027',

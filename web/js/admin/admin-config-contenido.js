@@ -92,8 +92,8 @@ function saveSEO() {
   showToast('Configuración SEO guardada correctamente', 'success');
 }
 
-function resetSEO() {
-  if (!confirm('¿Restablecer la configuración SEO a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
+async function resetSEO() {
+  if (!(await confirmarAccion('¿Restablecer la configuración SEO a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   localStorage.removeItem('padron_seo_config');
   showToast('Configuración SEO restablecida', 'info');
 }
@@ -186,7 +186,7 @@ function cancelEditAviso() {
 }
 async function deleteAviso(id) {
   const a = avisoData.find(x => x.id === id);
-  if (!confirm(`¿Eliminar el aviso "${a ? a.titulo : ''}"? Esta acción no se puede deshacer.`)) return;
+  if (!(await confirmarAccion(`¿Eliminar el aviso "${a ? a.titulo : ''}"? Esta acción no se puede deshacer.`, { danger: true, textoAceptar: 'Eliminar' }))) return;
   try {
     await apiEliminarCampana(id);
     avisoData = avisoData.filter(a => a.id !== id);
@@ -233,9 +233,9 @@ function renderEventos() {
       <button class="btn btn-danger btn-sm" onclick="deleteEvento(${i})" style="padding:4px 8px;" aria-label="Eliminar evento">${ICON_TRASH}</button>
     </div>`).join('');
 }
-function deleteEvento(i) {
+async function deleteEvento(i) {
   const e = eventosData[i];
-  if (!confirm(`¿Eliminar el evento "${e ? e.titulo : ''}"? Esta acción no se puede deshacer.`)) return;
+  if (!(await confirmarAccion(`¿Eliminar el evento "${e ? e.titulo : ''}"? Esta acción no se puede deshacer.`, { danger: true, textoAceptar: 'Eliminar' }))) return;
   eventosData.splice(i, 1);
   renderEventos();
   persistEventos();
@@ -321,9 +321,9 @@ function cancelEditFaq() {
   document.getElementById('faqFormTitle').innerHTML = ICON_QUESTION + ' Preguntas';
   document.getElementById('faqCancelBtn').style.display = 'none';
 }
-function deleteFaq(i) {
+async function deleteFaq(i) {
   const f = faqData[i];
-  if (!confirm(`¿Eliminar la pregunta "${f ? f.pregunta : ''}"? Esta acción no se puede deshacer.`)) return;
+  if (!(await confirmarAccion(`¿Eliminar la pregunta "${f ? f.pregunta : ''}"? Esta acción no se puede deshacer.`, { danger: true, textoAceptar: 'Eliminar' }))) return;
   faqData.splice(i, 1);
   renderFaqTable();
   persistFaq();

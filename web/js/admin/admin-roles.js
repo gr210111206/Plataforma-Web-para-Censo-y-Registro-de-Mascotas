@@ -117,7 +117,7 @@ async function toggleCuentaActiva(id, estaActivo) {
   const u = allCuentas.find(x => x.id === id);
   const nombre = u ? u.nombre : 'esta cuenta';
   const accion = estaActivo ? 'desactivar' : 'reactivar';
-  if (!confirm(`¿Seguro que quieres ${accion} la cuenta de ${nombre}?`)) return;
+  if (!(await confirmarAccion(`¿Seguro que quieres ${accion} la cuenta de ${nombre}?`))) return;
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
     loadRolesTable();
@@ -132,7 +132,7 @@ async function toggleCuentaActiva(id, estaActivo) {
 async function promoverAAdmin(id) {
   const u = allCuentas.find(x => x.id === id);
   if (!u) return;
-  if (!confirm(`¿Hacer administrador a ${u.nombre}? Va a poder entrar al panel admin y gestionar todo el padrón.`)) return;
+  if (!(await confirmarAccion(`¿Hacer administrador a ${u.nombre}? Va a poder entrar al panel admin y gestionar todo el padrón.`, { danger: true, textoAceptar: 'Hacer administrador' }))) return;
   try {
     await apiPromoverAAdmin(id);
     showToast(`${u.nombre} ahora es Administrador`, 'success');
@@ -148,7 +148,7 @@ async function promoverAAdmin(id) {
 async function revocarAdmin(id) {
   const u = allCuentas.find(x => x.id === id);
   if (!u) return;
-  if (!confirm(`¿Quitarle el rol de administrador a ${u.nombre}? Va a volver a Ciudadano.`)) return;
+  if (!(await confirmarAccion(`¿Quitarle el rol de administrador a ${u.nombre}? Va a volver a Ciudadano.`, { danger: true, textoAceptar: 'Quitar administrador' }))) return;
   try {
     await apiRevocarAdmin(id);
     showToast(`Se le quitó el rol de administrador a ${u.nombre}`, 'success');

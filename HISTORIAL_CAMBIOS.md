@@ -2,6 +2,34 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-17] — Modal de confirmación propio, en vez del confirm() nativo del navegador
+
+### 🤔 Contexto
+Después de agregar las 12 confirmaciones de [2026-10-16c]/[2026-10-16d], el usuario notó (con una captura) que el cuadro de confirmación era el `confirm()` nativo del navegador — se ve genérico (en su celular, con tema oscuro, salía con acento morado) y no tiene nada que ver con el diseño del sitio (naranja, tarjetas redondeadas).
+
+### 🔧 Cambios
+- **`web/js/admin/admin-core.js` — nueva función `confirmarAccion(mensaje, opciones)`**: reemplaza `confirm()` nativo. Devuelve una `Promise<boolean>` (se usa como `if (!(await confirmarAccion('¿...?'))) return;`, mismo patrón que antes). Abre el modal `#modal-confirm` (mismo look que el resto de modales del panel: tarjeta blanca redondeada, botón "Cancelar" gris y uno de acción naranja). Admite `{ danger: true, textoAceptar: '...' }` para las acciones destructivas (eliminar, hacer/quitar administrador, restablecer tema), que cambian el ícono y el botón de acción a rojo en vez de naranja.
+- **`web/admin.html`**: se agregó el modal `#modal-confirm` (una sola vez, reutilizado por los 12 casos), junto a los demás modales genéricos del panel.
+- Se reemplazaron los 12 `confirm()` nativos por `await confirmarAccion(...)` en: `admin-mascotas.js`, `admin-usuarios.js`, `admin-roles.js` (x3, los 2 de hacer/quitar admin con `danger:true`), `admin-articulos.js` (`danger:true`), `admin-config-contenido.js` (x4, avisos/eventos/FAQ con `danger:true`, SEO sin), `admin-config-portada.js`, `admin-config-footer.js`, `admin-config-apariencia.js`, `admin-config-core.js` (x2, Tema visual con `danger:true` por ser el que se aplica en producción de inmediato). Las funciones que antes eran síncronas (los 6 "Restablecer" + `deleteEvento`/`deleteFaq`) se volvieron `async` para poder usar `await`.
+
+### 🔎 Verificado
+- Probado en vivo contra el entorno local (mismo levantado en [2026-10-16d]): el modal "Cambiar estatus" (variante normal, naranja) y "Eliminar artículo" (variante `danger`, roja) — ambos con "Cancelar" confirmando que no se ejecuta nada, y el diseño coincide con el resto del panel.
+- `node --check` sin errores en los 10 archivos modificados.
+- Pendiente: desplegar en producción.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+- `web/js/admin/admin-core.js`
+- `web/js/admin/admin-mascotas.js`
+- `web/js/admin/admin-usuarios.js`
+- `web/js/admin/admin-roles.js`
+- `web/js/admin/admin-articulos.js`
+- `web/js/admin/admin-config-contenido.js`
+- `web/js/admin/admin-config-portada.js`
+- `web/js/admin/admin-config-footer.js`
+- `web/js/admin/admin-config-apariencia.js`
+- `web/js/admin/admin-config-core.js`
+
 ## 📅 [2026-10-16d] — Auditoría completa de confirmaciones faltantes en los 3 roles (admin, ciudadano, asistente)
 
 ### 🤔 Contexto

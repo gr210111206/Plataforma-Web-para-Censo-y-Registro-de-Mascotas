@@ -126,6 +126,48 @@ const colonias = {
 };
 
 /* ══════════════════════════════════════════════════ */
+/*  CONFIRMACIÓN GENÉRICA — reemplaza confirm() nativo  */
+/*  del navegador (no respeta el diseño del sitio) por  */
+/*  el modal #modal-confirm, con el mismo look del resto */
+/*  del panel. Uso: if (!(await confirmarAccion('¿...?'))) return; */
+/* ══════════════════════════════════════════════════ */
+function confirmarAccion(mensaje, { danger = false, textoAceptar = 'Aceptar' } = {}) {
+  return new Promise(resolve => {
+    const overlay     = document.getElementById('modal-confirm');
+    const btnAceptar   = document.getElementById('confirm-btn-aceptar');
+    const btnCancelar  = document.getElementById('confirm-btn-cancelar');
+    const btnCerrar    = document.getElementById('confirm-btn-cerrar');
+    const icono        = document.getElementById('confirm-icon');
+
+    document.getElementById('confirm-mensaje').textContent = mensaje;
+    btnAceptar.textContent = textoAceptar;
+    btnAceptar.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+    icono.style.color = danger ? 'var(--red)' : 'var(--orange)';
+
+    function terminar(resultado) {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+      btnAceptar.removeEventListener('click', onAceptar);
+      btnCancelar.removeEventListener('click', onCancelar);
+      btnCerrar.removeEventListener('click', onCancelar);
+      overlay.removeEventListener('click', onOverlayClick);
+      resolve(resultado);
+    }
+    function onAceptar()  { terminar(true); }
+    function onCancelar() { terminar(false); }
+    function onOverlayClick(e) { if (e.target === overlay) terminar(false); }
+
+    btnAceptar.addEventListener('click', onAceptar);
+    btnCancelar.addEventListener('click', onCancelar);
+    btnCerrar.addEventListener('click', onCancelar);
+    overlay.addEventListener('click', onOverlayClick);
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+}
+
+/* ══════════════════════════════════════════════════ */
 /*  NAVIGATION                                        */
 /* ══════════════════════════════════════════════════ */
 const sections = {

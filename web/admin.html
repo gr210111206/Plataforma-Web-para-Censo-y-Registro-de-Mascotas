@@ -2674,6 +2674,30 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
   </div>
 </div>
 
+<!-- ── Modal: confirmación genérica (reemplaza confirm() nativo del navegador,
+     para que se vea consistente con el resto del panel — ver confirmarAccion()
+     en admin-core.js) ── -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title" style="display:flex; align-items:center; gap:10px;">
+        <span id="confirm-icon" style="display:flex; flex-shrink:0;">
+          <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px; height:22px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+        </span>
+        Confirmar acción
+      </h2>
+      <button class="modal-close" id="confirm-btn-cerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-mensaje" style="font-size:.92rem; color:var(--gray-1); line-height:1.6; margin:0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" id="confirm-btn-cancelar">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirm-btn-aceptar">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
