@@ -39,6 +39,7 @@ function saveMunicipio() {
 }
 
 function resetMunicipio() {
+  if (!confirm('¿Restablecer los datos del municipio a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
   localStorage.removeItem('padron_municipio_config');
   showToast('Datos del municipio restablecidos', 'info');
 }
@@ -173,6 +174,7 @@ function saveTema() {
 }
 
 function resetTema() {
+  if (!confirm('¿Restablecer el tema visual (color y fuente) al predeterminado? Este cambio se aplica de inmediato en todo el sitio público, sin necesidad de guardar.')) return;
   localStorage.removeItem('padron_tema_config');
   pushConfigToServer('padron_tema_config', {});
   _currentColor = '#F27A00';

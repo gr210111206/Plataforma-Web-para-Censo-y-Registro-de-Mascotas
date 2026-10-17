@@ -2,6 +2,52 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-16d] — Auditoría completa de confirmaciones faltantes en los 3 roles (admin, ciudadano, asistente)
+
+### 🤔 Contexto
+A partir del hallazgo de [2026-10-16c] (abajo), el usuario pidió una auditoría completa: revisar en local, como Administrador, Ciudadano y Asistente, todas las zonas donde se hacen cambios y confirmar en cuáles falta un paso de "¿estás seguro?" antes de ejecutar la acción. En vez de depender solo de clics en vivo (que no garantizan cubrir el 100% de los casos), se hizo una auditoría de código: se listaron todas las funciones de `api-client.js` que escriben datos (POST/PUT/DELETE), se buscó cada botón que las llama, y se revisó si tenían algún `confirm()` antes.
+
+**Resultado de la auditoría — Ciudadano (dashboard.html) y Asistente (asistente.html): NADA que corregir.** Ambos roles solo editan sus propios datos a través de formularios explícitos (editar mascota, editar perfil, cambiar contraseña — esta última ya exige la contraseña actual), que ya cuentan como el propio paso de "¿estás seguro?" al llenar el formulario y dar clic en Guardar. El único botón de una sola acción es "Cerrar sesión", que no amerita confirmación (patrón estándar en casi cualquier sitio, totalmente reversible con volver a iniciar sesión).
+
+**Admin.html: se encontraron 9 casos más** (además de los 3 ya corregidos en [2026-10-16c]), todos con el mismo patrón: ejecutan el cambio al instante con un solo clic, sin preguntar nada:
+- **Eliminar un artículo** (`eliminarArticulo()`, pestaña Nuevo artículo) — borra el artículo de la base de datos sin poder deshacerlo.
+- **Eliminar un aviso/campaña** (`deleteAviso()`, Configuración → Avisos y promociones) — mismo caso.
+- **Eliminar un evento** (antes un `onclick` inline con 3 instrucciones seguidas, sin función propia — se extrajo a `deleteEvento()` para poder agregarle el `confirm()`).
+- **Eliminar una pregunta FAQ** (`deleteFaq()`).
+- **"Hacer administrador" / "Quitar administrador"** (`promoverAAdmin()` / `revocarAdmin()`, pestaña Roles) — cambia el rol de una cuenta real; "Hacer administrador" en particular le da acceso total al panel admin a quien se elija.
+- **6 botones "Restablecer"** (uno en cada pestaña de Configuración sitio: Contenidos de Portada, Contactos/Identidad del sitio, Apariencia e íconos, Municipio, Tema visual, SEO) — todos están justo al lado del botón "Guardar" correspondiente, lo que los hace fáciles de tocar por error. El de **Tema visual es el más grave de los 6**: a diferencia de los otros 5 (que solo borran lo que el admin tenía escrito en el formulario, sin afectar producción hasta que se dé clic en Guardar), este llama `pushConfigToServer()` directamente — restablece el color y la tipografía del sitio público **de inmediato**, sin necesidad de guardar.
+
+### 🔧 Cambios
+Mismo patrón que [2026-10-16c] en los 9 casos: se agregó un `confirm('¿...?')` justo antes de la línea que ejecuta el cambio, con el nombre del elemento afectado quien aplique (artículo, aviso, evento, pregunta, cuenta). Si el admin cancela, no se manda nada a la API ni se toca `localStorage`.
+
+- `web/js/admin/admin-articulos.js` — `eliminarArticulo()`
+- `web/js/admin/admin-config-contenido.js` — `deleteAviso()`, `deleteEvento()` (nueva, antes inline), `deleteFaq()`, `resetSEO()`
+- `web/js/admin/admin-config-portada.js` — `resetSiteContentConfig()`
+- `web/js/admin/admin-config-footer.js` — `resetSiteConfig()`
+- `web/js/admin/admin-config-apariencia.js` — `resetAppearance()`
+- `web/js/admin/admin-config-core.js` — `resetMunicipio()`, `resetTema()`
+- `web/js/admin/admin-roles.js` — `promoverAAdmin()`, `revocarAdmin()`
+
+### 🧪 Entorno local usado para la auditoría
+Se levantó XAMPP local y se probó en vivo contra `localhost` desde el emulador Android (Pixel_Prueba), con dos ajustes puntuales solo para poder probar, sin afectar producción:
+- **`web/api/config/database.php`** (gitignored, no se sube a git): el detector `$esLocal` comparaba `$_SERVER['HTTP_HOST']` exactamente contra `'localhost'`/`'127.0.0.1'` — si se accede por un puerto distinto de 80 (ej. `localhost:8080`, necesario aquí por un `adb reverse` para que el emulador llegue al XAMPP de la PC), el host trae el puerto pegado (`localhost:8080`) y la comparación fallaba, haciendo que PHP tomara las credenciales de producción (HostGator) contra el MySQL local → `Access denied`. Se corrigió quitando el puerto antes de comparar (`explode(':', ...)[0]`). No afecta producción en absoluto (es un archivo que ni siquiera se sube al repositorio) y solo mejora la detección para cualquier prueba local futura por un puerto no estándar.
+- Credenciales usadas: superadmin `mascotas.registro@gmail.com` (ver `CUENTAS_PRUEBA.md` para las demás cuentas de prueba locales).
+
+### 🔎 Verificado
+- Los 9 casos se revisaron en el código fuente (lectura completa de cada función + cómo se llama desde el HTML).
+- Se probaron en vivo 2 de los 9 (representativos de los dos subtipos: un `confirm()` normal en "Cambiar estatus" de Seguimiento, que ya se había arreglado en [2026-10-16c], y el de mayor riesgo, "Restablecer" en Tema visual) contra el entorno local recién levantado, confirmando que el diálogo aparece con el texto esperado y que "Cancelar" no ejecuta ningún cambio. El resto sigue exactamente el mismo patrón de código ya probado, sin lógica adicional que pudiera fallar distinto.
+- `node --check` sin errores en los 7 archivos modificados.
+- Pendiente: desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit).
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-articulos.js`
+- `web/js/admin/admin-config-apariencia.js`
+- `web/js/admin/admin-config-contenido.js`
+- `web/js/admin/admin-config-core.js`
+- `web/js/admin/admin-config-footer.js`
+- `web/js/admin/admin-config-portada.js`
+- `web/js/admin/admin-roles.js`
+
 ## 📅 [2026-10-16c] — admin.html: faltaba confirmación antes de cambiar estatus de mascota o desactivar una cuenta
 
 ### 🤔 Contexto

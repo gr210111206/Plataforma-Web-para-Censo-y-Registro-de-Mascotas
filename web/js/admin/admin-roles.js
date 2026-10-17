@@ -132,6 +132,7 @@ async function toggleCuentaActiva(id, estaActivo) {
 async function promoverAAdmin(id) {
   const u = allCuentas.find(x => x.id === id);
   if (!u) return;
+  if (!confirm(`¿Hacer administrador a ${u.nombre}? Va a poder entrar al panel admin y gestionar todo el padrón.`)) return;
   try {
     await apiPromoverAAdmin(id);
     showToast(`${u.nombre} ahora es Administrador`, 'success');
@@ -147,6 +148,7 @@ async function promoverAAdmin(id) {
 async function revocarAdmin(id) {
   const u = allCuentas.find(x => x.id === id);
   if (!u) return;
+  if (!confirm(`¿Quitarle el rol de administrador a ${u.nombre}? Va a volver a Ciudadano.`)) return;
   try {
     await apiRevocarAdmin(id);
     showToast(`Se le quitó el rol de administrador a ${u.nombre}`, 'success');

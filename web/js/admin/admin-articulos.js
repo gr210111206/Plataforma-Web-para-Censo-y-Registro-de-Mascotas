@@ -186,6 +186,8 @@ function editarArticulo(id) {
 }
 
 async function eliminarArticulo(id) {
+  const a = adminArticulos.find(x => x.id === id);
+  if (!confirm(`¿Eliminar el artículo "${a ? a.titulo : ''}"? Esta acción no se puede deshacer.`)) return;
   try {
     await apiEliminarArticulo(id);
     adminArticulos = adminArticulos.filter(a => a.id !== id);

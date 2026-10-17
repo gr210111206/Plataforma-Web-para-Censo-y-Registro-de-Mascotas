@@ -93,6 +93,7 @@ function saveSEO() {
 }
 
 function resetSEO() {
+  if (!confirm('¿Restablecer la configuración SEO a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.')) return;
   localStorage.removeItem('padron_seo_config');
   showToast('Configuración SEO restablecida', 'info');
 }
@@ -184,6 +185,8 @@ function cancelEditAviso() {
   document.getElementById('avisoCancelBtn').style.display = 'none';
 }
 async function deleteAviso(id) {
+  const a = avisoData.find(x => x.id === id);
+  if (!confirm(`¿Eliminar el aviso "${a ? a.titulo : ''}"? Esta acción no se puede deshacer.`)) return;
   try {
     await apiEliminarCampana(id);
     avisoData = avisoData.filter(a => a.id !== id);
@@ -227,8 +230,16 @@ function renderEventos() {
         <div style="font-weight:700; font-size:.88rem;">${e.titulo}</div>
         <div style="font-size:.75rem; color:var(--gray-2); display:flex; align-items:center; gap:4px; flex-wrap:wrap;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg> ${e.lugar || '—'} · <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> ${e.hora || '—'}</div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="eventosData.splice(${i},1); renderEventos(); persistEventos(); showToast('Evento eliminado','success')" style="padding:4px 8px;" aria-label="Eliminar evento">${ICON_TRASH}</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEvento(${i})" style="padding:4px 8px;" aria-label="Eliminar evento">${ICON_TRASH}</button>
     </div>`).join('');
+}
+function deleteEvento(i) {
+  const e = eventosData[i];
+  if (!confirm(`¿Eliminar el evento "${e ? e.titulo : ''}"? Esta acción no se puede deshacer.`)) return;
+  eventosData.splice(i, 1);
+  renderEventos();
+  persistEventos();
+  showToast('Evento eliminado', 'success');
 }
 function persistEventos() {
   localStorage.setItem('padron_eventos', JSON.stringify(eventosData));
@@ -311,6 +322,8 @@ function cancelEditFaq() {
   document.getElementById('faqCancelBtn').style.display = 'none';
 }
 function deleteFaq(i) {
+  const f = faqData[i];
+  if (!confirm(`¿Eliminar la pregunta "${f ? f.pregunta : ''}"? Esta acción no se puede deshacer.`)) return;
   faqData.splice(i, 1);
   renderFaqTable();
   persistFaq();
