@@ -114,6 +114,10 @@ function renderRolesTable(data, total, sinFiltro) {
 }
 
 async function toggleCuentaActiva(id, estaActivo) {
+  const u = allCuentas.find(x => x.id === id);
+  const nombre = u ? u.nombre : 'esta cuenta';
+  const accion = estaActivo ? 'desactivar' : 'reactivar';
+  if (!confirm(`¿Seguro que quieres ${accion} la cuenta de ${nombre}?`)) return;
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
     loadRolesTable();

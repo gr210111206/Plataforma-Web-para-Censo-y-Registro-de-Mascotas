@@ -72,6 +72,10 @@ function filterUsuarios() {
 const debouncedFilterUsuarios = debounce(filterUsuarios, 350);
 
 async function toggleUsuarioActivo(id, estaActivo) {
+  const u = allUsuarios.find(x => x.id === id);
+  const nombre = u ? u.nombre : 'esta cuenta';
+  const accion = estaActivo ? 'desactivar' : 'reactivar';
+  if (!confirm(`¿Seguro que quieres ${accion} la cuenta de ${nombre}?`)) return;
   try {
     await apiSetUsuarioActivo(id, !estaActivo);
     loadUsuariosTable();

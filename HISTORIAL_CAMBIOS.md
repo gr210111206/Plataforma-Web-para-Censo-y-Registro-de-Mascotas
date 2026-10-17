@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-16c] — admin.html: faltaba confirmación antes de cambiar estatus de mascota o desactivar una cuenta
+
+### 🤔 Contexto
+Siguiendo con la ronda de pruebas (ya se probaron `index.html`, `asistente.html` y `dashboard.html`), se inició sesión como Administrador (superadmin) y se probó cada sección de `admin.html`. En "Seguimiento de Mascotas" se encontró, probando en vivo, que el botón "Cambiar estatus" de una tarjeta cambiaba el Alta/Baja de la mascota al instante con un solo toque, sin pedir confirmación — pasó por accidente con una mascota de prueba (folio M-GRU-000000071) y hubo que revertirlo a mano. Revisando el código se confirmó el mismo patrón exacto en "Desactivar cuenta" (Cuentas Ciudadanas y Roles): ninguna de las tres acciones tenía ningún `confirm()` antes de mandar el cambio a la API, solo un toast después de que ya se había hecho.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-mascotas.js` — `changeEstatus()`**: se agregó `confirm('¿Cambiar el estatus de "<nombre>" a "<Alta/Baja>"?')` antes de llamar a `apiActualizarMascota()`. Si el admin cancela, no se manda ninguna petición.
+- **`web/js/admin/admin-usuarios.js` — `toggleUsuarioActivo()`**: mismo fix en Cuentas Ciudadanas — `confirm('¿Seguro que quieres desactivar/reactivar la cuenta de <nombre>?')` antes de `apiSetUsuarioActivo()`.
+- **`web/js/admin/admin-roles.js` — `toggleCuentaActiva()`**: mismo botón "Desactivar cuenta" pero en la pestaña Roles (función separada, mismo endpoint) — mismo fix.
+- No se tocó `promoverAAdmin()`/`revocarAdmin()` (botones "Hacer administrador"/"Quitar administrador") — quedó fuera del alcance de este bug reportado; esa acción además ya es reversible desde el panel (a diferencia de activar/desactivar, que si se hace sin querer solo se revierte repitiendo la acción, lo cual ya alcanza).
+
+### 🔎 Verificado
+- Bug confirmado en vivo en el emulador Android contra producción antes de corregir (cambio accidental de estatus de una mascota de prueba, revertido a mano).
+- `node --check` sin errores en los 3 archivos modificados.
+- La bitácora de auditoría (`bitacora`) ya registraba estos cambios correctamente desde antes — este fix solo agrega el paso de confirmación previo, no toca el registro de auditoría.
+- Pendiente: desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit) y volver a probar en vivo.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-mascotas.js`
+- `web/js/admin/admin-usuarios.js`
+- `web/js/admin/admin-roles.js`
+
 ## 📅 [2026-10-16b] — 2 bugs encontrados probando todos los botones de dashboard.html (Ciudadano)
 
 ### 🤔 Contexto
