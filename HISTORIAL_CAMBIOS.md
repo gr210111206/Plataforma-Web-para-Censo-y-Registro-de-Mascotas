@@ -2,6 +2,23 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-23] — Se quita el cuadro naranja detrás del logo (Panel Admin y login)
+
+### 🤔 Contexto
+El usuario pidió (con capturas) quitar el cuadro naranja que rodeaba al logo de El Grullo en la barra lateral del Panel Admin y en la columna izquierda de `login.html`, dejando solo la imagen.
+
+### 🔧 Cambios
+- **`web/css/styles.css`**: se quitó `background: var(--orange)` de `.sidebar-logo-icon` (sidebar de `admin.html`) y de `.auth-aside-logo-icon` (login). Se conservan el tamaño, el `border-radius` y el `overflow:hidden`.
+- **`web/login.html`**: se quitó el mismo `background:var(--orange)`, que estaba repetido en el `style` en línea de `#nav-logo-icon`. La imagen pasó de `height:36px` a `height:100%` para que llene los 48px del contenedor ahora que no hay cuadro alrededor.
+- Nota: si desde "Apariencia e íconos" se configura un emoji en lugar de una imagen para estos logos, el emoji también se verá sin el fondo naranja.
+
+### 🔎 Verificado
+- Pendiente: revisarlo en el navegador y desplegar en producción.
+
+### 📂 Archivos modificados
+- `web/css/styles.css`
+- `web/login.html`
+
 ## 📅 [2026-10-17] — Modal de confirmación propio, en vez del confirm() nativo del navegador
 
 ### 🤔 Contexto
