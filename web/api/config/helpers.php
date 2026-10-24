@@ -200,6 +200,45 @@ function crearSesion(int $duenoId): string {
     return $token;
 }
 
+/* Pide la contraseña de la cuenta ya con sesión iniciada, para acciones
+   delicadas (cerrar sesiones, cambiar la contraseña). Responde el error y
+   corta el script si no es correcta.
+   Los fallos cuentan para el MISMO bloqueo que el login (5 seguidos → 15
+   min, ver auth.php): si no, alguien con una sesión robada podría probar
+   contraseñas aquí sin ningún límite. Igual que en el login, el "¿sigue
+   bloqueada?" se calcula dentro de MySQL. */
+function exigirPassword(int $duenoId, string $password, string $mensajeError = 'La contraseña no es correcta.'): void {
+    if ($password === '') jsonError('Escribe tu contraseña para confirmar.', 400);
+
+    $db   = getDB();
+    $stmt = $db->prepare('
+        SELECT password_hash, intentos_fallidos,
+               (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > NOW()) AS bloqueado
+        FROM duenos WHERE id = ?
+    ');
+    $stmt->execute([$duenoId]);
+    $row = $stmt->fetch();
+
+    if ($row && $row['bloqueado']) {
+        jsonError('Demasiados intentos fallidos. Intenta de nuevo en unos minutos.', 429);
+    }
+    if (!$row || !$row['password_hash'] || !password_verify($password, $row['password_hash'])) {
+        if ($row) {
+            $intentos = (int) $row['intentos_fallidos'] + 1;
+            if ($intentos >= 5) {
+                $db->prepare('UPDATE duenos SET intentos_fallidos = 0, bloqueado_hasta = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?')
+                   ->execute([$duenoId]);
+            } else {
+                $db->prepare('UPDATE duenos SET intentos_fallidos = ? WHERE id = ?')->execute([$intentos, $duenoId]);
+            }
+        }
+        jsonError($mensajeError, 401);
+    }
+    if ((int) $row['intentos_fallidos'] > 0) {
+        $db->prepare('UPDATE duenos SET intentos_fallidos = 0 WHERE id = ?')->execute([$duenoId]);
+    }
+}
+
 /* Cierra TODAS las sesiones de una cuenta (cambio/recuperación de
    contraseña, desactivar la cuenta, cambio de rol). */
 function cerrarSesionesDe(int $duenoId): void {

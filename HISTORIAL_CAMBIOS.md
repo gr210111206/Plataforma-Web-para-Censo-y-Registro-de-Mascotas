@@ -2,6 +2,36 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-24b] — Cerrar una sesión (o "todas las demás") ahora pide la contraseña
+
+### 🤔 Contexto
+Ya aplicada la migración 0003 en producción (`ferna814_Mascotas`, confirmado con captura de phpMyAdmin), el usuario pidió que al cerrar una sesión desde "Sesiones activas" se pida la contraseña, para no cerrar una por equivocación. Además, así alguien que solo tenga una sesión robada no puede sacar al dueño de sus otros dispositivos.
+
+### 🔧 Cambios
+- **`web/api/config/helpers.php` — nueva `exigirPassword($duenoId, $password, $mensajeError)`**: valida la contraseña de la cuenta con sesión iniciada. Los intentos fallidos cuentan para el **mismo** bloqueo del login (5 seguidos → 15 min, `intentos_fallidos`/`bloqueado_hasta`, comparado dentro de MySQL); un acierto reinicia el contador. Sin esto, con una sesión robada se podían probar contraseñas sin límite.
+- **`web/api/auth.php`**: `cerrar-sesion` (body `id`, `password`) y `cerrar-otras-sesiones` (body `password`) llaman a `exigirPassword()`. `change-password` también la usa ahora para validar la contraseña actual, con lo que gana el mismo límite de intentos (antes no tenía ninguno). El mensaje de error es el mismo de siempre.
+- **`web/js/api-client.js`**: `apiCerrarSesion(id, password)` y `apiCerrarOtrasSesiones(password)`.
+- **`web/js/mis-sesiones.js`**: al dar "Cerrar" o "Cerrar todas las demás sesiones" se abre la ventana "Confirma que eres tú", hecha con las mismas clases `.modal-overlay`/`.modal` del sitio. Dice qué se va a cerrar, tiene el campo de contraseña con su ojito y los botones Cancelar / Cerrar sesión. Se cierra con Escape o clic afuera, y Enter confirma. Si la contraseña está mal o la cuenta está bloqueada, el error sale **dentro** de la ventana y esta sigue abierta para reintentar.
+
+### 🔎 Verificado
+- Con un servidor PHP temporal y una base desechable (`remac_db` y producción no se tocaron):
+  1. Sin contraseña → "Escribe tu contraseña para confirmar."
+  2. Contraseña equivocada → 401, la sesión sigue abierta y el contador sube.
+  3. Contraseña correcta → cierra y el contador vuelve a 0.
+  4. 5 fallos seguidos en "cerrar todas" → el 6º, aun con la contraseña correcta, da "Demasiados intentos fallidos", y el **login también queda bloqueado**.
+  5. "Cambiar contraseña" con la actual mal sigue respondiendo "La contraseña actual no es correcta."
+- En la página real (Chrome sin interfaz, 1280 px y 390 px): la ventana abre; con la contraseña mal muestra el error y no cierra nada; con la buena se cierra la ventana y desaparecen las demás sesiones. El ojito aparece.
+- `php -l` y `node --check` sin errores.
+
+### ⚠️ Pendiente
+- Desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit). La migración 0003 ya está aplicada en producción, así que este despliegue ya es seguro. Falta aplicarla en la base **local** `remac_db` para que el sitio funcione en XAMPP.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`
+- `web/api/auth.php`
+- `web/js/api-client.js`
+- `web/js/mis-sesiones.js`
+
 ## 📅 [2026-10-24] — Varias sesiones por cuenta (hasta 5), "Sesiones activas" en Mi perfil y correo por dispositivo nuevo
 
 ### 🤔 Contexto

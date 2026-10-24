@@ -40,7 +40,7 @@
       ? '<span style="color:var(--green); font-weight:600;">Esta sesión</span>'
       : `Usada ${haceCuanto(s.minutos_sin_uso)} · inició ${haceCuanto(s.minutos_desde_inicio)}`;
     const boton = s.actual ? '' :
-      `<button class="btn btn-outline btn-sm" type="button" data-cerrar-sesion="${s.id}">Cerrar</button>`;
+      `<button class="btn btn-outline btn-sm" type="button" data-cerrar-sesion="${s.id}" data-dispositivo="${esc(s.dispositivo)}">Cerrar</button>`;
     return `
       <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--gray-4);">
         <div style="width:36px; height:36px; border-radius:var(--radius-sm); background:var(--surface); display:flex; align-items:center; justify-content:center; flex-shrink:0;">${icono}</div>
@@ -74,21 +74,104 @@
     }
   }
 
-  async function onClick(e, cont) {
+  /* Ventana "confirma con tu contraseña" — se crea una sola vez, con las
+     mismas clases que el resto de modales del sitio (.modal-overlay/.modal).
+     `accion(password)` hace la petición; si falla (contraseña incorrecta,
+     bloqueo por intentos), el error se muestra DENTRO de la ventana y esta
+     sigue abierta para reintentar. */
+  let modal = null;
+  function crearModal() {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal-confirmar-sesion';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:420px;" role="dialog" aria-modal="true" aria-labelledby="ms-titulo">
+        <div class="modal-header">
+          <h2 class="modal-title" id="ms-titulo" style="display:flex; align-items:center; gap:10px;">${ICONO_TITULO} Confirma que eres tú</h2>
+          <button type="button" class="modal-close" data-ms-cancelar aria-label="Cerrar">✕</button>
+        </div>
+        <form class="modal-body" id="ms-form" style="padding-bottom:20px;">
+          <p id="ms-mensaje" style="font-size:.92rem; color:var(--gray-1); line-height:1.6; margin:0 0 16px;"></p>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="ms-password">Tu contraseña</label>
+            <div class="pw-wrap">
+              <input class="form-control has-toggle" type="password" id="ms-password" autocomplete="current-password" />
+              <button type="button" class="input-toggle" aria-label="Mostrar contraseña" onclick="togglePassword('ms-password', this)">${typeof ICONO_OJO !== 'undefined' ? ICONO_OJO : ''}</button>
+            </div>
+            <div id="ms-error" role="alert" style="display:none; color:var(--red); font-size:.82rem; margin-top:8px;"></div>
+          </div>
+        </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-ms-cancelar>Cancelar</button>
+          <button type="submit" form="ms-form" class="btn btn-primary" id="ms-aceptar">Cerrar sesión</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => {
+      if (e.target === modal || e.target.closest('[data-ms-cancelar]')) cerrarModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.classList.contains('open')) cerrarModal();
+    });
+  }
+
+  function cerrarModal() {
+    modal.classList.remove('open');
+    modal.querySelector('#ms-password').value = '';
+  }
+
+  function pedirPassword(mensaje, textoBoton, accion) {
+    if (!modal) crearModal();
+    const input = modal.querySelector('#ms-password');
+    const error = modal.querySelector('#ms-error');
+    const aceptar = modal.querySelector('#ms-aceptar');
+    modal.querySelector('#ms-mensaje').textContent = mensaje;
+    aceptar.textContent = textoBoton;
+    error.style.display = 'none';
+    input.value = '';
+    modal.classList.add('open');
+    setTimeout(() => input.focus(), 50);
+
+    modal.querySelector('#ms-form').onsubmit = async e => {
+      e.preventDefault();
+      if (!input.value) {
+        error.textContent = 'Escribe tu contraseña para confirmar.';
+        error.style.display = 'block';
+        input.focus();
+        return;
+      }
+      aceptar.disabled = true;
+      try {
+        const r = await accion(input.value);
+        cerrarModal();
+        showToast(r.message, 'success');
+      } catch (err) {
+        error.textContent = err.message;
+        error.style.display = 'block';
+        input.select();
+      } finally {
+        aceptar.disabled = false;
+      }
+    };
+  }
+
+  function onClick(e, cont) {
     const btnUna = e.target.closest('[data-cerrar-sesion]');
     const btnOtras = e.target.closest('[data-cerrar-otras]');
-    if (!btnUna && !btnOtras) return;
-    const btn = btnUna || btnOtras;
-    btn.disabled = true;
-    try {
-      const r = btnUna
-        ? await apiCerrarSesion(Number(btnUna.dataset.cerrarSesion))
-        : await apiCerrarOtrasSesiones();
-      showToast(r.message, 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
+    if (btnUna) {
+      const id = Number(btnUna.dataset.cerrarSesion);
+      pedirPassword(
+        `Vas a cerrar la sesión de "${btnUna.dataset.dispositivo}". Quien la esté usando tendrá que volver a iniciar sesión.`,
+        'Cerrar sesión',
+        async pw => { const r = await apiCerrarSesion(id, pw); cargar(cont); return r; }
+      );
+    } else if (btnOtras) {
+      pedirPassword(
+        'Vas a cerrar la sesión en todos tus otros dispositivos. Este dispositivo seguirá con la sesión abierta.',
+        'Cerrar las demás',
+        async pw => { const r = await apiCerrarOtrasSesiones(pw); cargar(cont); return r; }
+      );
     }
-    cargar(cont);
   }
 
   document.addEventListener('DOMContentLoaded', () => {

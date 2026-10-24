@@ -5,8 +5,8 @@
  * POST /api/auth.php?action=login    → Iniciar sesión (email + password)
  * POST /api/auth.php?action=logout   → Cierra la sesión de este dispositivo
  * GET  /api/auth.php?action=sesiones → Sesiones abiertas de la cuenta ("Mis sesiones")
- * POST /api/auth.php?action=cerrar-sesion          → Cierra una sesión de otro dispositivo (body: id)
- * POST /api/auth.php?action=cerrar-otras-sesiones  → Cierra todas menos la de este dispositivo
+ * POST /api/auth.php?action=cerrar-sesion          → Cierra una sesión de otro dispositivo (body: id, password)
+ * POST /api/auth.php?action=cerrar-otras-sesiones  → Cierra todas menos la de este dispositivo (body: password)
  * GET  /api/auth.php?action=me       → Datos del usuario autenticado
  * POST /api/auth.php?action=update-profile   → Actualiza nombre/correo/teléfono/foto/etc. de la sesión actual
  * POST /api/auth.php?action=change-password  → Cambia la contraseña de la sesión actual (pide la actual)
@@ -241,15 +241,19 @@ if ($method === 'GET' && $action === 'sesiones') {
 }
 
 /* ── POST /api/auth.php?action=cerrar-sesion ────────────── */
-/* Cierra UNA sesión de otro dispositivo de la propia cuenta (body: id).
-   El "AND dueno_id = ?" es lo que impide cerrar sesiones ajenas
-   cambiando el id. */
+/* Cierra UNA sesión de otro dispositivo de la propia cuenta (body: id,
+   password). Pide la contraseña para no cerrar una por equivocación (y
+   para que alguien que solo tenga una sesión robada no pueda sacar al
+   dueño de sus otros dispositivos). El "AND dueno_id = ?" es lo que
+   impide cerrar sesiones ajenas cambiando el id. */
 if ($method === 'POST' && $action === 'cerrar-sesion') {
     $user = requireAuth();
-    $id   = (int) (getBody()['id'] ?? 0);
+    $body = getBody();
+    $id   = (int) ($body['id'] ?? 0);
     if ($id === sesionActualId()) {
         jsonError('Para cerrar esta sesión usa "Cerrar sesión" en el menú.', 400);
     }
+    exigirPassword((int) $user['id'], (string) ($body['password'] ?? ''));
     $del = getDB()->prepare('DELETE FROM sesiones WHERE id = ? AND dueno_id = ?');
     $del->execute([$id, $user['id']]);
     if ($del->rowCount() === 0) jsonError('Esa sesión ya no existe.', 404);
@@ -257,9 +261,11 @@ if ($method === 'POST' && $action === 'cerrar-sesion') {
 }
 
 /* ── POST /api/auth.php?action=cerrar-otras-sesiones ────── */
-/* "Cerrar todas las demás": deja abierta solo la de este dispositivo. */
+/* "Cerrar todas las demás": deja abierta solo la de este dispositivo.
+   Pide la contraseña, igual que cerrar-sesion (body: password). */
 if ($method === 'POST' && $action === 'cerrar-otras-sesiones') {
     $user = requireAuth();
+    exigirPassword((int) $user['id'], (string) (getBody()['password'] ?? ''));
     $del  = getDB()->prepare('DELETE FROM sesiones WHERE dueno_id = ? AND id != ?');
     $del->execute([$user['id'], sesionActualId()]);
     jsonOk(['message' => 'Se cerraron las demás sesiones.', 'cerradas' => $del->rowCount()]);
@@ -369,13 +375,12 @@ if ($method === 'POST' && $action === 'change-password') {
     $passErr = validarPassword($nueva);
     if ($passErr) jsonError($passErr, 400);
 
+    exigirPassword((int) $user['id'], $actual, 'La contraseña actual no es correcta.');
+
     $db   = getDB();
     $stmt = $db->prepare('SELECT password_hash FROM duenos WHERE id = ?');
     $stmt->execute([$user['id']]);
     $row = $stmt->fetch();
-    if (!$row || !$row['password_hash'] || !password_verify($actual, $row['password_hash'])) {
-        jsonError('La contraseña actual no es correcta.', 401);
-    }
     if (password_verify($nueva, $row['password_hash'])) {
         jsonError('La nueva contraseña debe ser distinta a la actual.', 400);
     }

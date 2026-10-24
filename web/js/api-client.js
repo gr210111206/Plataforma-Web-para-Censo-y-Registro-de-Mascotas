@@ -171,17 +171,20 @@ async function apiGetSesiones() {
   return _fetch(`${API_BASE_URL}/auth?action=sesiones`);
 }
 
-/** Cierra la sesión de OTRO dispositivo de la propia cuenta. */
-async function apiCerrarSesion(id) {
+/** Cierra la sesión de OTRO dispositivo de la propia cuenta (pide la contraseña). */
+async function apiCerrarSesion(id, password) {
   return _fetch(`${API_BASE_URL}/auth?action=cerrar-sesion`, {
     method: 'POST',
-    body: JSON.stringify({ id }),
+    body: JSON.stringify({ id, password }),
   });
 }
 
-/** Cierra todas las sesiones de la cuenta menos la de este dispositivo. */
-async function apiCerrarOtrasSesiones() {
-  return _fetch(`${API_BASE_URL}/auth?action=cerrar-otras-sesiones`, { method: 'POST' });
+/** Cierra todas las sesiones de la cuenta menos la de este dispositivo (pide la contraseña). */
+async function apiCerrarOtrasSesiones(password) {
+  return _fetch(`${API_BASE_URL}/auth?action=cerrar-otras-sesiones`, {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  });
 }
 
 /**
