@@ -3,7 +3,10 @@
  * API: Autenticación
  * POST /api/auth.php?action=register → Crear cuenta de usuario
  * POST /api/auth.php?action=login    → Iniciar sesión (email + password)
- * POST /api/auth.php?action=logout   → Cierra la sesión
+ * POST /api/auth.php?action=logout   → Cierra la sesión de este dispositivo
+ * GET  /api/auth.php?action=sesiones → Sesiones abiertas de la cuenta ("Mis sesiones")
+ * POST /api/auth.php?action=cerrar-sesion          → Cierra una sesión de otro dispositivo (body: id)
+ * POST /api/auth.php?action=cerrar-otras-sesiones  → Cierra todas menos la de este dispositivo
  * GET  /api/auth.php?action=me       → Datos del usuario autenticado
  * POST /api/auth.php?action=update-profile   → Actualiza nombre/correo/teléfono/foto/etc. de la sesión actual
  * POST /api/auth.php?action=change-password  → Cambia la contraseña de la sesión actual (pide la actual)
@@ -165,11 +168,17 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
             jsonError('Todavía no confirmas tu correo. Revisa tu bandeja de entrada (y spam), o pide que te reenviemos el enlace.', 403);
         }
 
-        $token = bin2hex(random_bytes(32));
-        $db->prepare('UPDATE duenos SET token_sesion = ?, token_creado_en = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?')
-           ->execute([$token, $user['id']]);
+        $db->prepare('UPDATE duenos SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?')
+           ->execute([$user['id']]);
+        $token = crearSesion((int) $user['id']);
 
-        jsonOk([
+        // ¿Navegador que nunca había entrado a esta cuenta? → correo de
+        // aviso, pero DESPUÉS de responder, para que el login no espere
+        // al servidor de correo (ver jsonOkYContinuar en helpers.php).
+        $avisar = !empty($user['email'])
+            && registrarDispositivo((int) $user['id'], (string) ($body['device_id'] ?? ''));
+
+        $respuesta = [
             'token'         => $token,
             'id'            => $user['id'],
             'nombre'        => $user['nombre'],
@@ -180,20 +189,80 @@ if ($method === 'POST' && ($action === 'login' || empty($action))) {
             'foto_perfil'   => $user['foto_perfil'],
             'rol'           => $user['rol'],
             'es_superadmin' => (int) $user['es_superadmin'],
-        ]);
+        ];
+
+        if (!$avisar) jsonOk($respuesta);
+        $dispositivo = describirDispositivo($_SERVER['HTTP_USER_AGENT'] ?? '');
+        jsonOkYContinuar($respuesta, fn() => enviarAvisoDispositivoNuevo($user['email'], $user['nombre'], $dispositivo));
     }
 
     jsonError('Por favor ingresa tu correo electrónico y contraseña.', 400);
 }
 
 /* ── POST /api/auth.php?action=logout ───────────────────── */
+/* Cierra solo la sesión de ESTE dispositivo — las demás siguen abiertas. */
 if ($method === 'POST' && $action === 'logout') {
     $token = getAuthToken();
     if ($token) {
-        $db = getDB();
-        $db->prepare('UPDATE duenos SET token_sesion = NULL WHERE token_sesion = ?')->execute([$token]);
+        getDB()->prepare('DELETE FROM sesiones WHERE token_hash = ?')->execute([hashToken($token)]);
     }
     jsonOk(['message' => 'Sesión cerrada.']);
+}
+
+/* ── GET /api/auth.php?action=sesiones ──────────────────── */
+/* "Mis sesiones" en el perfil: dispositivos con sesión abierta en la
+   cuenta actual. Nunca se devuelve el token (ni su hash), solo el id
+   interno de la fila, que no sirve para entrar. */
+if ($method === 'GET' && $action === 'sesiones') {
+    $user = requireAuth();
+    $stmt = getDB()->prepare('
+        SELECT id, dispositivo,
+               TIMESTAMPDIFF(MINUTE, created_at, NOW()) AS minutos_desde_inicio,
+               TIMESTAMPDIFF(MINUTE, ultimo_uso, NOW()) AS minutos_sin_uso
+        FROM sesiones
+        WHERE dueno_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? SECOND)
+        ORDER BY ultimo_uso DESC, id DESC
+    ');
+    $stmt->execute([$user['id'], TOKEN_EXPIRY]);
+    $actual = sesionActualId();
+
+    // Minutos (no fechas) a propósito: los calcula MySQL con su propio
+    // NOW(), así no importa que PHP, MySQL y el navegador estén en zonas
+    // horarias distintas — el navegador solo muestra "hace X".
+    $sesiones = array_map(fn($s) => [
+        'id'                   => (int) $s['id'],
+        'dispositivo'          => $s['dispositivo'],
+        'minutos_desde_inicio' => (int) $s['minutos_desde_inicio'],
+        'minutos_sin_uso'      => (int) $s['minutos_sin_uso'],
+        'actual'               => (int) $s['id'] === $actual,
+    ], $stmt->fetchAll());
+
+    jsonOk(['sesiones' => $sesiones, 'maximo' => MAX_SESIONES]);
+}
+
+/* ── POST /api/auth.php?action=cerrar-sesion ────────────── */
+/* Cierra UNA sesión de otro dispositivo de la propia cuenta (body: id).
+   El "AND dueno_id = ?" es lo que impide cerrar sesiones ajenas
+   cambiando el id. */
+if ($method === 'POST' && $action === 'cerrar-sesion') {
+    $user = requireAuth();
+    $id   = (int) (getBody()['id'] ?? 0);
+    if ($id === sesionActualId()) {
+        jsonError('Para cerrar esta sesión usa "Cerrar sesión" en el menú.', 400);
+    }
+    $del = getDB()->prepare('DELETE FROM sesiones WHERE id = ? AND dueno_id = ?');
+    $del->execute([$id, $user['id']]);
+    if ($del->rowCount() === 0) jsonError('Esa sesión ya no existe.', 404);
+    jsonOk(['message' => 'Sesión cerrada en ese dispositivo.']);
+}
+
+/* ── POST /api/auth.php?action=cerrar-otras-sesiones ────── */
+/* "Cerrar todas las demás": deja abierta solo la de este dispositivo. */
+if ($method === 'POST' && $action === 'cerrar-otras-sesiones') {
+    $user = requireAuth();
+    $del  = getDB()->prepare('DELETE FROM sesiones WHERE dueno_id = ? AND id != ?');
+    $del->execute([$user['id'], sesionActualId()]);
+    jsonOk(['message' => 'Se cerraron las demás sesiones.', 'cerradas' => $del->rowCount()]);
 }
 
 /* ── GET /api/auth.php?action=me ────────────────────────── */
@@ -311,13 +380,13 @@ if ($method === 'POST' && $action === 'change-password') {
         jsonError('La nueva contraseña debe ser distinta a la actual.', 400);
     }
 
-    // Invalida la sesión actual (y cualquier otro token que ya hubiera
-    // circulando, robado o no): tras cambiar la contraseña hay que volver
-    // a iniciar sesión. Antes el token viejo seguía funcionando hasta por
-    // 30 días más, aun después de que la persona "aseguró" su cuenta.
+    // Cierra TODAS las sesiones de la cuenta, incluida la actual (y
+    // cualquier token que ya hubiera circulando, robado o no): tras cambiar
+    // la contraseña hay que volver a iniciar sesión en cada dispositivo.
     $hash = password_hash($nueva, PASSWORD_DEFAULT);
-    $db->prepare('UPDATE duenos SET password_hash = ?, token_sesion = NULL, token_creado_en = NULL WHERE id = ?')
+    $db->prepare('UPDATE duenos SET password_hash = ? WHERE id = ?')
        ->execute([$hash, $user['id']]);
+    cerrarSesionesDe((int) $user['id']);
     jsonOk(['message' => 'Contraseña actualizada correctamente. Vuelve a iniciar sesión.']);
 }
 
@@ -384,7 +453,7 @@ if ($method === 'POST' && $action === 'restablecer-password') {
 
     // La vigencia se compara DENTRO de MySQL (reset_token_expira > NOW()),
     // nunca con time()/strtotime() de PHP — mismo motivo que
-    // bloqueado_hasta/token_creado_en (ver sus comentarios arriba): PHP y
+    // bloqueado_hasta (ver su comentario arriba): PHP y
     // MySQL pueden tener zonas horarias distintas en el mismo servidor.
     $db   = getDB();
     $stmt = $db->prepare('
@@ -405,10 +474,10 @@ if ($method === 'POST' && $action === 'restablecer-password') {
     $db->prepare('
         UPDATE duenos
         SET password_hash = ?, reset_token = NULL, reset_token_expira = NULL,
-            token_sesion = NULL, token_creado_en = NULL,
             intentos_fallidos = 0, bloqueado_hasta = NULL
         WHERE id = ?
     ')->execute([$hash, $user['id']]);
+    cerrarSesionesDe((int) $user['id']);
 
     jsonOk(['message' => 'Contraseña actualizada. Ya puedes iniciar sesión.']);
 }

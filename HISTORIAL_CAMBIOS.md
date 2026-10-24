@@ -2,6 +2,66 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-24] — Varias sesiones por cuenta (hasta 5), "Sesiones activas" en Mi perfil y correo por dispositivo nuevo
+
+### 🤔 Contexto
+La sesión vivía en una sola columna (`duenos.token_sesion`), así que solo cabía **una sesión por cuenta**: entrar desde el celular cerraba la sesión de la computadora en cuanto esta hacía cualquier cosa. El usuario lo señaló como molesto (sobre todo para admin y asistentes, que trabajan en ventanilla y en campañas) y pidió algo como Discord: varias sesiones, ver en el perfil desde qué dispositivos se entró y un aviso por correo. De las 4 ideas propuestas eligió estas 3. La 4ª (que las sesiones de admin caduquen tras unas horas sin uso) quedó fuera por ahora. Tampoco se muestra la ubicación por IP a propósito: habría que mandar la IP de cada persona a un servicio externo (dato personal, Ley Federal de Protección de Datos Personales) y en celular casi siempre sale mal.
+
+### 🔧 Cambios
+- **Base de datos — migración `0003_2026-10-24_sesiones_multiples.sql`** (también reflejada en `schema.sql`):
+  - Nueva tabla `sesiones`: una fila por dispositivo (`dueno_id`, `token_hash`, `dispositivo`, `created_at`, `ultimo_uso`). El token **ya no se guarda tal cual**, solo su hash SHA-256, así que si alguien copiara la base de datos no podría entrar con esos datos (OWASP A04/A07).
+  - Nueva tabla `dispositivos_conocidos` (`dueno_id`, `dispositivo_hash`): navegadores que ya entraron alguna vez a cada cuenta. No se borra al cerrar sesión; si se borrara, cada login después de un logout parecería "nuevo".
+  - Se eliminan `duenos.token_sesion`, `duenos.token_creado_en` y su índice. ⚠️ Por eso, al aplicarla se cierran todas las sesiones abiertas.
+- **`web/api/config/helpers.php`**:
+  - `requireAuth()` ahora busca la sesión en `sesiones` por el hash del token. La caducidad de 30 días (`TOKEN_EXPIRY`, desde el inicio de sesión) sigue calculándose dentro de MySQL, y `ultimo_uso` se actualiza como máximo cada 5 minutos.
+  - Funciones nuevas: `hashToken()`, `sesionActualId()`, `crearSesion()` (límite `MAX_SESIONES = 5`; al abrir la sexta se cierra la que lleva más tiempo sin usarse), `cerrarSesionesDe()`, `describirDispositivo()` ("Chrome en Windows", "Safari en iPhone"… sacado del User-Agent; no se guarda IP), `registrarDispositivo()` y `enviarAvisoDispositivoNuevo()`.
+  - `jsonOkYContinuar()`: responde al navegador y **después** manda el correo, para que el login no espere al SMTP.
+- **`web/api/auth.php`**:
+  - El login usa `crearSesion()` y manda el aviso por correo solo si el navegador es nuevo **y** la cuenta ya tenía otros registrados. Así, el primer login de una cuenta, o el primero después de aplicar la migración, no manda correo a nadie.
+  - `logout` ahora cierra solo la sesión de ese dispositivo.
+  - Endpoints nuevos: `GET ?action=sesiones`, `POST ?action=cerrar-sesion` (solo sesiones de la propia cuenta; no deja cerrar la actual por esta vía) y `POST ?action=cerrar-otras-sesiones`.
+  - Cambiar o recuperar la contraseña sigue cerrando **todas** las sesiones de la cuenta.
+- **`web/api/usuarios.php`**: desactivar/activar una cuenta y dar/quitar el rol admin ahora usan `cerrarSesionesDe()` en vez de vaciar `token_sesion`. El efecto es el mismo: esa cuenta queda fuera en todos sus dispositivos.
+- **`web/js/api-client.js`**: `_getDeviceId()` (identificador aleatorio del navegador en `localStorage`, `padron_device_id`) se manda en el login. Funciones nuevas: `apiGetSesiones()`, `apiCerrarSesion()` y `apiCerrarOtrasSesiones()`.
+- **`web/js/mis-sesiones.js`** (nuevo): tarjeta "Sesiones activas", compartida por los 3 paneles. Lista los dispositivos (ícono de celular o computadora), marca "Esta sesión" y muestra "Usada hace X · inició hace X" (los minutos los calcula MySQL, para evitar el problema de zonas horarias). Tiene un botón "Cerrar" en cada sesión y "Cerrar todas las demás sesiones". Se carga al abrir Mi perfil, no al cargar la página.
+- **`web/dashboard.html`, `web/admin.html`, `web/asistente.html`**: tarjeta `#mis-sesiones` debajo de "Cambiar contraseña" y `<script src="js/mis-sesiones.js">`.
+
+### 🔎 Verificado
+- La migración 0003 se probó sobre una copia **desechable** del `schema.sql` anterior, en MariaDB 10.4 local: corre sin errores, elimina las columnas viejas, crea las 2 tablas y no borra ninguna cuenta.
+- API probada de punta a punta, con un servidor PHP temporal, contra otra base desechable creada con el `schema.sql` nuevo y un SMTP inexistente, para que no saliera ningún correo real. Resultados:
+  1. Entrar desde el celular ya **no** cierra la sesión de la PC.
+  2. El límite de 5 se respeta.
+  3. El token no aparece en claro en la base de datos.
+  4. No se pueden cerrar sesiones de otra cuenta, ni la actual por id.
+  5. "Cerrar" y "Cerrar todas las demás" funcionan.
+  6. El logout cierra solo ese dispositivo.
+  7. Una sesión de 31 días se rechaza y se borra.
+  8. Cambiar la contraseña cierra todo.
+  9. Hubo exactamente 4 intentos de correo, los 4 de dispositivos nuevos y ninguno de dispositivos conocidos, y el login respondió en ~300 ms sin esperar al correo.
+- Tarjeta revisada con capturas de Chrome sin interfaz en el panel ciudadano y el panel admin (1280 px) y en el del asistente a 390 px (celular). Los botones "Cerrar" y "Cerrar todas las demás" probados con clic real en la página.
+- `php -l` y `node --check` sin errores. La base local `remac_db` **no se tocó**.
+- No se probó: el diseño del correo de aviso en un cliente de correo real, porque en pruebas no se mandan correos reales.
+
+### ⚠️ Pendiente — orden obligatorio
+1. **Primero**, correr `web/database/migrations/0003_2026-10-24_sesiones_multiples.sql` en phpMyAdmin (local `remac_db` y producción). Sin la migración, el código nuevo no deja iniciar sesión, porque la tabla `sesiones` no existe.
+2. **Después**, desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit). Todos tendrán que volver a iniciar sesión una vez.
+
+### 📂 Archivos creados
+- `web/database/migrations/0003_2026-10-24_sesiones_multiples.sql`
+- `web/js/mis-sesiones.js`
+
+### 📂 Archivos modificados
+- `web/database/schema.sql`
+- `web/database/migrations/README.md`
+- `web/api/config/helpers.php`
+- `web/api/auth.php`
+- `web/api/usuarios.php`
+- `web/js/api-client.js`
+- `web/dashboard.html`
+- `web/admin.html`
+- `web/asistente.html`
+- `CLAUDE.md`
+
 ## 📅 [2026-10-23] — Se quita el cuadro naranja detrás del logo (Panel Admin y login)
 
 ### 🤔 Contexto

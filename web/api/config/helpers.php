@@ -61,6 +61,32 @@ function jsonOk(mixed $data, int $code = 200): never {
     exit;
 }
 
+/* Igual que jsonOk(), pero el script sigue corriendo DESPUÉS de que el
+   navegador ya recibió la respuesta — para trabajo lento que la persona
+   no tiene por qué esperar (ej. mandar un correo por SMTP al iniciar
+   sesión). Si el servidor no permite cortar la conexión antes
+   (fastcgi_finish_request no existe), igual funciona: solo tarda lo que
+   tarde $despues en terminar, como antes. */
+function jsonOkYContinuar(mixed $data, callable $despues): never {
+    ignore_user_abort(true);
+    $json = json_encode(['ok' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
+    http_response_code(200);
+    header('Content-Length: ' . strlen($json));
+    header('Connection: close');
+    echo $json;
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        while (ob_get_level() > 0) ob_end_flush();
+        flush();
+    }
+    // Un error aquí ya no puede llegarle al navegador (la respuesta ya
+    // salió) — solo se registra, para que el manejador global no intente
+    // imprimir un segundo JSON.
+    try { $despues(); } catch (Throwable $e) { error_log('jsonOkYContinuar(): ' . $e->getMessage()); }
+    exit;
+}
+
 function jsonError(string $msg, int $code = 400): never {
     http_response_code($code);
     echo json_encode(['ok' => false, 'error' => $msg], JSON_UNESCAPED_UNICODE);
@@ -97,31 +123,158 @@ function requireAuth(): array {
     if (!$token) jsonError('No autorizado. Falta el token.', 401);
 
     // El "¿ya expiró?" se calcula DENTRO de MySQL (mismo motivo que el
-    // bloqueo de login en auth.php): comparar token_creado_en con
+    // bloqueo de login en auth.php): comparar created_at con
     // time()/strtotime() de PHP depende de que PHP y MySQL coincidan en
     // zona horaria, y en este mismo proyecto no coinciden (PHP quedó en
-    // Europe/Berlin, MySQL en la del sistema). Con TOKEN_EXPIRY de 30
-    // días un desfase de unas horas casi no se nota, pero es el mismo
-    // bug de fondo — se corrige aquí también en vez de dejarlo latente.
+    // Europe/Berlin, MySQL en la del sistema).
     $db   = getDB();
     $stmt = $db->prepare('
-        SELECT id, nombre, email, telefono, direccion, colonia, foto_perfil, rol, es_superadmin,
-               (token_creado_en IS NOT NULL AND token_creado_en < DATE_SUB(NOW(), INTERVAL ? SECOND)) AS token_expirado
-        FROM duenos WHERE token_sesion = ? AND activo = 1
+        SELECT d.id, d.nombre, d.email, d.telefono, d.direccion, d.colonia, d.foto_perfil, d.rol, d.es_superadmin,
+               s.id AS sesion_id,
+               (s.created_at < DATE_SUB(NOW(), INTERVAL ? SECOND)) AS token_expirado,
+               (s.ultimo_uso < DATE_SUB(NOW(), INTERVAL 5 MINUTE)) AS actualizar_uso
+        FROM sesiones s
+        JOIN duenos d ON d.id = s.dueno_id
+        WHERE s.token_hash = ? AND d.activo = 1
     ');
-    $stmt->execute([TOKEN_EXPIRY, $token]);
+    $stmt->execute([TOKEN_EXPIRY, hashToken($token)]);
     $user = $stmt->fetch();
 
     if (!$user) jsonError('Token inválido o expirado.', 401);
 
     if ($user['token_expirado']) {
-        $db->prepare('UPDATE duenos SET token_sesion = NULL, token_creado_en = NULL WHERE id = ?')->execute([$user['id']]);
+        $db->prepare('DELETE FROM sesiones WHERE id = ?')->execute([$user['sesion_id']]);
         jsonError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
     }
 
+    // "Último uso" para la lista de "Mis sesiones" — como máximo una
+    // escritura cada 5 minutos por sesión, no una en cada request.
+    if ($user['actualizar_uso']) {
+        $db->prepare('UPDATE sesiones SET ultimo_uso = NOW() WHERE id = ?')->execute([$user['sesion_id']]);
+    }
+
+    sesionActualId((int) $user['sesion_id']);
     $user['es_superadmin'] = (int) $user['es_superadmin']; // normaliza a 0|1 (PDO puede devolver string)
-    unset($user['token_expirado']);
+    unset($user['token_expirado'], $user['actualizar_uso'], $user['sesion_id']);
     return $user;
+}
+
+/* ── Sesiones (una fila por dispositivo, tabla `sesiones`) ──
+   Antes la sesión era UNA columna en duenos (token_sesion): iniciar
+   sesión en el celular cerraba la de la computadora. Ahora cada
+   dispositivo tiene su propia sesión, hasta MAX_SESIONES por cuenta. */
+const MAX_SESIONES = 5;
+
+/* El token nunca se guarda tal cual en la BD, solo su SHA-256: si alguien
+   llegara a copiar la base de datos, esos hashes no sirven para entrar.
+   (SHA-256 sin sal basta aquí — a diferencia de una contraseña, el token
+   son 32 bytes aleatorios, imposibles de adivinar por fuerza bruta.) */
+function hashToken(string $token): string {
+    return hash('sha256', $token);
+}
+
+/* Id de la sesión con la que se hizo el request actual — lo fija
+   requireAuth(); lo usa "Mis sesiones" para marcar "esta sesión". */
+function sesionActualId(?int $id = null): ?int {
+    static $actual = null;
+    if ($id !== null) $actual = $id;
+    return $actual;
+}
+
+/* Crea una sesión nueva para la cuenta y devuelve el token (el único
+   momento en que existe en claro). Si con esta ya son más de
+   MAX_SESIONES, se cierran las que llevan más tiempo sin usarse. */
+function crearSesion(int $duenoId): string {
+    $db    = getDB();
+    $token = bin2hex(random_bytes(32));
+    $db->prepare('INSERT INTO sesiones (dueno_id, token_hash, dispositivo) VALUES (?, ?, ?)')
+       ->execute([$duenoId, hashToken($token), describirDispositivo($_SERVER['HTTP_USER_AGENT'] ?? '')]);
+
+    $stmt = $db->prepare('SELECT id FROM sesiones WHERE dueno_id = ? ORDER BY ultimo_uso DESC, id DESC');
+    $stmt->execute([$duenoId]);
+    $sobrantes = array_slice($stmt->fetchAll(PDO::FETCH_COLUMN), MAX_SESIONES);
+    if ($sobrantes) {
+        $marcas = implode(',', array_fill(0, count($sobrantes), '?'));
+        $db->prepare("DELETE FROM sesiones WHERE id IN ($marcas)")->execute($sobrantes);
+    }
+    return $token;
+}
+
+/* Cierra TODAS las sesiones de una cuenta (cambio/recuperación de
+   contraseña, desactivar la cuenta, cambio de rol). */
+function cerrarSesionesDe(int $duenoId): void {
+    getDB()->prepare('DELETE FROM sesiones WHERE dueno_id = ?')->execute([$duenoId]);
+}
+
+/* "Chrome en Windows", "Safari en iPhone", etc. — solo para que la
+   persona reconozca sus dispositivos en "Mis sesiones" y en el correo de
+   aviso. No es un dato de seguridad (el User-Agent lo puede escribir
+   cualquiera), y no se guarda la IP ni la ubicación a propósito: son
+   datos personales que no hacen falta para esto. */
+function describirDispositivo(string $ua): string {
+    if ($ua === '') return 'Dispositivo desconocido';
+
+    // El orden importa: Edge/Opera/Samsung también dicen "Chrome", y
+    // Chrome también dice "Safari".
+    $navegadores = [
+        'Edg/' => 'Edge', 'OPR/' => 'Opera', 'SamsungBrowser' => 'Samsung Internet',
+        'Firefox/' => 'Firefox', 'FxiOS' => 'Firefox', 'CriOS' => 'Chrome',
+        'Chrome/' => 'Chrome', 'Safari/' => 'Safari',
+    ];
+    $navegador = 'Navegador';
+    foreach ($navegadores as $marca => $nombre) {
+        if (str_contains($ua, $marca)) { $navegador = $nombre; break; }
+    }
+
+    $sistemas = [
+        'iPhone' => 'iPhone', 'iPad' => 'iPad', 'Android' => 'Android',
+        'Windows' => 'Windows', 'Macintosh' => 'Mac', 'CrOS' => 'Chromebook', 'Linux' => 'Linux',
+    ];
+    $sistema = '';
+    foreach ($sistemas as $marca => $nombre) {
+        if (str_contains($ua, $marca)) { $sistema = $nombre; break; }
+    }
+
+    return $sistema ? "$navegador en $sistema" : $navegador;
+}
+
+/* Recuerda este navegador para la cuenta y dice si hay que avisar por
+   correo. El navegador manda un identificador aleatorio que guarda en
+   localStorage (padron_device_id, api-client.js); aquí solo se guarda su
+   hash, en una tabla aparte de `sesiones` porque esta NO se borra al
+   cerrar sesión (si no, cada login después de un logout parecería un
+   dispositivo nuevo).
+   Devuelve true solo si es un navegador nuevo Y la cuenta ya tenía otros
+   registrados — así el primer login de una cuenta (o el primero después
+   de aplicar la migración 0003) no manda correo a nadie. */
+function registrarDispositivo(int $duenoId, string $deviceId): bool {
+    if (!preg_match('/^[a-zA-Z0-9-]{16,64}$/', $deviceId)) return false;
+
+    $db   = getDB();
+    $stmt = $db->prepare('SELECT COUNT(*) FROM dispositivos_conocidos WHERE dueno_id = ?');
+    $stmt->execute([$duenoId]);
+    $yaConocidos = (int) $stmt->fetchColumn();
+
+    $ins = $db->prepare('INSERT IGNORE INTO dispositivos_conocidos (dueno_id, dispositivo_hash) VALUES (?, ?)');
+    $ins->execute([$duenoId, hashToken($deviceId)]);
+
+    return $ins->rowCount() === 1 && $yaConocidos > 0;
+}
+
+/* Correo "se inició sesión desde un dispositivo nuevo". No incluye la
+   hora a propósito: PHP y MySQL tienen zonas horarias distintas en el
+   servidor (ver requireAuth), y el propio correo ya trae la hora en que
+   llegó. */
+function enviarAvisoDispositivoNuevo(string $email, string $nombre, string $dispositivo): void {
+    $cuerpo = '
+        <p>Hola ' . htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') . ',</p>
+        <p>Se acaba de iniciar sesión en tu cuenta del Padrón Municipal de Mascotas de El Grullo desde un dispositivo nuevo:</p>
+        <p style="font-size:16px; font-weight:bold; margin:18px 0;">' . htmlspecialchars($dispositivo, ENT_QUOTES, 'UTF-8') . '</p>
+        <p><strong>Si fuiste tú</strong>, no tienes que hacer nada.</p>
+        <p><strong>Si no fuiste tú</strong>, cambia tu contraseña cuanto antes: al hacerlo se cierran todas las sesiones abiertas de tu cuenta. También puedes ver y cerrar cada sesión en <em>Mi perfil → Sesiones activas</em>.</p>
+        ' . botonCorreo(BASE_URL . '/login.html', 'Ir a mi cuenta') . '
+    ';
+    enviarCorreo($email, 'Nuevo inicio de sesión en tu cuenta — Padrón de Mascotas El Grullo', $cuerpo);
 }
 
 function requireAdmin(): array {

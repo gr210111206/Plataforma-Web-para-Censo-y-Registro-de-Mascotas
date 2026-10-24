@@ -25,8 +25,6 @@ CREATE TABLE IF NOT EXISTS duenos (
   rol           ENUM('ciudadano','admin','asistente') NOT NULL DEFAULT 'ciudadano',
   es_superadmin TINYINT(1)   NOT NULL DEFAULT 0, -- solo se activa a mano en BD, ver CLAUDE.md; permite otorgar el rol admin desde el panel
   activo        TINYINT(1)   NOT NULL DEFAULT 1,
-  token_sesion  VARCHAR(64)   DEFAULT NULL,
-  token_creado_en TIMESTAMP  NULL DEFAULT NULL,
   intentos_fallidos TINYINT UNSIGNED NOT NULL DEFAULT 0, -- login: se resetea en cada intento correcto
   bloqueado_hasta   DATETIME NULL DEFAULT NULL,           -- login: bloqueo temporal tras 5 intentos fallidos
   reset_token        VARCHAR(64) DEFAULT NULL,            -- recuperación de contraseña: token aleatorio de un solo uso, enviado por correo
@@ -37,10 +35,41 @@ CREATE TABLE IF NOT EXISTS duenos (
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email),
   INDEX idx_rol   (rol),
-  INDEX idx_token_sesion (token_sesion), -- se consulta en CADA request autenticado (requireAuth)
   INDEX idx_colonia (colonia),           -- filtrado en mascotas.php y agrupado en stats.php
   INDEX idx_reset_token (reset_token),   -- se consulta en restablecer-password
   INDEX idx_verificacion_token (verificacion_token) -- se consulta en verificar-email
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Sesiones abiertas (una fila por dispositivo) ──
+-- Hasta MAX_SESIONES (5, ver helpers.php) por cuenta; al abrir la sexta se
+-- cierra la que lleva más tiempo sin usarse. El token NUNCA se guarda tal
+-- cual: solo su hash SHA-256 (si alguien copia la BD, no puede entrar con
+-- esos hashes). Caduca TOKEN_EXPIRY después de created_at.
+CREATE TABLE IF NOT EXISTS sesiones (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  dueno_id    INT UNSIGNED NOT NULL,
+  token_hash  CHAR(64)     NOT NULL,
+  dispositivo VARCHAR(100) NOT NULL DEFAULT 'Dispositivo desconocido', -- ej. "Chrome en Windows", sacado del User-Agent
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ultimo_uso  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,         -- se actualiza como máximo cada 5 min (requireAuth)
+  UNIQUE KEY uq_token_hash (token_hash), -- se consulta en CADA request autenticado (requireAuth)
+  INDEX idx_sesiones_dueno (dueno_id),
+  FOREIGN KEY fk_sesiones_dueno (dueno_id) REFERENCES duenos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Navegadores que ya entraron alguna vez a cada cuenta ──
+-- Para el correo "se inició sesión desde un dispositivo nuevo": cada
+-- navegador guarda un identificador aleatorio en localStorage
+-- (padron_device_id, api-client.js) y aquí solo se guarda su hash. A
+-- diferencia de `sesiones`, NO se borra al cerrar sesión — si no, cada
+-- login después de un logout parecería "nuevo".
+CREATE TABLE IF NOT EXISTS dispositivos_conocidos (
+  id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  dueno_id         INT UNSIGNED NOT NULL,
+  dispositivo_hash CHAR(64)     NOT NULL,
+  created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_dueno_dispositivo (dueno_id, dispositivo_hash),
+  FOREIGN KEY fk_dispositivos_dueno (dueno_id) REFERENCES duenos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ── Tabla de mascotas ────────────────────────────

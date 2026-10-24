@@ -41,6 +41,26 @@ function _getToken() {
   } catch { return null; }
 }
 
+/**
+ * Identificador aleatorio de ESTE navegador, para el correo de "se inició
+ * sesión desde un dispositivo nuevo" (el servidor solo guarda su hash, ver
+ * registrarDispositivo() en helpers.php). Vive en localStorage aparte de la
+ * sesión, así que sobrevive a cerrar sesión. Si el navegador no deja usar
+ * localStorage (modo privado estricto), se manda vacío y simplemente no
+ * hay aviso.
+ */
+function _getDeviceId() {
+  try {
+    let id = localStorage.getItem('padron_device_id');
+    if (!id) {
+      id = (crypto.randomUUID ? crypto.randomUUID()
+        : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''));
+      localStorage.setItem('padron_device_id', id);
+    }
+    return id;
+  } catch { return ''; }
+}
+
 function _authHeaders() {
   const token = _getToken();
   const headers = { 'Content-Type': 'application/json' };
@@ -123,7 +143,7 @@ async function apiLoginUser(email, password, remember = false) {
   const recaptcha_token = await _getRecaptchaToken('login');
   const data = await _fetch(`${API_BASE_URL}/auth?action=login`, {
     method: 'POST',
-    body: JSON.stringify({ email, password, recaptcha_token }),
+    body: JSON.stringify({ email, password, recaptcha_token, device_id: _getDeviceId() }),
   });
   const session = JSON.stringify({
     token:         data.token,
@@ -144,7 +164,28 @@ async function apiLoginUser(email, password, remember = false) {
 }
 
 /**
- * Cerrar sesión
+ * "Mis sesiones": dispositivos con sesión abierta en la cuenta actual.
+ * @returns {Promise<{sesiones: Array, maximo: number}>}
+ */
+async function apiGetSesiones() {
+  return _fetch(`${API_BASE_URL}/auth?action=sesiones`);
+}
+
+/** Cierra la sesión de OTRO dispositivo de la propia cuenta. */
+async function apiCerrarSesion(id) {
+  return _fetch(`${API_BASE_URL}/auth?action=cerrar-sesion`, {
+    method: 'POST',
+    body: JSON.stringify({ id }),
+  });
+}
+
+/** Cierra todas las sesiones de la cuenta menos la de este dispositivo. */
+async function apiCerrarOtrasSesiones() {
+  return _fetch(`${API_BASE_URL}/auth?action=cerrar-otras-sesiones`, { method: 'POST' });
+}
+
+/**
+ * Cerrar sesión (solo la de este dispositivo)
  */
 async function apiLogout() {
   await _fetch(`${API_BASE_URL}/auth?action=logout`, { method: 'POST' });

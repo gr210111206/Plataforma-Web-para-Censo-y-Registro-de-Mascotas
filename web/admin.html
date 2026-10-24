@@ -2614,6 +2614,9 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           <div class="form-hint" style="margin-bottom:16px;">Debe incluir al menos una letra y un número.</div>
           <button class="btn btn-primary" onclick="changePassword()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Actualizar contraseña</button>
         </div>
+
+        <!-- Sesiones activas (lo llena js/mis-sesiones.js) -->
+        <div id="mis-sesiones" style="background:white; border:1px solid var(--gray-4); border-radius:var(--radius-lg); padding:24px; margin-top:20px;"></div>
       </div>
     </div>
 
@@ -2702,6 +2705,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="js/api-client.js"></script>
+<script src="js/mis-sesiones.js"></script>
 <!-- jsPDF/QRCode con defer: solo los necesitan "Ver acta"/"QR" en
      Seguimiento, mucho después en el flujo — si tardan o fallan en
      cargar desde el CDN, ya no bloquean el resto del panel. -->

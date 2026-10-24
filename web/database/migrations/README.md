@@ -26,3 +26,4 @@ Igual que siempre: copiar el contenido del archivo y correrlo en la pestaña SQL
 |---|---|---|
 | 0001 | `0001_2026-10-02_add_email_verificacion.sql` | Agrega `duenos.email_verificado` / `duenos.verificacion_token` (verificación de correo al autoregistrarse). |
 | 0002 | `0002_2026-10-04_add_articulos_imagen.sql` | Agrega `articulos.imagen` (imagen de portada de los Tips de salud animal). |
+| 0003 | `0003_2026-10-24_sesiones_multiples.sql` | Crea `sesiones` (hasta 5 por cuenta, token guardado como hash) y `dispositivos_conocidos` (aviso por correo de dispositivo nuevo); elimina `duenos.token_sesion`/`token_creado_en`. Cierra todas las sesiones abiertas al aplicarse. **Pendiente en producción.** |

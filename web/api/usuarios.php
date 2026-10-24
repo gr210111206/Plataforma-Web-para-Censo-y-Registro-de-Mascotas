@@ -110,7 +110,8 @@ if ($method === 'PUT' && $id) {
     if (!$cuenta) jsonError('Cuenta no encontrada.', 404);
 
     $activo = (int)(bool)$body['activo'];
-    $db->prepare('UPDATE duenos SET activo = ?, token_sesion = NULL WHERE id = ?')->execute([$activo, $id]);
+    $db->prepare('UPDATE duenos SET activo = ? WHERE id = ?')->execute([$activo, $id]);
+    cerrarSesionesDe($id);
 
     registrarBitacora($yo, $activo ? 'cuenta_activada' : 'cuenta_desactivada',
         "{$cuenta['nombre']} (id {$cuenta['id']}, {$cuenta['rol']})");
@@ -254,7 +255,7 @@ if ($method === 'POST' && $action === 'promover-admin') {
     // petición cambió la cuenta justo en medio (doble clic, otra pestaña),
     // rowCount() da 0 en vez de promover una fila que ya no cumple.
     $upd = $db->prepare("
-        UPDATE duenos SET rol = 'admin', token_sesion = NULL
+        UPDATE duenos SET rol = 'admin'
         WHERE id = ? AND rol IN ('ciudadano', 'asistente') AND activo = 1
           AND email IS NOT NULL AND password_hash IS NOT NULL
     ");
@@ -262,6 +263,7 @@ if ($method === 'POST' && $action === 'promover-admin') {
     if ($upd->rowCount() === 0) {
         jsonError('La cuenta cambió mientras se procesaba. Intenta de nuevo.', 409);
     }
+    cerrarSesionesDe($id);
 
     // El cambio de rol más sensible del sistema — siempre queda registrado
     // quién lo hizo, a quién, y desde qué rol venía.
@@ -310,13 +312,14 @@ if ($method === 'POST' && $action === 'revocar-admin') {
     }
 
     $upd = $db->prepare("
-        UPDATE duenos SET rol = 'ciudadano', token_sesion = NULL
+        UPDATE duenos SET rol = 'ciudadano'
         WHERE id = ? AND rol = 'admin' AND es_superadmin = 0
     ");
     $upd->execute([$id]);
     if ($upd->rowCount() === 0) {
         jsonError('La cuenta cambió mientras se procesaba. Intenta de nuevo.', 409);
     }
+    cerrarSesionesDe($id);
 
     registrarBitacora($yo, 'rol_revocado_admin',
         "{$cuenta['nombre']} (id {$cuenta['id']}) — ahora: ciudadano");
