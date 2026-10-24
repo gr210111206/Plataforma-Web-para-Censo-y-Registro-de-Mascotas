@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-24c] — El navegador ya no usa copias viejas de los .js/.css/.html
+
+### 🤔 Contexto
+Después de desplegar las sesiones múltiples, el usuario vio en el panel admin **de escritorio** "No se pudieron cargar las sesiones: apiGetSesiones is not defined", y en el celular funcionaba bien. La causa: su navegador de escritorio seguía usando una copia guardada de `api-client.js` anterior a ese día, sin la función nueva, junto con el `mis-sesiones.js` nuevo, que nunca había visto. El sitio no mandaba ninguna regla de caché, así que cada navegador decidía por su cuenta cuánto tiempo reusar sus copias. Iba a pasar con cualquier cambio futuro a un `.js`, y un ciudadano no sabe que tiene que dar Ctrl+F5.
+
+### 🔧 Cambios
+- **`web/.htaccess`**: `Cache-Control: no-cache` para `.html`, `.js` y `.css`, con `<FilesMatch>` y `mod_headers`, que ya se usaba ahí. El navegador sigue guardando su copia, pero antes de usarla pregunta al servidor. Si el archivo no cambió, Apache responde `304` sin reenviarlo, usando el ETag que ya mandaba. Las imágenes no se tocaron: siguen reusándose sin preguntar.
+
+### 🔎 Verificado
+- En el Apache local (XAMPP): `api-client.js`, `styles.css` y `admin.html` responden con `Cache-Control: no-cache`, `favicon-escudo.png` no lo lleva, y una segunda petición de `api-client.js` con su ETag devuelve `304`.
+- Pendiente: desplegar. Quien ya tenga copias viejas guardadas necesita **un último** Ctrl+F5 (o esperar a que caduquen solas). A partir de ahí ya no hace falta.
+
+### 📂 Archivos modificados
+- `web/.htaccess`
+
 ## 📅 [2026-10-24b] — Cerrar una sesión (o "todas las demás") ahora pide la contraseña
 
 ### 🤔 Contexto

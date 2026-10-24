@@ -34,6 +34,19 @@ Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 # hace grecaptcha.execute() son todos a dominios de Google.
 Header always set Content-Security-Policy-Report-Only "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com; frame-src https://www.google.com; connect-src 'self' https://www.google.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
+# Caché del navegador para HTML/JS/CSS: "no-cache" NO significa "no
+# guardar" — el navegador sí guarda su copia, pero antes de usarla le
+# pregunta al servidor si cambió (con el ETag/Last-Modified que Apache ya
+# manda). Si no cambió, el servidor responde 304 sin reenviar el archivo.
+# Antes no había ninguna regla y cada navegador decidía solo cuánto
+# tiempo reusar su copia: el 2026-10-24 el panel admin en escritorio
+# mostró "apiGetSesiones is not defined" porque usaba un api-client.js
+# viejo guardado junto con el mis-sesiones.js nuevo. Las imágenes no
+# entran aquí — esas sí pueden reusarse sin preguntar.
+<FilesMatch "\.(html|js|css)$">
+  Header set Cache-Control "no-cache"
+</FilesMatch>
+
 # Redirección forzada a HTTPS — SOLO en producción, nunca en localhost.
 # Activado el 2026-09-21: SSL confirmado activo en cPanel (mascota-elgrullo.com)
 # y verificado en vivo con curl (200 OK, certificado válido) antes de activar esto.
