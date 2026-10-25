@@ -205,3 +205,257 @@ function filtrarPorEstatus(estatus) {
   filterSeguimiento();
 }
 
+/* ══════════════════════════════════════════════════ */
+/*  REGISTROS NUEVOS EN EL TIEMPO (gráfica de líneas)  */
+/* ══════════════════════════════════════════════════ */
+/* Mascotas y ciudadanos dados de alta por día (7/30 días) o por mes
+   (12 meses), de stats.php?serie=registros. SVG hecho a mano, igual que
+   las demás gráficas del panel (sin librerías). Reglas de diseño: una
+   sola escala (los dos son conteos), líneas de 2px, cuadrícula de 1px
+   tenue, leyenda con el total del periodo, tooltip con TODAS las series
+   en el día señalado, y la misma información en "Ver datos en tabla". */
+const REG_SERIES = [
+  { key: 'mascotas',   nombre: 'Mascotas',   color: 'var(--serie-mascotas)' },
+  { key: 'ciudadanos', nombre: 'Ciudadanos', color: 'var(--serie-ciudadanos)' },
+];
+const REG_SUBTITULO = { semana: 'últimos 7 días', mes: 'últimos 30 días', ano: 'últimos 12 meses' };
+const REG_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const REG_DIAS  = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const SVG_NS = 'http://www.w3.org/2000/svg';
+let regDatos = null;
+let regCargaId = 0;
+
+// clave = 'YYYY-MM-DD' (por día) o 'YYYY-MM' (por mes). Se arma la fecha
+// con sus partes (no con new Date('YYYY-MM-DD'), que la interpreta en UTC
+// y en México la recorre un día hacia atrás).
+function regEtiqueta(clave, larga) {
+  const [y, m, d] = clave.split('-').map(Number);
+  if (!d) return larga ? `${REG_MESES[m - 1]} ${y}` : REG_MESES[m - 1];
+  const dia = REG_DIAS[new Date(y, m - 1, d).getDay()];
+  return larga ? `${dia} ${d} ${REG_MESES[m - 1]} ${y}` : `${d} ${REG_MESES[m - 1]}`;
+}
+
+function regSvg(tag, attrs, padre) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (padre) padre.appendChild(el);
+  return el;
+}
+
+// Línea corta del color de la serie (leyenda y tooltip) — el texto de al
+// lado va en color de texto normal, nunca en el color de la serie.
+function regKey(color) {
+  const key = document.createElement('span');
+  key.className = 'registros-key';
+  key.style.background = color;
+  return key;
+}
+
+// Tope "redondo" del eje Y y su paso: 0-1-2-3-4, 0-5-10-15-20, 0-20-40…
+function regEscala(max) {
+  if (max <= 4) return { tope: 4, paso: 1 };
+  const bruto = max / 4;
+  const pot = 10 ** Math.floor(Math.log10(bruto));
+  const paso = [1, 2, 5, 10].map(f => f * pot).find(p => p >= bruto);
+  return { tope: Math.ceil(max / paso) * paso, paso };
+}
+
+function renderRegistros() {
+  const cont = document.getElementById('registros-grafica');
+  if (!cont || !regDatos) return;
+  const W = cont.clientWidth;
+  if (W < 60) return; // pestaña oculta: el ResizeObserver vuelve a llamar al mostrarse
+  const H = cont.clientHeight;
+  const { puntos, totales, periodo } = regDatos;
+  const n = puntos.length;
+  const m = { t: 10, r: 14, b: 26, l: 34 };
+  const anchoP = W - m.l - m.r, altoP = H - m.t - m.b;
+  const maximo = Math.max(0, ...puntos.flatMap(p => REG_SERIES.map(s => p[s.key])));
+  const { tope, paso } = regEscala(maximo);
+  const x = i => m.l + (n === 1 ? anchoP / 2 : (i * anchoP) / (n - 1));
+  const y = v => m.t + altoP - (v / tope) * altoP;
+
+  document.getElementById('registros-sub').textContent = `Mascotas y ciudadanos dados de alta · ${REG_SUBTITULO[periodo]}`;
+
+  // Leyenda: identidad (línea de color) + total del periodo.
+  document.getElementById('registros-leyenda').replaceChildren(...REG_SERIES.map(s => {
+    const item = document.createElement('div');
+    item.className = 'registros-leyenda-item';
+    const nombre = document.createElement('span');
+    nombre.textContent = s.nombre;
+    const total = document.createElement('strong');
+    total.textContent = totales[s.key];
+    item.append(regKey(s.color), nombre, total);
+    return item;
+  }));
+
+  cont.replaceChildren();
+  const svg = regSvg('svg', {
+    viewBox: `0 0 ${W} ${H}`, tabindex: '0', role: 'img',
+    'aria-label': `Registros nuevos, ${REG_SUBTITULO[periodo]}: ${totales.mascotas} mascotas y ${totales.ciudadanos} ciudadanos. Usa las flechas para recorrer los días; la tabla de abajo tiene todos los valores.`,
+  }, cont);
+
+  // Cuadrícula + eje Y (tenues, 1px).
+  for (let v = 0; v <= tope; v += paso) {
+    regSvg('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v === 0 ? '#B0B0B0' : '#ECECEC', 'stroke-width': 1 }, svg);
+    regSvg('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#7A7A7A' }, svg).textContent = v;
+  }
+
+  // Eje X: tantas etiquetas como quepan (~56px cada una), siempre la última.
+  const cada = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(anchoP / 56))));
+  puntos.forEach((p, i) => {
+    if ((n - 1 - i) % cada !== 0) return;
+    const ancla = n > 1 && i === 0 ? 'start' : (n > 1 && i === n - 1 ? 'end' : 'middle');
+    regSvg('text', { x: x(i), y: H - 6, 'text-anchor': ancla, 'font-size': 11, fill: '#7A7A7A' }, svg).textContent = regEtiqueta(p.clave, false);
+  });
+
+  // Líneas (2px) y, si hay pocos puntos, un marcador por punto.
+  REG_SERIES.forEach(s => {
+    const d = puntos.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[s.key]).toFixed(1)}`).join('');
+    regSvg('path', { d, fill: 'none', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', style: `stroke:${s.color}` }, svg);
+    if (n <= 12) {
+      puntos.forEach((p, i) => regSvg('circle', { cx: x(i), cy: y(p[s.key]), r: 4, stroke: 'white', 'stroke-width': 2, style: `fill:${s.color}` }, svg));
+    }
+  });
+
+  if (totales.mascotas === 0 && totales.ciudadanos === 0) {
+    const vacio = document.createElement('div');
+    vacio.className = 'registros-vacio';
+    vacio.textContent = 'No hubo registros en este periodo.';
+    cont.appendChild(vacio);
+  }
+
+  // Capa de hover: línea vertical que se pega al día más cercano + puntos +
+  // tooltip con las dos series. Todo el ancho del área es zona de hover.
+  const cruz = regSvg('line', { y1: m.t, y2: m.t + altoP, stroke: '#B0B0B0', 'stroke-width': 1, visibility: 'hidden' }, svg);
+  const puntosHover = REG_SERIES.map(s => regSvg('circle', { r: 5, stroke: 'white', 'stroke-width': 2, style: `fill:${s.color}`, visibility: 'hidden' }, svg));
+  const zona = regSvg('rect', { x: m.l - 10, y: 0, width: anchoP + 20, height: H, fill: 'transparent' }, svg);
+  const tip = document.createElement('div');
+  tip.className = 'registros-tip';
+  tip.style.display = 'none';
+  cont.appendChild(tip);
+  let actual = -1;
+
+  function mostrar(i) {
+    actual = i;
+    const p = puntos[i];
+    cruz.setAttribute('x1', x(i));
+    cruz.setAttribute('x2', x(i));
+    cruz.setAttribute('visibility', 'visible');
+    REG_SERIES.forEach((s, k) => {
+      puntosHover[k].setAttribute('cx', x(i));
+      puntosHover[k].setAttribute('cy', y(p[s.key]));
+      puntosHover[k].setAttribute('visibility', 'visible');
+    });
+    const fecha = document.createElement('div');
+    fecha.className = 'registros-tip-fecha';
+    fecha.textContent = regEtiqueta(p.clave, true);
+    tip.replaceChildren(fecha, ...REG_SERIES.map(s => {
+      const fila = document.createElement('div');
+      fila.className = 'registros-tip-fila';
+      const valor = document.createElement('strong');
+      valor.textContent = p[s.key];
+      const nombre = document.createElement('span');
+      nombre.textContent = s.nombre;
+      fila.append(regKey(s.color), valor, nombre);
+      return fila;
+    }));
+    tip.style.display = 'block';
+    const izq = x(i) + 14 + tip.offsetWidth > W ? x(i) - 14 - tip.offsetWidth : x(i) + 14;
+    tip.style.left = `${Math.max(0, izq)}px`;
+  }
+  function ocultar() {
+    actual = -1;
+    tip.style.display = 'none';
+    cruz.setAttribute('visibility', 'hidden');
+    puntosHover.forEach(c => c.setAttribute('visibility', 'hidden'));
+  }
+  const indiceEn = clientX => {
+    const r = svg.getBoundingClientRect();
+    const px = (clientX - r.left) * (W / r.width);
+    return n === 1 ? 0 : Math.min(n - 1, Math.max(0, Math.round(((px - m.l) / anchoP) * (n - 1))));
+  };
+  zona.addEventListener('pointermove', e => mostrar(indiceEn(e.clientX)));
+  zona.addEventListener('pointerleave', ocultar);
+  svg.addEventListener('focus', () => mostrar(actual >= 0 ? actual : n - 1));
+  svg.addEventListener('blur', ocultar);
+  svg.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const desde = actual < 0 ? n - 1 : actual;
+    mostrar(Math.min(n - 1, Math.max(0, desde + (e.key === 'ArrowRight' ? 1 : -1))));
+  });
+
+  // Tabla: los mismos valores, sin depender del hover ni del color.
+  const tabla = document.createElement('table');
+  const cab = tabla.createTHead().insertRow();
+  ['Fecha', ...REG_SERIES.map(s => s.nombre)].forEach(t => {
+    const th = document.createElement('th');
+    th.textContent = t;
+    cab.appendChild(th);
+  });
+  const cuerpo = tabla.createTBody();
+  [...puntos].reverse().forEach(p => {
+    const fila = cuerpo.insertRow();
+    fila.insertCell().textContent = regEtiqueta(p.clave, true);
+    REG_SERIES.forEach(s => { fila.insertCell().textContent = p[s.key]; });
+  });
+  const pie = tabla.createTFoot().insertRow();
+  pie.insertCell().textContent = 'Total';
+  REG_SERIES.forEach(s => {
+    const c = pie.insertCell();
+    c.textContent = totales[s.key];
+    c.style.fontWeight = '700';
+  });
+  document.getElementById('registros-tabla').replaceChildren(tabla);
+}
+
+async function cargarRegistros(periodo) {
+  const cont = document.getElementById('registros-grafica');
+  if (!cont) return;
+  const id = ++regCargaId;
+  cont.classList.add('cargando'); // conserva la gráfica anterior, atenuada, mientras llega la nueva
+  try {
+    const datos = await apiGetRegistros(periodo);
+    if (id !== regCargaId) return; // ya se pidió otro periodo después
+    regDatos = datos;
+    renderRegistros();
+  } catch (err) {
+    if (id !== regCargaId) return;
+    if (!regDatos) {
+      const aviso = document.createElement('div');
+      aviso.className = 'registros-vacio';
+      aviso.style.color = 'var(--red)';
+      aviso.textContent = `No se pudieron cargar los registros: ${err.message}`;
+      cont.replaceChildren(aviso);
+    }
+    showToast(`No se pudieron cargar los registros: ${err.message}`, 'error');
+  } finally {
+    if (id === regCargaId) cont.classList.remove('cargando');
+  }
+}
+
+function initRegistros() {
+  const cont = document.getElementById('registros-grafica');
+  if (!cont) return;
+  const botones = document.querySelectorAll('.registros-periodos button');
+  botones.forEach(btn => {
+    btn.addEventListener('click', () => {
+      botones.forEach(b => {
+        b.classList.toggle('activo', b === btn);
+        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+      });
+      cargarRegistros(btn.dataset.periodo);
+    });
+  });
+  // Redibuja al cambiar el ancho, y al mostrarse la pestaña Datos (que
+  // empieza oculta y mide 0 px).
+  let pendiente = false;
+  new ResizeObserver(() => {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(() => { pendiente = false; renderRegistros(); });
+  }).observe(cont);
+  cargarRegistros('mes');
+}
+

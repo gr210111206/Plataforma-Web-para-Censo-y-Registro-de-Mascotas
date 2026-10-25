@@ -178,6 +178,7 @@ async function initAdmin() {
   renderVacunacionPie();
   renderKpiRow();
   renderMiniBar();
+  initRegistros();
 
   // Solo las 10 más recientes para la mini-tabla de "Datos" — antes se
   // traían TODAS las mascotas (con foto en Base64 incluida) nada más para

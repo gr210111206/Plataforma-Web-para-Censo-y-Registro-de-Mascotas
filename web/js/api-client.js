@@ -347,6 +347,15 @@ async function apiGetStats() {
   return _fetch(`${API_BASE_URL}/stats`);
 }
 
+/**
+ * Mascotas y ciudadanos registrados en el tiempo (solo admin).
+ * @param {'semana'|'mes'|'ano'} periodo  últimos 7 días / 30 días / 12 meses
+ * @returns {Promise<{periodo, puntos: Array<{clave, mascotas, ciudadanos}>, totales}>}
+ */
+async function apiGetRegistros(periodo) {
+  return _fetch(`${API_BASE_URL}/stats?serie=registros&periodo=${encodeURIComponent(periodo)}`);
+}
+
 /* ══════════════════════════════════════════════
    CONTENIDO PÚBLICO
    ══════════════════════════════════════════════ */

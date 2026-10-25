@@ -98,6 +98,53 @@
       border-top: 1px solid var(--gray-4);
     }
 
+    /* ── Registros nuevos en el tiempo (gráfica de líneas) ── */
+    .registros-card {
+      --serie-mascotas:   #F27A00;  /* naranja del sitio */
+      --serie-ciudadanos: #2a78d6;  /* azul: tono opuesto, validado para daltonismo (ΔE 27.7) */
+      background: white;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px 14px;
+      margin-top: 20px;
+    }
+    .registros-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .registros-titulo { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .95rem; color: var(--dark); margin: 0; }
+    .registros-sub { font-size: .78rem; color: var(--gray-2); margin-top: 2px; }
+    .registros-periodos { display: inline-flex; background: var(--surface); border: 1px solid var(--gray-4); border-radius: 99px; padding: 3px; }
+    .registros-periodos button {
+      border: 0; background: transparent; color: var(--gray-1);
+      font-size: .78rem; font-weight: 600; padding: 6px 14px; border-radius: 99px; cursor: pointer;
+    }
+    .registros-periodos button:hover { color: var(--dark); }
+    .registros-periodos button.activo { background: white; color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .registros-leyenda { display: flex; gap: 22px; flex-wrap: wrap; margin: 14px 0 4px; }
+    .registros-leyenda-item { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--gray-1); }
+    .registros-leyenda-item strong { font-size: 1.05rem; color: var(--dark); }
+    .registros-key { width: 16px; height: 2px; border-radius: 2px; flex-shrink: 0; }
+    .registros-grafica { position: relative; height: 240px; transition: opacity .2s; }
+    .registros-grafica.cargando { opacity: .45; }
+    .registros-grafica svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .registros-grafica svg:focus { outline: none; }
+    .registros-grafica svg:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; border-radius: 4px; }
+    .registros-vacio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .85rem; color: var(--gray-2); pointer-events: none; }
+    .registros-tip {
+      position: absolute; top: 0; pointer-events: none; z-index: 5;
+      background: white; border: 1px solid var(--gray-4); border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.12); padding: 8px 10px; min-width: 130px;
+      font-size: .78rem; color: var(--gray-1);
+    }
+    .registros-tip-fecha { font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+    .registros-tip-fila { display: flex; align-items: center; gap: 7px; margin-top: 3px; }
+    .registros-tip-fila strong { color: var(--dark); font-size: .9rem; min-width: 18px; }
+    .registros-tabla { margin-top: 8px; font-size: .8rem; }
+    .registros-tabla summary { cursor: pointer; color: var(--gray-1); font-weight: 600; padding: 4px 0; }
+    .registros-tabla table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    .registros-tabla th, .registros-tabla td { padding: 6px 8px; border-bottom: 1px solid var(--gray-4); text-align: right; }
+    .registros-tabla th:first-child, .registros-tabla td:first-child { text-align: left; }
+    .registros-tabla th { color: var(--gray-2); font-weight: 600; font-size: .74rem; text-transform: uppercase; letter-spacing: .03em; }
+    #registros-tabla { max-height: 260px; overflow-y: auto; }
+
     /* ── Charts column ── */
     .charts-col {
       display: flex;
@@ -1091,6 +1138,27 @@
         </div>
 
       </div>
+
+      <!-- Registros nuevos en el tiempo (lo llena renderRegistros() en admin-dashboard.js) -->
+      <section class="registros-card" aria-labelledby="registros-titulo">
+        <div class="registros-head">
+          <div>
+            <h3 class="registros-titulo" id="registros-titulo">Registros nuevos</h3>
+            <div class="registros-sub" id="registros-sub">Mascotas y ciudadanos dados de alta</div>
+          </div>
+          <div class="registros-periodos" role="group" aria-label="Periodo de la gráfica">
+            <button type="button" data-periodo="semana">7 días</button>
+            <button type="button" data-periodo="mes" class="activo" aria-pressed="true">30 días</button>
+            <button type="button" data-periodo="ano">12 meses</button>
+          </div>
+        </div>
+        <div class="registros-leyenda" id="registros-leyenda"></div>
+        <div class="registros-grafica" id="registros-grafica"></div>
+        <details class="registros-tabla">
+          <summary>Ver datos en tabla</summary>
+          <div id="registros-tabla"></div>
+        </details>
+      </section>
     </div>
 
     <!-- ══════════════════════════════════════════ -->

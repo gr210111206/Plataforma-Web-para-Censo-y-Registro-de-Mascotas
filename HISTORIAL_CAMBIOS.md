@@ -2,6 +2,44 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-25] — Gráfica "Registros nuevos" (mascotas y ciudadanos en el tiempo) en la pestaña Datos
+
+### 🤔 Contexto
+El usuario pidió en el dashboard del admin una gráfica de cuántos usuarios y cuántas mascotas se registran por semana, mes o año. Antes, la pestaña Datos solo tenía totales (KPI), la dona de vacunación y la barra de razas: no había forma de ver la tendencia.
+
+### 🔧 Cambios
+- **`web/api/stats.php` — `GET ?serie=registros&periodo=semana|mes|ano`** (solo admin, `requireAdmin()`; el resto de `stats.php` sigue público porque lo usa la portada). Devuelve un punto por día (últimos 7 o 30 días) o por mes (últimos 12 meses, completos desde el día 1). Cada punto trae `mascotas` y `ciudadanos` (`duenos` con rol `ciudadano`), más los totales del periodo.
+  - Se cuenta por **`created_at`**, la fecha en que se guardó de verdad, no por `mascotas.fecha_registro`, que la persona escribe y edita en el formulario.
+  - Los días sin registros salen en 0, no se omiten.
+  - "Hoy" se toma de `CURDATE()` de MySQL, por el mismo problema de zonas horarias PHP/MySQL de `requireAuth()`.
+- **`web/js/api-client.js`**: `apiGetRegistros(periodo)`.
+- **`web/admin.html`**: tarjeta "Registros nuevos" de ancho completo debajo del mapa y las gráficas de la pestaña Datos. Tiene botones **7 días / 30 días / 12 meses** (por defecto 30 días), leyenda con el total de cada serie, la gráfica y "Ver datos en tabla". Los estilos van en `.registros-*`.
+- **`web/js/admin/admin-dashboard.js`**: `renderRegistros()`, `cargarRegistros()` e `initRegistros()` (llamada desde `admin-init.js`). Es una gráfica de líneas en SVG hecha a mano, sin librerías, igual que las otras del panel:
+  - Una sola escala (los dos son conteos), con tope "redondo" en el eje Y. Líneas de 2px, cuadrícula de 1px tenue, y marcadores solo cuando hay ≤12 puntos.
+  - Al pasar el mouse, una línea vertical se pega al día o mes más cercano y la ventanita muestra **las dos series** a la vez. También funciona con teclado (Tab + flechas).
+  - Al cambiar de periodo, la gráfica anterior se queda atenuada mientras llega la nueva.
+  - Se redibuja al cambiar el ancho de la ventana (`ResizeObserver`).
+  - Los textos se insertan con `textContent`.
+- **Colores**: mascotas = naranja del sitio `#F27A00`, ciudadanos = azul `#2a78d6`. Validados con el validador de paletas de la guía de gráficas: daltonismo ΔE 27.7 y visión normal ΔE 35.8. El naranja queda con contraste 2.78:1 sobre blanco (por debajo de 3:1), por eso los totales van escritos en la leyenda y existe la vista de tabla, que tiene todos los valores sin depender del color ni del mouse. El sitio no tiene modo oscuro, así que no se validó para fondo oscuro.
+
+### 🔎 Verificado
+- Con un servidor PHP temporal y una base **desechable** con ~200 ciudadanos y ~200 mascotas repartidos en 13 meses (ni `remac_db` ni producción se tocaron):
+  1. Sin sesión → 401.
+  2. Periodo inválido → 400.
+  3. `stats` público sigue respondiendo igual.
+  4. 7/30/12 puntos con las fechas correctas.
+  5. Totales **idénticos** a contar directo en la base (30 días: 46/43; 12 meses: 178/190).
+- Capturas con Chrome sin interfaz: 30 días con la ventanita al pasar el mouse (1440 px), 12 meses con la tabla abierta, y 7 días a 390 px (celular) sin desplazamiento horizontal.
+- `node --check` (todos los `js/admin/*.js` y `api-client.js`) y `php -l stats.php` sin errores.
+- Limitación conocida: si las dos series tienen el mismo valor, la línea azul tapa a la naranja en ese tramo. La ventanita y la tabla siempre muestran ambas cifras.
+
+### 📂 Archivos modificados
+- `web/api/stats.php`
+- `web/js/api-client.js`
+- `web/admin.html`
+- `web/js/admin/admin-dashboard.js`
+- `web/js/admin/admin-init.js`
+
 ## 📅 [2026-10-24c] — El navegador ya no usa copias viejas de los .js/.css/.html
 
 ### 🤔 Contexto
