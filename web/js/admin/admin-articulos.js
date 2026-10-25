@@ -179,7 +179,7 @@ function editarArticulo(id) {
   document.getElementById('art-titulo').value = a.titulo;
   document.getElementById('wysiwygEditor').innerHTML = a.contenido;
   document.getElementById('art-img').value = '';
-  document.getElementById('art-banner-prev').innerHTML = a.imagen ? `<img src="${a.imagen}" alt="Vista previa de la imagen de portada" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />` : '';
+  document.getElementById('art-banner-prev').innerHTML = a.imagen ? htmlVistaPreviaRecorte(a.imagen, 'Vista previa de la imagen de portada') : '';
   updateWordCount();
   document.getElementById('art-save-btn').innerHTML = ICON_SAVE + ' Guardar cambios';
   showAdmin('articulo');

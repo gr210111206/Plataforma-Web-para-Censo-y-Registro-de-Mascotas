@@ -2,6 +2,47 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-25b] — La imagen de portada de los artículos ahora se ve completa y centrada (igual que en "Apariencia e íconos")
+
+### 🤔 Contexto
+El usuario mandó capturas de un artículo con una imagen casi cuadrada (texto arriba, perro y gato abajo): en la portada, en la ventana "Leer más" y en la vista previa del panel salía **descentrada y recortada**, cada vez distinta (el texto pegado arriba y cortado de los lados, al perro le faltaba el cuerpo). Pidió que se comportara como "Apariencia e íconos", donde la imagen se centra sola sin hacer nada. Había dos causas:
+1. "Ajustar imagen" arrancaba como `object-fit:cover`: para llenar el recuadro 2.5:1 cortaba arriba y abajo de cualquier imagen más alta que ancha.
+2. Después, cada lugar la volvía a recortar con **otra** forma: la tarjeta de la portada con `height:140px` fijo, la ventana del artículo con `max-height:220px` y la vista previa del panel con `max-height:120px`, todas con `object-fit:cover`.
+
+### 🔧 Cambios
+- **`web/js/admin/admin-image-crop.js`**:
+  - Para la imagen de **artículos** (`CROP_COMPLETA = ['art-banner-prev']`) el ajuste arranca con la **imagen completa y centrada** (zoom mínimo = "contain"). Lo que sobra se rellena con `colorDeBorde()`: el color **más común** del borde de la imagen (blanco en ilustraciones con fondo blanco). Es el más común y no el promedio, porque una franja de color en una sola orilla teñía todo el relleno; se detectó probando.
+  - El recuadro de ajuste muestra ese mismo relleno, y la persona puede acercar (hasta 3× "cover") y mover como antes.
+  - Mientras la imagen sea más chica que el recuadro en un sentido, se mantiene centrada en ese sentido.
+  - `applyImageCrop()` ahora dibuja la imagen con su tamaño y posición reales, así funciona tanto si se sale del recuadro como si queda más chica.
+  - El banner de **Avisos** sigue igual: arranca llenando el recuadro, porque en la portada lleva texto encima y con franjas se vería mal.
+  - Nueva `htmlVistaPreviaRecorte()` para las vistas previas del panel.
+- **Forma única 2.5:1** (la misma con que se guarda la imagen) en lugar de alturas fijas:
+  - `web/css/styles.css` → `.article-image` (tarjetas de la portada).
+  - `web/index.html` → `#articulo-modal-imagen`.
+  - `web/dashboard.html` → `#dash-articulo-modal-imagen`.
+  - `web/js/admin/admin-articulos.js` y `web/js/admin/admin-config-contenido.js` → vistas previas al editar un artículo o aviso, con `htmlVistaPreviaRecorte()`, máximo 420px de ancho.
+
+### 🔎 Verificado
+- Con un servidor PHP temporal y una base **desechable** (ni `remac_db` ni producción se tocaron), usando una imagen de prueba casi cuadrada con texto arriba, un círculo y una franja roja abajo:
+  - "Ajustar imagen" la muestra **completa y centrada** con relleno blanco.
+  - La imagen guardada (1200×481) conserva la franja roja de abajo, el círculo y las orillas blancas.
+  - El artículo se publicó desde el formulario real.
+  - En la portada, la tarjeta (1280 px y 390 px) y la ventana "Leer más" muestran la imagen entera y centrada.
+- El ajuste del **aviso** sigue llenando el recuadro (zoom máx. 3) y no deja ver huecos al arrastrar.
+- `node --check` de todos los `js/admin/*.js` sin errores.
+
+### ⚠️ Pendiente
+- Los artículos que **ya** tienen imagen se guardaron con el recorte viejo. Ahora ya no se recortan otra vez de los lados, pero lo que se cortó arriba y abajo al guardarlos no regresa. Para que se vean completos hay que volver a subir su imagen (Nuevo artículo → editar → subir de nuevo). Falta desplegar.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-image-crop.js`
+- `web/js/admin/admin-articulos.js`
+- `web/js/admin/admin-config-contenido.js`
+- `web/css/styles.css`
+- `web/index.html`
+- `web/dashboard.html`
+
 ## 📅 [2026-10-25] — Gráfica "Registros nuevos" (mascotas y ciudadanos en el tiempo) en la pestaña Datos
 
 ### 🤔 Contexto

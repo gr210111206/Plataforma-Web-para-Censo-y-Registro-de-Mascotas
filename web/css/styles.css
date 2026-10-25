@@ -731,9 +731,13 @@ input, select, textarea { font-family: inherit; }
   transition: var(--transition);
 }
 .article-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--orange); }
+/* Misma forma (2.5:1) que el recuadro de "Ajustar imagen" del panel admin,
+   que es la forma con la que se guarda la imagen — así se ve completa,
+   tal cual se ajustó. Antes era height:140px fijo + object-fit:cover, que
+   en la tarjeta (más angosta) volvía a recortar los lados. */
 .article-image {
   width: 100%;
-  height: 140px;
+  aspect-ratio: 2.5 / 1;
   object-fit: cover;
   display: block;
 }

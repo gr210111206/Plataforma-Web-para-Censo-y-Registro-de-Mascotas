@@ -169,7 +169,7 @@ function editAviso(id) {
   document.getElementById('aviso-desc').value = a.descripcion || '';
   document.getElementById('aviso-inicio').value = a.fecha_inicio || '';
   document.getElementById('aviso-fin').value = a.fecha_fin || '';
-  document.getElementById('aviso-prev').innerHTML = a.imagen ? `<img src="${a.imagen}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />` : '';
+  document.getElementById('aviso-prev').innerHTML = a.imagen ? htmlVistaPreviaRecorte(a.imagen, 'Vista previa del banner') : '';
   document.getElementById('avisoSaveBtn').innerHTML = ICON_SAVE + ' Guardar cambios';
   document.getElementById('avisoCancelBtn').style.display = 'inline-flex';
   document.getElementById('aviso-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });

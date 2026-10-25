@@ -7,6 +7,44 @@
 /* ══════════════════════════════════════════════════ */
 let cropState = null;
 
+// Recuadros que arrancan con la imagen COMPLETA y centrada (como en
+// "Apariencia e íconos"), rellenando lo que sobra con el color del borde
+// de la propia imagen. Los demás (banner de Avisos) arrancan llenando el
+// recuadro (tipo object-fit:cover), porque en la portada llevan texto
+// encima y un banner con franjas se vería mal.
+const CROP_COMPLETA = ['art-banner-prev'];
+
+// Color MÁS COMÚN del borde de la imagen (compuesta sobre blanco, por si
+// es PNG con transparencia) — para rellenar las franjas sin que se noten
+// en ilustraciones con fondo liso. Es el más común y no el promedio a
+// propósito: con el promedio, una franja de color en una sola orilla
+// teñía todo el relleno (una franja roja abajo lo volvía rosa).
+function colorDeBorde(img) {
+  const N = 32;
+  const c = document.createElement('canvas');
+  c.width = N; c.height = N;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, N, N);
+  ctx.drawImage(img, 0, 0, N, N);
+  const px = ctx.getImageData(0, 0, N, N).data;
+  // Agrupa los píxeles del borde en "cubetas" de color parecido (16 tonos
+  // por canal) y se queda con el promedio de la cubeta más llena.
+  const cubetas = new Map();
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      if (x !== 0 && y !== 0 && x !== N - 1 && y !== N - 1) continue;
+      const i = (y * N + x) * 4;
+      const clave = (px[i] >> 4) << 8 | (px[i + 1] >> 4) << 4 | (px[i + 2] >> 4);
+      const cub = cubetas.get(clave) || { r: 0, g: 0, b: 0, n: 0 };
+      cub.r += px[i]; cub.g += px[i + 1]; cub.b += px[i + 2]; cub.n++;
+      cubetas.set(clave, cub);
+    }
+  }
+  const mayor = [...cubetas.values()].reduce((a, b) => (b.n > a.n ? b : a));
+  return `rgb(${Math.round(mayor.r / mayor.n)}, ${Math.round(mayor.g / mayor.n)}, ${Math.round(mayor.b / mayor.n)})`;
+}
+
 function openImageCropper(dataUrl, targetPrevId) {
   const probe = new Image();
   probe.onload = () => {
@@ -32,14 +70,27 @@ function openImageCropper(dataUrl, targetPrevId) {
       offsetX: 0,
       offsetY: 0,
     };
-    // Zoom mínimo (1) = la imagen completa cubre el recuadro sin dejar
-    // huecos, igual que object-fit:cover — a partir de ahí la persona
-    // acerca/mueve a su gusto. Se probó que el zoom arrancara ya acercado
-    // automáticamente al "contenido" detectado de la imagen, pero no
-    // siempre acertaba qué parte era la interesante (ver HISTORIAL_CAMBIOS,
-    // 2026-10-07e/i) — mejor arrancar siempre igual: completa y centrada,
-    // lista para que la persona decida.
-    cropState.baseScale = Math.max(cropState.stageW / cropState.naturalW, cropState.stageH / cropState.naturalH);
+    // Zoom mínimo (1):
+    //  - Artículos (CROP_COMPLETA): la imagen ENTERA cabe en el recuadro y
+    //    queda centrada (como object-fit:contain); lo que sobra se rellena
+    //    con el color del borde. Antes arrancaba como "cover" y en una
+    //    imagen casi cuadrada eso cortaba arriba y abajo (el texto quedaba
+    //    pegado arriba y al perro se le cortaba el cuerpo, 2026-10-25).
+    //  - Avisos: la imagen cubre el recuadro sin dejar huecos (como
+    //    object-fit:cover).
+    // A partir de ahí la persona acerca/mueve a su gusto. Se probó que el
+    // zoom arrancara ya acercado al "contenido" detectado, pero no siempre
+    // acertaba (ver HISTORIAL_CAMBIOS, 2026-10-07e/i).
+    const s = cropState;
+    const fit   = Math.min(s.stageW / s.naturalW, s.stageH / s.naturalH);
+    const cover = Math.max(s.stageW / s.naturalW, s.stageH / s.naturalH);
+    s.completa  = CROP_COMPLETA.includes(targetPrevId);
+    s.baseScale = s.completa ? fit : cover;
+    // El zoom máximo sigue siendo 3× "cover", sin importar desde dónde arranque.
+    s.zoomMax = 3 * cover / s.baseScale;
+    s.relleno = s.completa ? colorDeBorde(probe) : '#fff';
+    document.getElementById('crop-zoom').max = s.zoomMax;
+    stage.style.background = s.completa ? s.relleno : '';
 
     document.getElementById('crop-img').src = dataUrl;
     resetImageCrop();
@@ -57,17 +108,17 @@ function applyCropTransform() {
   img.style.transform = `translate(${s.offsetX}px, ${s.offsetY}px)`;
 }
 
-// Nunca deja que se vea un hueco vacío dentro del recuadro — el borde de
-// la imagen nunca puede quedar más adentro que el borde del recuadro.
+// En el sentido en que la imagen es MÁS GRANDE que el recuadro, nunca deja
+// ver un hueco (su borde no puede quedar más adentro que el del recuadro).
+// En el sentido en que es más chica (solo pasa en modo "completa"), la
+// mantiene centrada — así nunca queda pegada a una orilla.
 function clampCropOffset() {
   const s = cropState;
   const displayScale = s.baseScale * s.zoomFactor;
-  const displayW = s.naturalW * displayScale;
-  const displayH = s.naturalH * displayScale;
-  const minX = Math.min(0, s.stageW - displayW);
-  const minY = Math.min(0, s.stageH - displayH);
-  s.offsetX = Math.min(0, Math.max(minX, s.offsetX));
-  s.offsetY = Math.min(0, Math.max(minY, s.offsetY));
+  const ajustar = (offset, stage, display) =>
+    display <= stage ? (stage - display) / 2 : Math.min(0, Math.max(stage - display, offset));
+  s.offsetX = ajustar(s.offsetX, s.stageW, s.naturalW * displayScale);
+  s.offsetY = ajustar(s.offsetY, s.stageH, s.naturalH * displayScale);
 }
 
 function updateCropZoom(val) {
@@ -105,33 +156,38 @@ function cancelImageCrop() {
   closeModal('modal-image-crop');
 }
 
+// Vista previa en el formulario con la MISMA forma (2.5:1) que el recuadro
+// de "Ajustar imagen" y que la tarjeta de la portada — antes era una franja
+// de 120px de alto con object-fit:cover que volvía a recortar la imagen y
+// no se parecía a lo que se veía al ajustarla.
+function htmlVistaPreviaRecorte(src, alt) {
+  return `<img src="${src}" alt="${alt}" style="display:block; width:100%; max-width:420px; aspect-ratio:2.5/1; object-fit:cover; border-radius:var(--radius); margin-top:6px; border:1px solid var(--gray-4);" />`;
+}
+
 function applyImageCrop() {
   if (!cropState) return;
   const s = cropState;
   const displayScale = s.baseScale * s.zoomFactor;
 
-  // Convierte el recuadro visible (en px de pantalla) a coordenadas
-  // reales dentro de la imagen original, para recortar justo esa parte.
-  const srcX = -s.offsetX / displayScale;
-  const srcY = -s.offsetY / displayScale;
-  const srcW = s.stageW / displayScale;
-  const srcH = s.stageH / displayScale;
-
+  // Dibuja la imagen con el mismo tamaño y posición que tiene en el
+  // recuadro, solo que a la resolución de salida. Así funciona igual si la
+  // imagen se sale del recuadro (se recorta sola) o si queda más chica
+  // (modo "completa": las franjas llevan el color de relleno).
+  const k = 1200 / s.stageW;
   const outW = 1200;
   const outH = Math.round(outW * (s.stageH / s.stageW));
   const canvas = document.createElement('canvas');
   canvas.width = outW; canvas.height = outH;
   const ctx = canvas.getContext('2d');
   // Mismo motivo que en previewBanner(): JPEG no tiene canal alpha.
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = s.relleno;
   ctx.fillRect(0, 0, outW, outH);
-  ctx.drawImage(document.getElementById('crop-img'), srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+  ctx.drawImage(document.getElementById('crop-img'),
+    s.offsetX * k, s.offsetY * k, s.naturalW * displayScale * k, s.naturalH * displayScale * k);
   const optimized = canvas.toDataURL('image/jpeg', 0.85);
 
   const el = document.getElementById(s.targetPrevId);
-  if (el) {
-    el.innerHTML = `<img src="${optimized}" alt="Vista previa del banner" style="width:100%; max-height:120px; object-fit:cover; border-radius:var(--radius); margin-top:6px;" />`;
-  }
+  if (el) el.innerHTML = htmlVistaPreviaRecorte(optimized, 'Vista previa de la imagen');
   cropState = null;
   closeModal('modal-image-crop');
   showToast('Imagen ajustada', 'success');
@@ -188,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const rect = stage.getBoundingClientRect();
       const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
       const dist = Math.hypot(e.clientX - cx, e.clientY - cy) || 1;
-      const newZoom = Math.min(3, Math.max(1, startZoom * (dist / startDist)));
+      const newZoom = Math.min(cropState.zoomMax, Math.max(1, startZoom * (dist / startDist)));
       document.getElementById('crop-zoom').value = newZoom;
       updateCropZoom(newZoom);
     });
