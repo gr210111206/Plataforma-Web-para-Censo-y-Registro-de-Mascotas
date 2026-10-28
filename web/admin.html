@@ -795,6 +795,14 @@
     }
     .emoji-item:hover { background: var(--orange-pale); }
 
+    /* ── Cuadrículas de Configuración (Avisos, Eventos, Municipio, SEO,
+       Portada) — se colapsan a 1 columna en el @media (max-width:768px)
+       de abajo; por eso van ANTES de él (ver el comentario de abajo).
+       minmax(0, 1fr) para que una columna pueda encogerse por debajo del
+       ancho de su contenido (inputs, URLs largas) en vez de desbordarse. */
+    .cfg-grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .cfg-grid-3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+
     /* ── Responsive ── */
     @media (max-width: 1100px) {
       .datos-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
@@ -824,7 +832,7 @@
          Portada) usan cuadrículas de 2-3 columnas fijas pensadas para
          escritorio — en celular quedaban apretadas, con texto/botones
          encimados (reportado con captura real desde el emulador). */
-      .cfg-grid-2, .cfg-grid-3 { grid-template-columns: 1fr; }
+      .cfg-grid-2, .cfg-grid-3 { grid-template-columns: minmax(0, 1fr); }
       /* A diferencia de las demás barras de "Guardar"/"Restablecer" del
          panel (que solo tienen los 2 botones), .appearance-save-bar
          además trae un texto de ayuda en la misma fila — en celular, sin
@@ -833,19 +841,32 @@
          emulador). Se baja el grupo de botones a su propia fila, abajo
          del texto, y los dos botones se reparten el ancho entre sí. */
       .appearance-save-bar > div:last-child { width: 100%; }
-      .appearance-save-bar > div:last-child > button { flex: 1; }
       /* Contactos y Tema visual: formulario + vista previa en vivo, con
          la columna de la vista previa a un ancho fijo en px (380/300) en
          vez de 1fr — ese ancho fijo no cede en celular y aprieta todo.
          !important porque el ancho de escritorio sigue viniendo del
-         style="" en línea (más específico que una regla externa). */
-      .cfg-grid-preview { grid-template-columns: 1fr !important; }
+         style="" en línea (más específico que una regla externa).
+         minmax(0, 1fr) y no 1fr: una columna 1fr nunca se hace más
+         angosta que su contenido más ancho (un input con texto largo), y
+         eso empujaba todo el formulario fuera de la pantalla (2026-10-28). */
+      .cfg-grid-preview { grid-template-columns: minmax(0, 1fr) !important; }
+      /* Filas de botones "Guardar …" + "Restablecer" de Configuración: con
+         textos largos ("Guardar todos los contenidos de la Portada") los
+         dos lado a lado no caben en 390px y el segundo quedaba cortado.
+         En celular van uno debajo del otro, a todo lo ancho, y el texto
+         puede partirse en dos renglones si hace falta. */
+      .cfg-acciones { flex-direction: column; }
+      .cfg-acciones > .btn { width: 100%; white-space: normal; text-align: center; justify-content: center; }
     }
 
     /* ── Cuadrículas de Configuración (Avisos, Eventos, Municipio, SEO,
-       Portada) — ver el colapso a 1 columna en el media query de arriba ── */
-    .cfg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
-    .cfg-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+       Portada) ──
+       ⚠️ Estas reglas base tienen que ir ANTES del @media (max-width:768px)
+       de arriba. Antes estaban después y, al tener la misma especificidad,
+       ganaban siempre: el colapso a 1 columna en celular nunca se aplicaba
+       (Avisos y Eventos seguían en 2 columnas apretadas en el celular,
+       2026-10-28). Por eso viven en el bloque "Cuadrículas de
+       Configuración" de más arriba, no aquí. */
 
     /* ── Icon Selector (Apariencia) ── */
     .icon-sel-grid {
@@ -1894,7 +1915,7 @@
           </div>
 
           <!-- BOTONES GUARDAR -->
-          <div style="display:flex; gap:12px;">
+          <div class="cfg-acciones" style="display:flex; gap:12px;">
             <button class="btn btn-primary btn-lg" style="flex:1;" onclick="saveSiteContentConfig()">
               <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar todos los contenidos de la Portada
             </button>
@@ -2117,7 +2138,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
             </div>
 
             <!-- Botones -->
-            <div style="display:flex; gap:12px;">
+            <div class="cfg-acciones" style="display:flex; gap:12px;">
               <button class="btn btn-primary" style="flex:1;" onclick="saveSiteConfig()">
                 <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar y publicar cambios
               </button>
@@ -2205,7 +2226,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           <div style="font-size:.85rem; color:var(--gray-1);">
             <strong style="display:inline-flex; align-items:center; gap:5px;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg> Tip:</strong> Los GIFs animados son compatibles. Usa URLs de <a href="https://giphy.com" target="_blank" rel="noopener noreferrer" style="color:var(--orange);">Giphy</a> o sube el archivo directamente.
           </div>
-          <div style="display:flex; gap:10px;">
+          <div class="cfg-acciones" style="display:flex; gap:10px;">
             <button class="btn btn-ghost" onclick="resetAppearance()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg> Restablecer</button>
             <button class="btn btn-primary" onclick="saveAppearance()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar apariencia</button>
           </div>
@@ -2323,7 +2344,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
           </div>
         </div>
 
-        <div style="display:flex; gap:10px; margin-top:4px;">
+        <div class="cfg-acciones" style="display:flex; gap:10px; margin-top:4px;">
           <button class="btn btn-primary" style="flex:1;" onclick="saveMunicipio()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar datos del municipio</button>
           <button class="btn btn-ghost" onclick="resetMunicipio()">Restablecer</button>
         </div>
@@ -2458,7 +2479,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
               </div>
             </div>
 
-            <div style="display:flex; gap:10px;">
+            <div class="cfg-acciones" style="display:flex; gap:10px;">
               <button class="btn btn-primary" style="flex:1;" onclick="saveTema()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913" /><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z" /><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15" /></svg> Aplicar tema</button>
               <button class="btn btn-ghost" onclick="resetTema()">Restablecer</button>
             </div>
@@ -2573,7 +2594,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
               </div>
             </div>
 
-            <div style="display:flex; gap:10px;">
+            <div class="cfg-acciones" style="display:flex; gap:10px;">
               <button class="btn btn-primary" style="flex:1;" onclick="saveSEO()"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg> Guardar configuración SEO</button>
               <button class="btn btn-ghost" onclick="resetSEO()">Restablecer</button>
             </div>

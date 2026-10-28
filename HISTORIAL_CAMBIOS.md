@@ -2,6 +2,33 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-10-28] — Configuración del Sitio se ve bien en el celular (nada cortado ni en 2 columnas apretadas)
+
+### 🤔 Contexto
+El usuario mandó 11 capturas de **Configuración del Sitio** desde su celular. Avisos y Eventos seguían en dos columnas apretadas; en SEO y Contactos los campos y tarjetas se salían por la derecha; y en Portada, Contactos, Municipio, SEO y Apariencia los botones "Guardar…"/"Restablecer" quedaban cortados. Pidió que al menos se vea bien en el celular, aunque esa sección esté pensada para computadora.
+
+### 🔍 Causas (medidas, no supuestas)
+Con Chrome sin interfaz a 390 px se contó, pestaña por pestaña, qué elementos se salían de la pantalla: portada 2, avisos 1, contactos 2, apariencia 1, municipio 1, SEO 2. Eventos daba 0, pero quedaba en 2 columnas apretadas.
+1. **Regla en mal orden:** ya existía `.cfg-grid-2, .cfg-grid-3 { grid-template-columns: 1fr }` dentro del `@media (max-width:768px)`, pero las reglas base (`1fr 1fr` / `1fr 1fr 1fr`) estaban escritas **después**. Con la misma especificidad, la última gana, así que el colapso a 1 columna **nunca se aplicaba**. Esto afectaba a Avisos, Eventos, Municipio y SEO.
+2. **Columnas `1fr` que no se encogen:** una columna `1fr` nunca queda más angosta que su contenido más ancho (un input con una URL larga), así que el formulario de Contactos y la tarjeta de SEO empujaban fuera de la pantalla.
+3. **Filas de botones sin espacio:** dos botones lado a lado con textos largos y `white-space:nowrap` no caben en 390 px.
+
+### 🔧 Cambios (`web/admin.html`)
+- Las reglas base de `.cfg-grid-2` / `.cfg-grid-3` se movieron **antes** de los `@media` (con un comentario ⚠️ para que no vuelvan a quedar después) y ahora usan `minmax(0, 1fr)`. En el `@media (max-width:768px)` colapsan a `minmax(0, 1fr)`.
+- `.cfg-grid-preview` (Contactos y Tema visual) en celular: `minmax(0, 1fr)` en lugar de `1fr`.
+- Clase nueva **`cfg-acciones`** en las 6 filas de botones de Configuración (Portada, Contactos, Apariencia, Municipio, Tema visual, SEO). En celular los botones van uno debajo del otro, a todo lo ancho, y el texto puede partirse en dos renglones.
+- Se quitó la regla vieja `.appearance-save-bar > div:last-child > button { flex:1 }`; ahora la cubre `cfg-acciones`.
+
+### 🔎 Verificado
+- Con un servidor PHP temporal y una base **desechable** con `seed.sql` (ni `remac_db` ni producción se tocaron):
+  - A **390 px**, las 10 pestañas de Configuración dan **0 elementos fuera de pantalla** y no hay desplazamiento horizontal.
+  - Capturas de Avisos, Eventos, Contactos, Municipio, SEO, Portada y Apariencia: todo en una columna y los botones completos.
+- A **1366 px** (computadora): también 0 elementos fuera de pantalla. Avisos sigue en 2 columnas (509px + 509px) y Contactos con su vista previa a la derecha (1fr + 380px).
+- Los acentos raros en los títulos de los avisos que se ven en las capturas de prueba vienen de cómo se cargó `seed.sql` por línea de comandos en la base desechable, no del sitio.
+
+### 📂 Archivos modificados
+- `web/admin.html`
+
 ## 📅 [2026-10-25b] — La imagen de portada de los artículos ahora se ve completa y centrada (igual que en "Apariencia e íconos")
 
 ### 🤔 Contexto
