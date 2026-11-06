@@ -1463,6 +1463,9 @@ tbody tr:hover { background: var(--surface); }
   padding: 16px 28px;
   border-top: 1px solid var(--gray-4);
   display: flex;
+  flex-wrap: wrap; /* el del recortador tiene 3 botones (Reiniciar/Cancelar/
+    Aplicar) y en celular no cabían en una sola fila: quedaban cortados
+    contra el borde del modal en vez de bajar de línea. */
   gap: 8px;
   justify-content: flex-end;
 }

@@ -667,8 +667,8 @@ function botonCorreo(string $url, string $texto): string {
             <a href="' . $urlEsc . '" style="display:inline-block; padding:14px 28px; color:#FFFFFF; font-size:15px; font-weight:bold; text-decoration:none; border-radius:8px; font-family:Arial, Helvetica, sans-serif;">' . $textoEsc . '</a>
           </td></tr>
         </table>
-        <p style="font-size:12px; color:#7A7A7A; word-break:break-all; margin:0 0 4px;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
-        <p style="font-size:12px; margin:0;"><a href="' . $urlEsc . '" style="color:#F27A00;">' . $urlEsc . '</a></p>
+        <p style="font-size:12px; color:#7A7A7A; margin:0 0 4px;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+        <p style="font-size:12px; margin:0; word-break:break-all;"><a href="' . $urlEsc . '" style="color:#F27A00;">' . $urlEsc . '</a></p>
     ';
 }
 

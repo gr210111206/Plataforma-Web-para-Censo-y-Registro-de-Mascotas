@@ -2,6 +2,32 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-05b] — 4 fallas conocidas confirmadas y corregidas (Fase 2 de pruebas de cierre)
+
+### 🤔 Contexto
+Al iniciar la Fase 2 del plan de pruebas de cierre (`Word/PROMPT_otro_chat_pruebas_y_cierre.txt`), se revisó si seguían presentes las 4 fallas conocidas del análisis del 7–8 de octubre más el C.P. del aviso de privacidad. Las 4 seguían ahí. Se corrigieron las 4 y se verificó cada una (3 con evidencia visual a 390px, 1 con prueba unitaria de la lógica).
+
+### 🔍 Causas y 🔧 Cambios
+1. **C.P. 48970 en el aviso de privacidad** (`web/login.html`): texto suelto, dato incorrecto (el C.P. real del Ayuntamiento es 48740, ya corregido en el Informe desde el 6-oct, pero nunca en el sitio). Cambiado el número.
+2. **El correo de recuperación/confirmación se ensanchaba en celular** (`web/api/config/helpers.php` → `botonCorreo()`): el párrafo con el enlace largo de un solo uso (~110 caracteres sin espacios) no tenía `word-break`, así que el navegador/cliente de correo no podía partirlo y estiraba toda la tarjeta más ancha que la pantalla. La propiedad `word-break:break-all` SÍ estaba puesta, pero en el párrafo de instrucciones de al lado (que no la necesitaba, son palabras normales con espacios) — se movió al párrafo correcto.
+3. **Arrastrar y soltar la portada de un artículo no guardaba** (`web/js/admin/admin-config-shared.js` → `handleDrop()`): calculaba el id del contenedor de vista previa con un `.replace()` encadenado que asumía el patrón `-img`→`-prev` para todos los casos; para el artículo el id real es `art-banner-prev`, no `art-prev`, y el segundo `.replace()` pensado para corregir ese caso especial ya no encontraba nada que reemplazar (el primer `.replace()` ya había cambiado la cadena). El recorte se veía en pantalla pero nunca llegaba al campo que se guarda. Se reemplazó por un mapeo explícito `{'art-img':'art-banner-prev', 'aviso-img':'aviso-prev'}`.
+4. **Botón "Reiniciar" del recortador cortado en celular** (`web/css/styles.css` → `.modal-footer`): con 3 botones (Reiniciar/Cancelar/Aplicar) de texto fijo (`white-space:nowrap`) y sin `flex-wrap`, a 390px de ancho no cabían en una sola fila y el primero quedaba cortado contra el borde del modal. Se agregó `flex-wrap: wrap` — los botones que no quepan bajan a su propia línea en vez de cortarse. Este `.modal-footer` lo usan todos los modales del sitio; el cambio es inofensivo para los que sí caben en una fila (nunca se activa el wrap si no hace falta).
+
+### 🔎 Verificado
+- **C.P.:** `grep` confirma 0 ocurrencias de 48970 y 1 de 48740 en `login.html`.
+- **Correo:** renderizado real de `envolverCorreoHtml()`+`botonCorreo()` con un enlace de recuperación de 110 caracteres, visto con Chrome headless por CDP con el viewport forzado a 390×844 (`Emulation.setDeviceMetricsOverride`) — antes del arreglo el documento medía 504px de ancho (se salía de la pantalla); después, exactamente 390px, el enlace se parte en 3 líneas. Evidencia: `Word/Respaldos/capturas_pruebas_2026-11/PM-20_correo_recuperacion_390px_despues.png`.
+- **Arrastrar y soltar:** prueba unitaria de la función de mapeo (sin necesitar el servidor): `art-img` → `art-banner-prev` (antes: `art-prev`, no existía), `aviso-img` → `aviso-prev` (sin cambio, ya funcionaba).
+- **Botón Reiniciar:** reproducción del `.modal-footer` real (mismo padding, mismos botones, mismo `.modal-overlay` con su padding de 12px en celular) a 390px — antes, "Reiniciar" se ve cortado contra el borde izquierdo del modal; después, los 3 botones se ven completos (2 arriba, 1 abajo). Evidencia: `Word/Respaldos/capturas_pruebas_2026-11/PM-46_boton_reiniciar_antes_despues_390px.png`.
+- `node --check` en `admin-config-shared.js` y `php -l` en `helpers.php` sin errores.
+- Aprovechando el entorno aislado ya levantado para esto, se repitieron también las 125 pruebas de seguridad del 2026-11-05 (ver entrada de arriba): siguen en 125/125 — evidencia actualizada en `Word/Respaldos/capturas_pruebas_2026-11/evidencia_125_pruebas_seguridad_2026-11-05.txt`.
+- Matriz de pruebas (`Word/Matriz_Pruebas_Manuales_2026-11-05.xlsx`) actualizada: PM-09, PM-20 y PM-46 marcados FALLA→corregida, con el detalle en "Resultado obtenido".
+
+### 📂 Archivos modificados
+- `web/login.html`
+- `web/api/config/helpers.php`
+- `web/js/admin/admin-config-shared.js`
+- `web/css/styles.css`
+
 ## 📅 [2026-11-05] — Dos huecos de seguridad cerrados: fotos con código oculto (XSS) y aviso de dispositivo nuevo que se podía evitar
 
 ### 🤔 Contexto

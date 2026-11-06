@@ -1,6 +1,14 @@
 /* ══════════════════════════════════════════════════ */
 /*  DRAG & DROP HELPERS                               */
 /* ══════════════════════════════════════════════════ */
+// Cada input de imagen con zona para arrastrar y soltar tiene su propio
+// contenedor de vista previa, con un nombre que no sigue un patrón único
+// (art-img → art-banner-prev, aviso-img → aviso-prev) — antes se adivinaba
+// con .replace() encadenado y fallaba justo para el artículo (el segundo
+// .replace() ya no encontraba "art-img" porque el primero ya lo había
+// cambiado a "art-prev", un id que no existe: la imagen se recortaba en
+// pantalla pero nunca llegaba al campo real que guarda el artículo).
+const PREV_ID_POR_INPUT = { 'art-img': 'art-banner-prev', 'aviso-img': 'aviso-prev' };
 function handleDrop(e, inputId) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
@@ -9,7 +17,7 @@ function handleDrop(e, inputId) {
     const dt = new DataTransfer();
     dt.items.add(file);
     document.getElementById(inputId).files = dt.files;
-    const prevId = inputId.replace('-img', '-prev').replace('art-img', 'art-banner-prev');
+    const prevId = PREV_ID_POR_INPUT[inputId] || inputId.replace('-img', '-prev');
     previewBanner({ files: dt.files }, prevId);
   }
 }
