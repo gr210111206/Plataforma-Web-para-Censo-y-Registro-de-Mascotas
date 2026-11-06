@@ -2,6 +2,75 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-05] — Dos huecos de seguridad cerrados: fotos con código oculto (XSS) y aviso de dispositivo nuevo que se podía evitar
+
+### 🤔 Contexto
+La revisión del 26-oct de los cambios de sesiones y dispositivos (commits del 24–25 oct) dejó dos hallazgos reales sin corregir. Hoy se corrigen los dos y se comprueba con pruebas contra una API aislada (ver "Verificado").
+
+### 🔍 Causas
+1. **XSS almacenado por imágenes** (ya existía antes de las sesiones). `validarFotoBase64()` solo revisaba el prefijo `data:image/(jpeg|png|webp);base64,` y el tamaño: **todo lo que venía después se guardaba tal cual**. El navegador pinta esa cadena dentro de `src="${…}"` en `innerHTML` (`mascota.html`, `dashboard.html`, `index.html`, `admin-mascotas.js`, `admin-articulos.js`, vista previa de recorte). Un valor como `data:image/png;base64,AAA" onerror="…"` rompía el atributo y ejecutaba JavaScript en el navegador de quien viera la ficha: un ciudadano podía atacar al administrador o a cualquiera que abriera el QR. Los caminos realmente explotables eran el **alta de mascota** (`mascotas.php` POST guarda `foto_url` crudo) y las **campañas/artículos** (`contenido.php`, alta y edición, solo admin). La edición de mascota y el perfil pasaban por `clean()` (`htmlspecialchars` con `ENT_QUOTES`), que escapa las comillas, pero igual guardaban cualquier texto como si fuera una foto.
+2. **El aviso de dispositivo nuevo "fallaba abierto".** `registrarDispositivo()` devolvía `false` (sin correo) si `device_id` faltaba o no tenía el formato esperado: quien supiera la contraseña y llamara a la API directo, sin mandar `device_id`, entraba sin disparar el aviso al dueño de la cuenta.
+
+### 🔧 Cambios
+- **`web/api/config/helpers.php` → `validarFotoBase64()`** (la usan mascotas, perfil, campañas y artículos, así que un solo cambio cubre los cuatro lugares):
+  - Después del prefijo solo se aceptan caracteres Base64 (`A-Z a-z 0-9 + /`) y relleno `=` únicamente al final (máx. 2). Nada de comillas, `<`, espacios ni saltos de línea. Se usa `strspn()` en lugar de una expresión regular para que cadenas de varios MB no dependan de límites de pila ni de backtracking.
+  - Ya decodificada (`base64_decode` estricto) tiene que ser de verdad una imagen: `getimagesizefromstring()` la debe reconocer **y su tipo debe coincidir con el declarado** (un PNG etiquetado como JPEG, o un HTML/SVG codificado en Base64, se rechazan).
+  - Se conservan el límite de 3 MB, los mismos formatos (JPG/PNG/WEBP) y los mismos mensajes de error; las fotos que genera el navegador con Canvas pasan igual que antes.
+- **`web/api/config/helpers.php` → `registrarDispositivo()`:** si el identificador falta o es inválido, usa como respaldo una huella del User-Agent (`'ua-' . sha256(User-Agent)`). El primer acceso desde ese tipo de cliente sí avisa y los siguientes no repiten el aviso. Sigue sin avisar en el primer login de una cuenta nueva.
+- **`web/js/api-client.js`:** solo el comentario de `_getDeviceId()` (ya no dice que sin localStorage "no hay aviso").
+- **`CLAUDE.md`:** dos notas breves (validación de imágenes y respaldo del aviso de dispositivo).
+
+### ⚠️ Límites (para no sobreestimar el arreglo)
+- La huella de User-Agent es menos precisa que `padron_device_id`: dos personas con exactamente el mismo navegador y versión comparten huella. Es solo respaldo; con un `device_id` válido todo funciona como antes.
+- El front-end **no** se tocó: sigue pintando `src="${…}"`. La defensa ahora está en el servidor (nada que no sea una imagen real llega a la base). Escapar también del lado del navegador queda como defensa en profundidad opcional.
+- Esto **no limpia lo que ya estuviera guardado**: ver la consulta de revisión en "Pendiente".
+
+### 🔎 Verificado
+Con una copia de `web/api` conectada a un MariaDB **desechable** (puerto 3399, carpeta temporal) y un servidor PHP temporal (puerto 8125), con el SMTP apuntando a un puerto cerrado (no sale ningún correo). `remac_db` y producción no se tocaron. PHP 8.2.12 de XAMPP.
+- **125 comprobaciones, 0 fallos.** Las fotos válidas (PNG, JPEG y WEBP con y sin pérdida) se aceptan y se guardan idénticas en alta, edición y perfil. Quince cargas maliciosas distintas (ruptura de atributo con `"` o `'`, Base64 válido con basura al final, `<script>` o SVG codificados, PNG disfrazado de JPEG, relleno `=====`, salto de línea, GIF, más de 3 MB, `javascript:`, URL externa…) se rechazan con 400 en alta de mascota, edición, perfil, campañas y artículos (alta y edición). Un ciudadano sigue sin poder crear campañas (403).
+- Revisión directa en la base tras las pruebas: ninguna fila con `onerror`, `<`, `"`, espacios ni `javascript:`, y todo lo guardado es Base64 puro (con controles positivos para comprobar que la consulta sí detecta basura conocida).
+- Aviso de dispositivo (se cuenta el intento de envío en el registro de errores): `device_id` nuevo → avisa; el mismo otra vez → no; **sin `device_id`**, navegador nuevo → **avisa** (antes no); `device_id` inválido o con `<script>` → usa la huella, sin errores; primer login de una cuenta nueva → no avisa; el login responde 200 con token aunque el correo no se pueda enviar.
+- **Contraste con el código anterior** (el mismo conjunto de pruebas contra el `helpers.php` de `HEAD`): fallaron **60 de 125**. Aceptaba todas las cargas con prefijo válido (dejó 4 filas peligrosas en mascotas, artículos y campañas) y no avisaba sin `device_id`. Así se comprueba que las pruebas sí detectan el problema.
+- Fotos realistas con ruido (peor caso de tamaño): JPEG de 346 KB y 781 KB y PNG de 587 KB se aceptan en 13–29 ms; un JPEG de 2.7 MB (3.6 MB en Base64) da "demasiado grande", el mismo tope de 3 MB de antes.
+- La consulta de revisión de abajo se probó en esa base: 0 filas con datos limpios y marca las 4 cargas de control (incluida una que intenta esconderse con una coma), sin marcar imágenes válidas, vacías ni NULL.
+- `php -l helpers.php` y `node --check api-client.js` sin errores.
+
+### 🗄️ Pendiente (manual)
+1. Subir `web/api/config/helpers.php` y `web/js/api-client.js` a HostGator (cPanel). No hay cambios de base de datos ni migración.
+2. Revisar si ya hay imágenes raras guardadas (solo lectura; correr en phpMyAdmin de producción). **Debe devolver 0 filas**:
+```sql
+SELECT 'mascotas.foto_url' AS donde, CAST(id AS CHAR) AS id, LEFT(foto_url, 60) AS inicio
+  FROM mascotas
+ WHERE foto_url IS NOT NULL AND foto_url <> ''
+   AND (foto_url NOT REGEXP '^data:image/(jpeg|png|webp);base64,'
+        OR SUBSTRING(foto_url, LOCATE(',', foto_url) + 1) REGEXP '[^A-Za-z0-9+/=]')
+UNION ALL
+SELECT 'duenos.foto_perfil', CAST(id AS CHAR), LEFT(foto_perfil, 60)
+  FROM duenos
+ WHERE foto_perfil IS NOT NULL AND foto_perfil <> ''
+   AND (foto_perfil NOT REGEXP '^data:image/(jpeg|png|webp);base64,'
+        OR SUBSTRING(foto_perfil, LOCATE(',', foto_perfil) + 1) REGEXP '[^A-Za-z0-9+/=]')
+UNION ALL
+SELECT 'articulos.imagen', CAST(id AS CHAR), LEFT(imagen, 60)
+  FROM articulos
+ WHERE imagen IS NOT NULL AND imagen <> ''
+   AND (imagen NOT REGEXP '^data:image/(jpeg|png|webp);base64,'
+        OR SUBSTRING(imagen, LOCATE(',', imagen) + 1) REGEXP '[^A-Za-z0-9+/=]')
+UNION ALL
+SELECT 'campanas.imagen', CAST(id AS CHAR), LEFT(imagen, 60)
+  FROM campanas
+ WHERE imagen IS NOT NULL AND imagen <> ''
+   AND (imagen NOT REGEXP '^data:image/(jpeg|png|webp);base64,'
+        OR SUBSTRING(imagen, LOCATE(',', imagen) + 1) REGEXP '[^A-Za-z0-9+/=]');
+```
+   Si devuelve filas, abrir ese registro y reemplazar su imagen (o dejarla en NULL) desde el panel o phpMyAdmin.
+
+### 📂 Archivos modificados
+- `web/api/config/helpers.php`
+- `web/js/api-client.js`
+- `CLAUDE.md`
+- `HISTORIAL_CAMBIOS.md`
+
 ## 📅 [2026-10-28] — Configuración del Sitio se ve bien en el celular (nada cortado ni en 2 columnas apretadas)
 
 ### 🤔 Contexto

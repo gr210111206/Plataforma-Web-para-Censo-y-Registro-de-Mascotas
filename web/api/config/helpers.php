@@ -285,9 +285,20 @@ function describirDispositivo(string $ua): string {
    dispositivo nuevo).
    Devuelve true solo si es un navegador nuevo Y la cuenta ya tenía otros
    registrados — así el primer login de una cuenta (o el primero después
-   de aplicar la migración 0003) no manda correo a nadie. */
+   de aplicar la migración 0003) no manda correo a nadie.
+
+   ⚠️ Antes, si el identificador faltaba o no tenía el formato esperado,
+   esto devolvía false y NO se avisaba: quien conociera la contraseña y
+   llamara a la API sin mandar device_id entraba sin disparar el correo
+   (el aviso "fallaba abierto"). Ahora, sin un identificador válido (una
+   llamada directa a la API, un navegador que bloquea localStorage…) se
+   usa como identificador de respaldo una huella del User-Agent: el
+   primer acceso desde ese tipo de cliente sí avisa y los siguientes no
+   repiten el aviso. */
 function registrarDispositivo(int $duenoId, string $deviceId): bool {
-    if (!preg_match('/^[a-zA-Z0-9-]{16,64}$/', $deviceId)) return false;
+    if (!preg_match('/^[a-zA-Z0-9-]{16,64}$/', $deviceId)) {
+        $deviceId = 'ua-' . hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
+    }
 
     $db   = getDB();
     $stmt = $db->prepare('SELECT COUNT(*) FROM dispositivos_conocidos WHERE dueno_id = ?');
@@ -551,21 +562,49 @@ function sanitizeArticleHtml(?string $html): string {
     return $out;
 }
 
-/* ── Validar foto en Base64 (mascota, perfil) ───── */
-/* El redimensionado con Canvas ya limita esto desde el navegador, pero
+/* ── Validar foto en Base64 (mascota, perfil, campañas, artículos) ─────
+   El redimensionado con Canvas ya limita esto desde el navegador, pero
    una llamada directa a la API (sin pasar por la UI) podría mandar un
    archivo enorme o que ni siquiera sea una imagen — esto es el respaldo
-   del lado del servidor. Un solo límite/formato para los tres lugares
-   que guardan fotos (perfil, mascota) en vez de una copia distinta en
-   cada endpoint. Devuelve null si es válida, o el mensaje de error. */
+   del lado del servidor. Un solo límite/formato para todos los lugares
+   que guardan imágenes en vez de una copia distinta en cada endpoint.
+   Devuelve null si es válida, o el mensaje de error.
+
+   ⚠️ Antes solo se revisaba el PREFIJO ("data:image/png;base64,") y el
+   tamaño: lo que viniera DESPUÉS se guardaba tal cual. Como el navegador
+   pinta esa cadena dentro de un atributo (<img src="${foto}">), un valor
+   como  data:image/png;base64,AAA" onerror="…"  rompía el atributo y
+   ejecutaba JavaScript en el navegador de quien viera la ficha (XSS
+   almacenado: un ciudadano podía atacar al administrador). Ahora todo lo
+   que sigue al prefijo tiene que ser Base64 puro y, ya decodificado,
+   tiene que ser de verdad una imagen del tipo que dice ser. */
 function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
     if ($foto === null || $foto === '') return null;
-    if (!preg_match('#^data:image/(jpeg|png|webp);base64,#', $foto)) {
-        return 'La imagen debe ser una foto en formato JPG, PNG o WEBP.';
+    $errFormato = 'La imagen debe ser una foto en formato JPG, PNG o WEBP.';
+
+    if (!preg_match('#^data:image/(jpeg|png|webp);base64,#', $foto, $m)) return $errFormato;
+    if (strlen($foto) > $maxBytes) return 'La imagen es demasiado grande.';
+
+    // Solo caracteres Base64 (nada de comillas, "<", espacios ni saltos de
+    // línea) y el relleno "=" únicamente al final (máximo 2). strspn() en
+    // vez de una expresión regular: sobre cadenas de varios MB no tiene
+    // límites de pila ni de backtracking.
+    $b64        = substr($foto, strlen($m[0]));
+    $sinRelleno = rtrim($b64, '=');
+    if ($sinRelleno === ''
+        || strlen($b64) - strlen($sinRelleno) > 2
+        || strspn($sinRelleno, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/') !== strlen($sinRelleno)) {
+        return $errFormato;
     }
-    if (strlen($foto) > $maxBytes) {
-        return 'La imagen es demasiado grande.';
-    }
+
+    // Que decodifique bien y que sea una imagen real del tipo declarado
+    // (no un texto cualquiera ni un PNG disfrazado de JPEG).
+    $binario = base64_decode($b64, true);
+    if ($binario === false) return $errFormato;
+    $info  = @getimagesizefromstring($binario);
+    $tipos = ['jpeg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'webp' => IMAGETYPE_WEBP];
+    if ($info === false || $info[2] !== $tipos[$m[1]]) return $errFormato;
+
     return null;
 }
 

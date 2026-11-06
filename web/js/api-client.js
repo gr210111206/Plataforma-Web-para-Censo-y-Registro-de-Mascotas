@@ -46,8 +46,9 @@ function _getToken() {
  * sesión desde un dispositivo nuevo" (el servidor solo guarda su hash, ver
  * registrarDispositivo() en helpers.php). Vive en localStorage aparte de la
  * sesión, así que sobrevive a cerrar sesión. Si el navegador no deja usar
- * localStorage (modo privado estricto), se manda vacío y simplemente no
- * hay aviso.
+ * localStorage (modo privado estricto), se manda vacío y el servidor usa
+ * una huella del User-Agent en su lugar (así el primer acceso desde ese
+ * navegador también avisa).
  */
 function _getDeviceId() {
   try {
