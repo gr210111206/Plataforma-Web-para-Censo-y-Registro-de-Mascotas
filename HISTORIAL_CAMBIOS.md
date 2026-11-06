@@ -36,7 +36,7 @@ Con una copia de `web/api` conectada a un MariaDB **desechable** (puerto 3399, c
 - `php -l helpers.php` y `node --check api-client.js` sin errores.
 
 ### 🗄️ Pendiente (manual)
-1. Subir `web/api/config/helpers.php` y `web/js/api-client.js` a HostGator (cPanel). No hay cambios de base de datos ni migración.
+1. Desplegar en HostGator: cPanel → **Git Version Control** → abrir el repo → pestaña "Pull or Deploy" → **Update from Remote** y luego **Deploy HEAD Commit** (`.cpanel.yml` copia `web/` a `public_html` sin tocar `api/config/database.php`). Ojo: el cambio de seguridad solo protege en producción **después** de este paso. No hay cambios de base de datos ni migración.
 2. Revisar si ya hay imágenes raras guardadas (solo lectura; correr en phpMyAdmin de producción). **Debe devolver 0 filas**:
 ```sql
 SELECT 'mascotas.foto_url' AS donde, CAST(id AS CHAR) AS id, LEFT(foto_url, 60) AS inicio
