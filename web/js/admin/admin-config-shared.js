@@ -40,9 +40,27 @@ function previewBanner(input, prevId) {
 /* ══════════════════════════════════════════════════ */
 /*  EXPORT CSV                                        */
 /* ══════════════════════════════════════════════════ */
-function exportCSV() {
+// "allPets" solo tiene la PÁGINA actual de Seguimiento (la llena loadSeguimiento(),
+// pensada para pintar la tabla, no para exportar) — exportar desde ahí descargaba
+// como máximo PAGE_SIZE filas en vez de todo el padrón. Se vuelve a pedir al
+// servidor sin paginar (misma búsqueda/filtro que esté activo en Seguimiento, si hay
+// alguno) para traer de verdad todas las filas que corresponden.
+async function exportCSV() {
+  showToast('Preparando el CSV...', 'info');
+  let pets;
+  try {
+    const params = {};
+    if (seguimientoState.q)       params.q       = seguimientoState.q;
+    if (seguimientoState.especie) params.especie = seguimientoState.especie;
+    if (seguimientoState.estatus) params.estatus = seguimientoState.estatus;
+    pets = await apiGetTodasMascotas(params); // sin "page": el servidor regresa el arreglo completo, sin paginar
+  } catch (err) {
+    showToast(`No se pudo exportar: ${err.message}`, 'error');
+    return;
+  }
+
   const header = ['Folio','Nombre','Especie','Raza','Edad','Sexo','Vacunado','Esterilizado','Estatus','Dueño','Colonia','Registro'];
-  const rows = allPets.map(m => [
+  const rows = pets.map(m => [
     m.id, m.nombre, m.especie, m.raza||'', m.edad_label||m.edad||'',
     m.sexo||'', m.vacunado?'Sí':'No', m.esterilizado?'Sí':'No',
     m.estatus, m.persona||'', m.colonia||'', m.fecha_registro||m.created_at||'',
@@ -53,7 +71,7 @@ function exportCSV() {
   a.href = URL.createObjectURL(blob);
   a.download = `padron_mascotas_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
-  showToast('CSV descargado correctamente', 'success');
+  showToast(`CSV descargado correctamente (${rows.length} mascotas)`, 'success');
 }
 
 /* ══════════════════════════════════════════════════ */

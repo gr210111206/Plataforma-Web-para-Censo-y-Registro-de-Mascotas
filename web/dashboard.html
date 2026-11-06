@@ -571,6 +571,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
+      <button class="btn btn-ghost" id="detalle-baja-btn" style="color:var(--red);"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> Dar de baja</button>
       <button class="btn btn-outline" id="detalle-editar-btn"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8" /><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /></svg> Editar</button>
       <button class="btn btn-primary" id="detalle-acta-btn"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg> Descargar Acta PDF</button>
     </div>
@@ -962,6 +963,12 @@ function verDetalle(i) {
   document.getElementById('detalle-acta-btn').onclick   = () => downloadActa(folio);
   document.getElementById('detalle-editar-btn').onclick = () => { closeModal('modal-detalle'); editarMascota(i); };
 
+  // "Dar de baja" (RF-25): solo tiene sentido si la mascota sigue en Alta — ya dada de baja, no hay nada que hacer aquí.
+  const bajaBtn = document.getElementById('detalle-baja-btn');
+  const yaDeBaja = pet.estatus === 'Baja';
+  bajaBtn.style.display = yaDeBaja ? 'none' : '';
+  bajaBtn.onclick = () => darDeBajaPropiaMascota(i);
+
   document.getElementById('detalle-body').innerHTML = `
     ${(pet.foto_url && pet.foto_url.length > 10) ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:100%; height:160px; object-fit:cover; border-radius:var(--radius-lg); margin-bottom:16px;" />` : ''}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -988,6 +995,28 @@ function verDetalle(i) {
       <a href="${pet.link_publico}" target="_blank" rel="noopener noreferrer" style="font-size:.8rem; color:var(--orange); word-break:break-all;">${pet.link_publico}</a>
     </div>` : ''}`;
   openModal('modal-detalle');
+}
+
+/* Dar de baja la propia mascota (RF-25): baja lógica, no se borra el
+   registro — el folio y el acta siguen existiendo, solo cambia el
+   estatus. Un solo clic y sin un paso de formulario de por medio, así
+   que sí necesita su propia confirmación (mismo criterio que admin.html
+   con "Cambiar estatus"). */
+async function darDeBajaPropiaMascota(i) {
+  const pet = myPets[i];
+  if (!pet) return;
+  const folio = pet.id || pet.folio;
+  if (!confirm(`¿Dar de baja a "${pet.nombre}" (folio ${folio})? El registro no se borra, pero quedará marcado como Baja.`)) return;
+
+  try {
+    await apiDarDeBajaMascota(folio);
+    pet.estatus = 'Baja';
+    renderPets();
+    closeModal('modal-detalle');
+    showToast(`✅ ${pet.nombre} fue dado/a de baja`, 'success');
+  } catch (err) {
+    showToast(`❌ ${err.message}`, 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════ */

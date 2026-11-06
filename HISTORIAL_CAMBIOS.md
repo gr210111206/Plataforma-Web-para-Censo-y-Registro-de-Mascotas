@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-06] — Dos hallazgos nuevos de la Fase 2: el ciudadano no podía dar de baja su mascota, y Exportar CSV solo traía la página visible
+
+### 🤔 Contexto
+Terminando la matriz de 82 pruebas manuales de la Fase 2 (quedó completa hoy: 77 OK, 5 FALLA — ver `Word/ESTADO_PRUEBAS_Y_CIERRE.md`), aparecieron 2 casos reales que no eran de la lista de 4 fallas ya conocidas del 5-nov. Se le preguntó al usuario antes de tocar nada; pidió corregir los dos.
+
+### 🔍 Causas y 🔧 Cambios
+1. **RF-25 — un ciudadano no tenía ninguna forma de dar de baja su propia mascota.** El endpoint `DELETE /api/mascotas?id=...` (baja lógica, deja el registro con `estatus='Baja'` y lo manda a la bitácora) ya existía y funcionaba bien, y `apiDarDeBajaMascota()` ya existía en `api-client.js` — pero `dashboard.html` nunca llamaba a esa función desde ninguna pantalla: el modal de editar mascota no tiene campo de estatus. Se agregó un botón "Dar de baja" en el modal de Detalle de mascota (`web/dashboard.html`, función nueva `darDeBajaPropiaMascota()`), con su propio `confirm()` antes de ejecutar (es una acción de un solo clic, sin un paso de formulario de por medio — mismo criterio que llevó a agregarle confirmación a "Cambiar estatus" en `admin.html` el 2026-10-16). El botón se oculta solo si la mascota ya está en Baja (no hay nada más que hacer ahí).
+2. **RF-41 — "Exportar CSV" del panel admin solo traía la página visible en pantalla, no el padrón completo.** `exportCSV()` (`web/js/admin/admin-config-shared.js`) leía de `allPets`, una variable que `loadSeguimiento()` llena solo con la página actual de la tabla de Seguimiento (`PAGE_SIZE = 25`) — pensada para pintar la tabla, nunca para exportar. Con 73 mascotas de prueba, el CSV descargado traía 25 filas. Se corrigió para que `exportCSV()` vuelva a pedirle al servidor la lista completa SIN paginar (`apiGetTodasMascotas()` sin `page`), respetando la búsqueda/filtro que esté activo en Seguimiento en ese momento (si el admin filtró por "gato", exporta todos los gatos, no solo los primeros 25).
+
+### 🔎 Verificado
+- Ambos casos probados en vivo contra el entorno aislado de la Fase 2 (datos ficticios, MariaDB 3399 + PHP 8125), con Chrome real sin interfaz:
+  - Dar de baja: el botón aparece, al confirmar cambia el estatus en pantalla Y en el servidor, y desaparece después (ya no hay nada que hacer con una mascota que ya está en Baja).
+  - Exportar CSV: sin filtro, exportó las 66 mascotas reales del padrón de prueba (antes solo 25); con el filtro "especie=gato" activo, exportó los 23 gatos reales (antes también se quedaba en la página visible).
+- `node --check` sin errores en los scripts de `dashboard.html` (extraídos a un archivo temporal para validarlos) y en `admin-config-shared.js`.
+- Pendiente: desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit).
+
+### 📂 Archivos modificados
+- `web/dashboard.html`
+- `web/js/admin/admin-config-shared.js`
+
 ## 📅 [2026-11-05b] — 4 fallas conocidas confirmadas y corregidas (Fase 2 de pruebas de cierre)
 
 ### 🤔 Contexto
