@@ -6,6 +6,9 @@
  *     registrados por día (semana = últimos 7 días, mes = últimos 30) o por
  *     mes (ano = últimos 12 meses). Solo admin — gráfica "Registros nuevos"
  *     de la pestaña Datos.
+ * GET /api/stats?serie=registros&periodo=mes_especifico&mes=AAAA-MM → Lo
+ *     mismo, pero por día dentro de ese mes elegido (selector de calendario
+ *     en la gráfica), sea pasado o futuro.
  */
 
 require_once __DIR__ . '/config/helpers.php';
@@ -21,8 +24,8 @@ $db = getDB();
 if (($_GET['serie'] ?? '') === 'registros') {
     requireAdmin();
     $periodo = $_GET['periodo'] ?? 'mes';
-    if (!in_array($periodo, ['semana', 'mes', 'ano'], true)) {
-        jsonError('Periodo inválido. Usa semana, mes o ano.', 400);
+    if (!in_array($periodo, ['semana', 'mes', 'ano', 'mes_especifico'], true)) {
+        jsonError('Periodo inválido. Usa semana, mes, ano o mes_especifico.', 400);
     }
 
     // "Hoy" según MySQL, no según PHP: en el servidor tienen zonas horarias
@@ -34,27 +37,41 @@ if (($_GET['serie'] ?? '') === 'registros') {
     // Se usa created_at (cuándo se guardó de verdad en el sistema), no
     // mascotas.fecha_registro: esa la escribe/edita la persona en el
     // formulario, así que no sirve para saber cuándo hubo registros.
-    if ($periodo === 'ano') {
+    $mesElegido = null;
+    if ($periodo === 'mes_especifico') {
+        $mesElegido = $_GET['mes'] ?? '';
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mesElegido)) {
+            jsonError('Mes inválido. Usa el formato AAAA-MM.', 400);
+        }
+        $inicio  = new DateTimeImmutable($mesElegido . '-01');
+        $fin     = $inicio->modify('+1 month');
+        $formato = '%Y-%m-%d';
+        $claves  = [];
+        $dias    = (int) $inicio->format('t');
+        for ($i = 0; $i < $dias; $i++) $claves[] = $inicio->modify("+$i days")->format('Y-m-d');
+    } elseif ($periodo === 'ano') {
         $inicio  = $hoy->modify('first day of this month')->modify('-11 months');
+        $fin     = $hoy->modify('first day of this month')->modify('+1 month');
         $formato = '%Y-%m';
         $claves  = [];
         for ($i = 0; $i < 12; $i++) $claves[] = $inicio->modify("+$i months")->format('Y-m');
     } else {
         $dias    = $periodo === 'semana' ? 7 : 30;
         $inicio  = $hoy->modify('-' . ($dias - 1) . ' days');
+        $fin     = $hoy->modify('+1 day');
         $formato = '%Y-%m-%d';
         $claves  = [];
         for ($i = 0; $i < $dias; $i++) $claves[] = $inicio->modify("+$i days")->format('Y-m-d');
     }
 
-    // $formato viene de las dos constantes de arriba, nunca del cliente.
-    $contar = function (string $sql) use ($db, $inicio): array {
+    // $formato viene de las constantes de arriba, nunca del cliente.
+    $contar = function (string $sql) use ($db, $inicio, $fin): array {
         $stmt = $db->prepare($sql);
-        $stmt->execute([$inicio->format('Y-m-d')]);
+        $stmt->execute([$inicio->format('Y-m-d'), $fin->format('Y-m-d')]);
         return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     };
-    $mascotas   = $contar("SELECT DATE_FORMAT(created_at, '$formato') AS k, COUNT(*) FROM mascotas WHERE created_at >= ? GROUP BY k");
-    $ciudadanos = $contar("SELECT DATE_FORMAT(created_at, '$formato') AS k, COUNT(*) FROM duenos WHERE rol = 'ciudadano' AND created_at >= ? GROUP BY k");
+    $mascotas   = $contar("SELECT DATE_FORMAT(created_at, '$formato') AS k, COUNT(*) FROM mascotas WHERE created_at >= ? AND created_at < ? GROUP BY k");
+    $ciudadanos = $contar("SELECT DATE_FORMAT(created_at, '$formato') AS k, COUNT(*) FROM duenos WHERE rol = 'ciudadano' AND created_at >= ? AND created_at < ? GROUP BY k");
 
     $puntos = array_map(fn($k) => [
         'clave'      => $k,
@@ -64,6 +81,7 @@ if (($_GET['serie'] ?? '') === 'registros') {
 
     jsonOk([
         'periodo' => $periodo,
+        'mes'     => $mesElegido,
         'puntos'  => $puntos,
         'totales' => [
             'mascotas'   => array_sum(array_column($puntos, 'mascotas')),

@@ -2,6 +2,29 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-18] — La gráfica "Registros nuevos" del panel admin ahora deja elegir un mes específico con un calendario
+
+### 🤔 Contexto
+El usuario pidió poder ver las estadísticas de un mes en concreto (no solo los 3 periodos fijos de "7 días / 30 días / 12 meses") para revisar el padrón, usando un selector tipo calendario.
+
+### 🔍 Causas y 🔧 Cambios
+La gráfica "Registros nuevos" (pestaña Datos del panel admin) solo soportaba 3 periodos fijos relativos a hoy (`semana`, `mes`, `ano`), resueltos en `GET /api/stats?serie=registros&periodo=...`. Se agregó un cuarto periodo, `mes_especifico`, que recibe además `mes=AAAA-MM`:
+1. **`web/api/stats.php`** — valida `mes` con un regex (`^\d{4}-(0[1-9]|1[0-2])$`), calcula el rango de ese mes completo (día 1 al último día, con `DateTimeImmutable::format('t')`) y cuenta mascotas/ciudadanos por `created_at` igual que los otros periodos. De paso se le puso también límite superior (`created_at < $fin`) a los 3 periodos existentes — antes solo tenían `>= $inicio`, lo cual daba el mismo resultado porque nunca hay datos a futuro, pero ahora las 4 ramas comparten la misma forma.
+2. **`web/js/api-client.js`** — `apiGetRegistros(periodo, mes)` ahora manda el parámetro `mes` cuando aplica.
+3. **`web/js/admin/admin-dashboard.js`** — nueva función `regSubtitulo()` que arma el subtítulo ("marzo de 2026") cuando el periodo es `mes_especifico`, en vez de la tabla fija `REG_SUBTITULO`. `initRegistros()` conecta el nuevo `<input type="month">` (limita `max` al mes actual): al elegir un mes se desactivan los 3 botones de periodo fijo, y al volver a tocar un botón fijo se limpia el mes elegido.
+4. **`web/admin.html`** — se agregó el `<input type="month">` junto a los 3 botones existentes, con su propio estilo para que combine con el grupo de pastillas.
+
+### 🔎 Verificado
+- `php -l` sin errores en `stats.php`.
+- `node --check` sin errores en `admin-dashboard.js` y `api-client.js`.
+- Pendiente: desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit) y probarlo ahí con datos reales/de demostración.
+
+### 📂 Archivos modificados
+- `web/api/stats.php`
+- `web/js/api-client.js`
+- `web/js/admin/admin-dashboard.js`
+- `web/admin.html`
+
 ## 📅 [2026-11-06] — Dos hallazgos nuevos de la Fase 2: el ciudadano no podía dar de baja su mascota, y Exportar CSV solo traía la página visible
 
 ### 🤔 Contexto

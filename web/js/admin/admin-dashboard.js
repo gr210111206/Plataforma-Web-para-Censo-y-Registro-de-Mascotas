@@ -220,6 +220,16 @@ const REG_SERIES = [
 ];
 const REG_SUBTITULO = { semana: 'últimos 7 días', mes: 'últimos 30 días', ano: 'últimos 12 meses' };
 const REG_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const REG_MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+// Subtítulo de la gráfica: los 3 periodos fijos salen de REG_SUBTITULO; el
+// mes elegido en el calendario se arma con su propia fecha (ej. "marzo de 2026").
+function regSubtitulo({ periodo, mes }) {
+  if (periodo === 'mes_especifico' && mes) {
+    const [y, m] = mes.split('-').map(Number);
+    return `${REG_MESES_LARGOS[m - 1]} de ${y}`;
+  }
+  return REG_SUBTITULO[periodo];
+}
 const REG_DIAS  = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const SVG_NS = 'http://www.w3.org/2000/svg';
 let regDatos = null;
@@ -266,7 +276,7 @@ function renderRegistros() {
   const W = cont.clientWidth;
   if (W < 60) return; // pestaña oculta: el ResizeObserver vuelve a llamar al mostrarse
   const H = cont.clientHeight;
-  const { puntos, totales, periodo } = regDatos;
+  const { puntos, totales } = regDatos;
   const n = puntos.length;
   const m = { t: 10, r: 14, b: 26, l: 34 };
   const anchoP = W - m.l - m.r, altoP = H - m.t - m.b;
@@ -274,8 +284,9 @@ function renderRegistros() {
   const { tope, paso } = regEscala(maximo);
   const x = i => m.l + (n === 1 ? anchoP / 2 : (i * anchoP) / (n - 1));
   const y = v => m.t + altoP - (v / tope) * altoP;
+  const subtitulo = regSubtitulo(regDatos);
 
-  document.getElementById('registros-sub').textContent = `Mascotas y ciudadanos dados de alta · ${REG_SUBTITULO[periodo]}`;
+  document.getElementById('registros-sub').textContent = `Mascotas y ciudadanos dados de alta · ${subtitulo}`;
 
   // Leyenda: identidad (línea de color) + total del periodo.
   document.getElementById('registros-leyenda').replaceChildren(...REG_SERIES.map(s => {
@@ -292,7 +303,7 @@ function renderRegistros() {
   cont.replaceChildren();
   const svg = regSvg('svg', {
     viewBox: `0 0 ${W} ${H}`, tabindex: '0', role: 'img',
-    'aria-label': `Registros nuevos, ${REG_SUBTITULO[periodo]}: ${totales.mascotas} mascotas y ${totales.ciudadanos} ciudadanos. Usa las flechas para recorrer los días; la tabla de abajo tiene todos los valores.`,
+    'aria-label': `Registros nuevos, ${subtitulo}: ${totales.mascotas} mascotas y ${totales.ciudadanos} ciudadanos. Usa las flechas para recorrer los días; la tabla de abajo tiene todos los valores.`,
   }, cont);
 
   // Cuadrícula + eje Y (tenues, 1px).
@@ -410,13 +421,13 @@ function renderRegistros() {
   document.getElementById('registros-tabla').replaceChildren(tabla);
 }
 
-async function cargarRegistros(periodo) {
+async function cargarRegistros(periodo, mes) {
   const cont = document.getElementById('registros-grafica');
   if (!cont) return;
   const id = ++regCargaId;
   cont.classList.add('cargando'); // conserva la gráfica anterior, atenuada, mientras llega la nueva
   try {
-    const datos = await apiGetRegistros(periodo);
+    const datos = await apiGetRegistros(periodo, mes);
     if (id !== regCargaId) return; // ya se pidió otro periodo después
     regDatos = datos;
     renderRegistros();
@@ -439,15 +450,28 @@ function initRegistros() {
   const cont = document.getElementById('registros-grafica');
   if (!cont) return;
   const botones = document.querySelectorAll('.registros-periodos button');
+  const mesInput = document.getElementById('registros-mes-input');
   botones.forEach(btn => {
     btn.addEventListener('click', () => {
       botones.forEach(b => {
         b.classList.toggle('activo', b === btn);
         b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
       });
+      if (mesInput) mesInput.value = ''; // un periodo fijo reemplaza al mes elegido a mano
       cargarRegistros(btn.dataset.periodo);
     });
   });
+  if (mesInput) {
+    mesInput.max = new Date().toISOString().slice(0, 7); // no tiene caso elegir un mes futuro
+    mesInput.addEventListener('change', () => {
+      if (!mesInput.value) return;
+      botones.forEach(b => {
+        b.classList.remove('activo');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      cargarRegistros('mes_especifico', mesInput.value);
+    });
+  }
   // Redibuja al cambiar el ancho, y al mostrarse la pestaña Datos (que
   // empieza oculta y mide 0 px).
   let pendiente = false;

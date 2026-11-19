@@ -118,6 +118,16 @@
     }
     .registros-periodos button:hover { color: var(--dark); }
     .registros-periodos button.activo { background: white; color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .registros-mes-picker {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .78rem; font-weight: 600; color: var(--gray-1);
+      padding: 6px 10px; border-radius: 99px; cursor: pointer;
+    }
+    .registros-mes-picker:hover { color: var(--dark); }
+    .registros-mes-picker input[type="month"] {
+      border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; width: 92px;
+    }
+    .registros-mes-picker input[type="month"]:focus { outline: none; }
     .registros-leyenda { display: flex; gap: 22px; flex-wrap: wrap; margin: 14px 0 4px; }
     .registros-leyenda-item { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--gray-1); }
     .registros-leyenda-item strong { font-size: 1.05rem; color: var(--dark); }
@@ -1171,6 +1181,10 @@
             <button type="button" data-periodo="semana">7 días</button>
             <button type="button" data-periodo="mes" class="activo" aria-pressed="true">30 días</button>
             <button type="button" data-periodo="ano">12 meses</button>
+            <label class="registros-mes-picker" title="Ver un mes específico">
+              <span aria-hidden="true">📅</span>
+              <input type="month" id="registros-mes-input" aria-label="Ver un mes específico">
+            </label>
           </div>
         </div>
         <div class="registros-leyenda" id="registros-leyenda"></div>
