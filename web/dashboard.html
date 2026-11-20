@@ -595,6 +595,30 @@
   </div>
 </div>
 
+<!-- ── Modal: confirmación genérica (reemplaza confirm() nativo del navegador,
+     para que se vea consistente con el resto del panel — ver confirmarAccion()
+     más abajo, mismo patrón que admin.html) ── -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title" style="display:flex; align-items:center; gap:10px;">
+        <span id="confirm-icon" style="display:flex; flex-shrink:0;">
+          <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px; height:22px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+        </span>
+        Confirmar acción
+      </h2>
+      <button class="modal-close" id="confirm-btn-cerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-mensaje" style="font-size:.92rem; color:var(--gray-1); line-height:1.6; margin:0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-ghost" id="confirm-btn-cancelar">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirm-btn-aceptar">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1006,7 +1030,7 @@ async function darDeBajaPropiaMascota(i) {
   const pet = myPets[i];
   if (!pet) return;
   const folio = pet.id || pet.folio;
-  if (!confirm(`¿Dar de baja a "${pet.nombre}" (folio ${folio})? El registro no se borra, pero quedará marcado como Baja.`)) return;
+  if (!(await confirmarAccion(`¿Dar de baja a "${pet.nombre}" (folio ${folio})? El registro no se borra, pero quedará marcado como Baja.`, { danger: true, textoAceptar: 'Dar de baja' }))) return;
 
   try {
     await apiDarDeBajaMascota(folio);
@@ -1515,6 +1539,49 @@ function closeModal(id) {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
 });
+
+/* ══════════════════════════════════════════════════ */
+/*  CONFIRMACIÓN GENÉRICA — reemplaza confirm() nativo  */
+/*  del navegador (no respeta el diseño del sitio) por  */
+/*  el modal #modal-confirm, con el mismo look del resto */
+/*  del panel (mismo patrón que admin-core.js). Uso:     */
+/*  if (!(await confirmarAccion('¿...?'))) return;       */
+/* ══════════════════════════════════════════════════ */
+function confirmarAccion(mensaje, { danger = false, textoAceptar = 'Aceptar' } = {}) {
+  return new Promise(resolve => {
+    const overlay     = document.getElementById('modal-confirm');
+    const btnAceptar   = document.getElementById('confirm-btn-aceptar');
+    const btnCancelar  = document.getElementById('confirm-btn-cancelar');
+    const btnCerrar    = document.getElementById('confirm-btn-cerrar');
+    const icono        = document.getElementById('confirm-icon');
+
+    document.getElementById('confirm-mensaje').textContent = mensaje;
+    btnAceptar.textContent = textoAceptar;
+    btnAceptar.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+    icono.style.color = danger ? 'var(--red)' : 'var(--orange)';
+
+    function terminar(resultado) {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+      btnAceptar.removeEventListener('click', onAceptar);
+      btnCancelar.removeEventListener('click', onCancelar);
+      btnCerrar.removeEventListener('click', onCancelar);
+      overlay.removeEventListener('click', onOverlayClick);
+      resolve(resultado);
+    }
+    function onAceptar()  { terminar(true); }
+    function onCancelar() { terminar(false); }
+    function onOverlayClick(e) { if (e.target === overlay) terminar(false); }
+
+    btnAceptar.addEventListener('click', onAceptar);
+    btnCancelar.addEventListener('click', onCancelar);
+    btnCerrar.addEventListener('click', onCancelar);
+    overlay.addEventListener('click', onOverlayClick);
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+}
 
 /* ══════════════════════════════════════════════════ */
 /*  TOAST                                             */

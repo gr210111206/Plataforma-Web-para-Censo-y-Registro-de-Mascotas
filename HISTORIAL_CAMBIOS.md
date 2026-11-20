@@ -2,6 +2,18 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-20] — El "Dar de baja" del ciudadano ya no usa el confirm() nativo del navegador
+
+### 🤔 Contexto
+El usuario reportó que, al dar de baja una mascota desde el panel ciudadano, aparecía el cuadro de diálogo nativo del navegador ("mascota-elgrullo.com says... OK / Cancel") en vez del modal de confirmación que ya se usa en el resto del sitio.
+
+### 🔍 Causas y 🔧 Cambios
+Al agregar "Dar de baja" al panel ciudadano (ver entrada del 2026-11-06), se le puso un `confirm()` nativo citando como criterio el de "Cambiar estatus" en `admin.html` — pero ese botón de `admin.html` en realidad ya no usa `confirm()` nativo desde el 2026-10-16: usa un modal propio (`#modal-confirm` + función `confirmarAccion()` en `admin-core.js`), que sí respeta el diseño del sitio. La entrada del 2026-11-06 se equivocó de referencia y dejó el `confirm()` nativo en `dashboard.html`.
+- **`web/dashboard.html`**: se agregó el mismo modal `#modal-confirm` y la misma función `confirmarAccion()` que ya existían en `admin.html`/`admin-core.js` (copia exacta del patrón, mismo HTML y mismo JS). `darDeBajaPropiaMascota()` ahora usa `await confirmarAccion(...)` en vez de `confirm()`.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`
+
 ## 📅 [2026-11-18] — La gráfica "Registros nuevos" del panel admin ahora deja elegir un mes específico con un calendario
 
 ### 🤔 Contexto
