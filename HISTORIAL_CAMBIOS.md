@@ -2,6 +2,21 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-21] — Contraseña de prueba del admin ya no queda expuesta en texto plano en `seed.sql`
+
+### 🤔 Contexto
+Al revisar el cierre del proyecto se notó que `web/database/seed.sql` (público en GitHub) traía, en un comentario, la contraseña real de la cuenta de prueba del administrador (`admin@remac.elgrullo.mx` → `Admin1234`). En producción esa cuenta ya tiene otro correo distinto (confirmado por el usuario), así que el dato filtrado ya no sirve para entrar al sitio real, pero seguía siendo una mala práctica dejarlo así en el repo (y cualquier instalación nueva hecha desde este seed heredaría esa contraseña débil y conocida).
+
+### 🔍 Causas y 🔧 Cambios
+- **`web/database/seed.sql`**: se generó una contraseña aleatoria nueva (no publicada en el repo) y se reemplazó el hash bcrypt de la cuenta admin de prueba por el de esa contraseña nueva; el comentario que revelaba "Admin1234" se reemplazó por una nota que no expone ningún valor real.
+
+### 🔎 Verificado
+- Hash generado con `password_hash(..., PASSWORD_BCRYPT, ['cost' => 10])` (mismo formato `$2y$10$...` que los demás hashes del seed), con el PHP de XAMPP.
+- **Pendiente de decidir por el usuario:** este cambio limpia el archivo tal como queda a partir de ahora, pero la contraseña anterior ("Admin1234") sigue siendo legible en commits viejos del historial de git/GitHub; purgarla del todo requeriría reescribir el historial y forzar el push (`git filter-repo` + `push --force`), una operación más invasiva que no se hizo aquí sin confirmarlo primero.
+
+### 📂 Archivos modificados
+- `web/database/seed.sql`
+
 ## 📅 [2026-11-20] — El buscador de la mini-tabla de "Datos" (panel admin) no encontraba mascotas que sí existían
 
 ### 🤔 Contexto
