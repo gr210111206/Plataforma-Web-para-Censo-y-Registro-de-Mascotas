@@ -1152,7 +1152,7 @@
         <div class="right-col">
           <div class="search-box" style="width:100%;">
             <span class="search-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg></span>
-            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." aria-label="Buscar mascota" oninput="filterMiniTable()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+            <input class="form-control" id="miniSearch" placeholder="Buscar mascota..." aria-label="Buscar mascota" oninput="debouncedFilterMiniTable()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
           </div>
           <div class="padron-table-mini">
             <table>

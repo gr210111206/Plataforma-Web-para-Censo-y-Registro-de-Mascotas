@@ -2,6 +2,25 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-20] — El buscador de la mini-tabla de "Datos" (panel admin) no encontraba mascotas que sí existían
+
+### 🤔 Contexto
+El usuario estaba grabando el videotutorial como superadministrador y buscó "Luna" en el buscador del lado derecho de la sección "Datos" — la mascota no apareció, aunque sí está en el padrón.
+
+### 🔍 Causas y 🔧 Cambios
+`filterMiniTable()` (`web/js/admin/admin-dashboard.js`) filtraba la variable `allPets` en el navegador — pero esa variable solo la llena `loadSeguimiento()` (la pestaña Seguimiento), y únicamente con la página actual (hasta 25 filas). El superadmin entra directo a la sección "Datos" al iniciar sesión, sin haber visitado Seguimiento: en ese momento `allPets` seguía en `[]` (su valor inicial), así que la búsqueda no encontraba NADA, existiera o no la mascota. Incluso habiendo visitado Seguimiento antes, si "Luna" no estaba en esa página de 25, tampoco aparecía. Mismo tipo de bug que el de "Exportar CSV" (RF-41, ver entrada del 2026-11-06): una variable pensada solo para pintar una tabla, reutilizada para buscar en todo el padrón.
+- **`web/js/admin/admin-dashboard.js`**: `filterMiniTable()` ahora es async y le pregunta al servidor (`apiGetTodasMascotas({ q, page: 1, pageSize: 10 })`), igual que ya hace `loadSeguimiento()` — busca en todo el padrón (nombre, folio, raza, color, dueño, teléfono, dirección, colonia), no solo entre lo que ya estaba en memoria. Se agregó `debouncedFilterMiniTable` (350ms) porque ahora cada búsqueda es una petición al servidor.
+- **`web/admin.html`**: el campo `#miniSearch` ahora llama a `debouncedFilterMiniTable()` en vez de `filterMiniTable()` directo.
+
+### 🔎 Verificado
+- `node --check` sin errores en `admin-dashboard.js`.
+- Verificado por lectura de código contra el endpoint `GET /api/mascotas?q=...` (ya probado y en producción, lo usa Seguimiento) — no se montó el arnés local completo por el tiempo (el usuario estaba grabando en ese momento).
+- Pendiente: desplegar en producción (cPanel → Git → Update from Remote → Deploy HEAD Commit) — el sitio en vivo sigue con el bug hasta que se despliegue.
+
+### 📂 Archivos modificados
+- `web/js/admin/admin-dashboard.js`
+- `web/admin.html`
+
 ## 📅 [2026-11-20] — El "Dar de baja" del ciudadano ya no usa el confirm() nativo del navegador
 
 ### 🤔 Contexto

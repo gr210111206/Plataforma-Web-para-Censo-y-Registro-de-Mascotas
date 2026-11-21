@@ -183,15 +183,25 @@ function renderMiniTable(data) {
     </tr>`).join('');
 }
 
-function filterMiniTable() {
-  const q = document.getElementById('miniSearch').value.toLowerCase();
-  const data = allPets.filter(m =>
-    m.nombre.toLowerCase().includes(q) ||
-    (m.persona && m.persona.toLowerCase().includes(q)) ||
-    m.id.toLowerCase().includes(q)
-  );
-  renderMiniTable(data.slice(0, 10));
+/* Antes filtraba "allPets" en el navegador — pero esa variable solo la
+   llena loadSeguimiento() (la pestaña Seguimiento) con la página actual
+   (hasta 25 filas), y el superadmin entra directo a "Datos" sin haber
+   visitado Seguimiento todavía: ahí "allPets" seguía vacío ([] desde
+   admin-core.js) y la búsqueda de esta mini-tabla no encontraba NINGUNA
+   mascota aunque sí existiera en el padrón — mismo tipo de bug que el de
+   "Exportar CSV" (RF-41, ver HISTORIAL_CAMBIOS.md 2026-11-06). Ahora le
+   pregunta al servidor igual que Seguimiento, buscando en todo el padrón
+   (no solo entre las 10 que ya se estaban mostrando). */
+async function filterMiniTable() {
+  const q = document.getElementById('miniSearch').value.trim();
+  try {
+    const { rows } = await apiGetTodasMascotas(q ? { q, page: 1, pageSize: 10 } : { page: 1, pageSize: 10 });
+    renderMiniTable(rows);
+  } catch (err) {
+    showToast(`${err.message}`, 'error');
+  }
 }
+const debouncedFilterMiniTable = debounce(filterMiniTable, 350);
 
 function goToSeguimiento(nombre) {
   document.getElementById('segSearch').value = nombre;
