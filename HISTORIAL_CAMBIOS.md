@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22c] — Tercera re-prueba: "Leer más" de un artículo mostraba el HTML en vez de renderizarlo
+
+### 🤔 Contexto
+Con el commit `beae1c9` ya desplegado, el usuario confirmó las fallas 14/15/16 como corregidas (0 inyecciones en el portal) y entregó un reporte más (`Reporte_fallas_Configuracion_del_sitio_2026-11-22c.txt`) con una sola falla nueva.
+
+### 🔍 Causa y 🔧 Cambio
+
+**17. Artículos — el modal de "Leer más" mostraba el HTML tal cual (`<p><b>...`) en vez de negritas/listas reales.** `verArticulo()` (`web/index.html`) pintaba `a.contenido` con `.textContent`; eso es correcto para texto plano, pero `contenido` de un artículo es HTML de verdad ya sanitizado en el servidor (`sanitizeArticleHtml()`, lista blanca de etiquetas/atributos, sin `on*=`, sin `javascript:` — ver `web/api/config/helpers.php`), pensado para el editor con negritas/listas/imágenes del panel. No se notaba con los 2 artículos actuales por ser texto simple.
+  - Ahora se pinta con `innerHTML`, pero antes pasa por `limpiarHtmlArticuloCliente()` (nueva): una segunda capa de defensa en el navegador, por si algún día hubiera un bug en el sanitizador del servidor — quita cualquier atributo `on*` y cualquier `href`/`src` que empiece con `javascript:`. Para no disparar nada (ej. la carga de una `<img>`) mientras se inspecciona, se parsea dentro de un `<template>` (inerte, no es parte del documento activo) en vez de un `<div>` normal.
+  - El contenedor del modal (`#articulo-modal-contenido`) era un `<p>`; un artículo con `<p>`/`<ul>`/`<h1-3>`/`<blockquote>` adentro (todos permitidos por el editor) se habría roto porque un `<p>` no puede anidar otro bloque — el navegador lo cierra solo. Se cambió a `<div>`.
+  - De paso (detalle cosmético que señalaba el mismo reporte): `extraerTextoPlano()` (el extracto de la tarjeta, de la entrada anterior) pegaba el texto de bloques distintos (ej. "cada año.Rabia"); ahora reemplaza los cierres de bloque (`</p>`, `</li>`, etc.) y los `<br>` por un espacio antes de sacar el texto, y también usa un `<template>` inerte en vez de un `<div>`.
+
+### 🔎 Verificado
+- `node --check`/sintaxis de los 2 bloques `<script>` inline de `index.html`: OK.
+- La página sigue sirviéndose (200 OK) con el Apache local de XAMPP.
+- No se probó con sesión real logueada (mismo problema preexistente de credenciales locales). Recomendado: repetir el paso de la falla 17 después de desplegar, con un artículo que tenga negritas/lista/imagen de verdad.
+- No se instaló `jsdom` ni ninguna dependencia nueva para esto — la lógica se revisó a mano (es el mismo patrón que usan librerías como DOMPurify: `<template>` para parsear sin ejecutar nada).
+
+### 📂 Archivos modificados
+- `web/index.html`
+
 ## 📅 [2026-11-22b] — Segunda re-prueba: XSS dentro del propio panel admin (Eventos/FAQ) + doble escape en Avisos/Artículos
 
 ### 🤔 Contexto

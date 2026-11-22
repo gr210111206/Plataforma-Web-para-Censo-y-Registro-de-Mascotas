@@ -364,7 +364,11 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
     </div>
     <div class="modal-body">
       <img id="articulo-modal-imagen" src="" alt="" style="display:none; width:100%; aspect-ratio:2.5/1; object-fit:cover; border-radius:var(--radius); margin-bottom:16px;" />
-      <p id="articulo-modal-contenido" style="white-space:pre-line; line-height:1.8; color:var(--gray-1); margin-bottom:0;"></p>
+      <!-- div, no <p>: el contenido de un artículo puede traer sus propios
+           <p>/<ul>/<h1-3>/<blockquote> (ver sanitizeArticleHtml en el
+           servidor), y un <p> no puede anidar otro bloque — el navegador
+           lo cortaría solo. -->
+      <div id="articulo-modal-contenido" style="line-height:1.8; color:var(--gray-1);"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="closeModal('modal-articulo')">Cerrar</button>
@@ -519,9 +523,39 @@ let ARTICULOS_DATA = [];
 // negritas/imágenes), así que para el extracto se saca solo el texto
 // plano en vez de cortar el HTML a la mitad (ver Falla 16).
 function extraerTextoPlano(html, maxLen) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = String(html ?? '');
-  return (tmp.textContent || '').trim().slice(0, maxLen);
+  // <template> es inerte (su .content no es parte del documento activo):
+  // a diferencia de un <div> normal, parsear aquí un <img src=x> no
+  // dispara su carga/onerror — igual que limpiarHtmlArticuloCliente(),
+  // más abajo.
+  const tpl = document.createElement('template');
+  // Espacio entre bloques para que el extracto no pegue los textos de
+  // párrafos/líneas distintas (ej. "cada año.Rabia").
+  const conEspacios = String(html ?? '')
+    .replace(/<\/(p|li|div|h[1-3]|blockquote)>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, ' ');
+  tpl.innerHTML = conEspacios;
+  const texto = (tpl.content.textContent || '').replace(/\s+/g, ' ').trim();
+  return texto.slice(0, maxLen);
+}
+// Segunda capa de protección, en el navegador, para el HTML que ya llegó
+// sanitizado del servidor (sanitizeArticleHtml() en
+// web/api/config/helpers.php: lista blanca de etiquetas/atributos, sin
+// on*=, sin javascript:) — por si un bug ahí algún día dejara pasar algo.
+// Igual que arriba, se inspecciona dentro de un <template> inerte para no
+// disparar nada mientras se limpia.
+function limpiarHtmlArticuloCliente(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(html ?? '');
+  tpl.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      const nombre = attr.name.toLowerCase();
+      if (nombre.startsWith('on')) { el.removeAttribute(attr.name); return; }
+      if ((nombre === 'href' || nombre === 'src') && /^\s*javascript:/i.test(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+  return tpl.innerHTML;
 }
 function renderArticles(articles) {
   ARTICULOS_DATA = articles;
@@ -550,7 +584,11 @@ function verArticulo(i) {
   // a.titulo ya viene escapado del servidor (clean()) — .textContent no
   // decodifica entidades, así que sin esto se veía literalmente "&quot;".
   document.getElementById('articulo-modal-titulo').textContent = unescapeHtmlEntities(a.titulo);
-  document.getElementById('articulo-modal-contenido').textContent = a.contenido;
+  // a.contenido ya es HTML seguro (ver sanitizeArticleHtml() en el
+  // servidor) — se pinta con innerHTML para que se vean negritas/listas/
+  // imágenes de verdad, no las etiquetas como texto (Falla 17,
+  // Reporte_fallas_Configuracion_del_sitio_2026-11-22c.txt).
+  document.getElementById('articulo-modal-contenido').innerHTML = limpiarHtmlArticuloCliente(a.contenido);
   const img = document.getElementById('articulo-modal-imagen');
   if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
   else { img.removeAttribute('src'); img.style.display = 'none'; }
