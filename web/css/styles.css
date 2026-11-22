@@ -1459,6 +1459,17 @@ tbody tr:hover { background: var(--surface); }
 }
 .modal-close:hover { background: var(--gray-4); }
 .modal-body { padding: 0 28px 28px; }
+
+/* Contenido de un artículo (ver sanitizeArticleHtml() en el servidor y
+   verArticulo() en index.html): el reset global (*, margin/padding: 0;
+   ul { list-style:none }) le quita a TODO el sitio las viñetas y el
+   espaciado entre párrafos, pero dentro de un artículo real sí se
+   esperan listas con viñetas/números y separación entre bloques. */
+#articulo-modal-contenido ul { list-style: disc; padding-left: 1.3em; }
+#articulo-modal-contenido ol { list-style: decimal; padding-left: 1.3em; }
+#articulo-modal-contenido li { margin-bottom: 4px; }
+#articulo-modal-contenido p  { margin-bottom: 12px; }
+#articulo-modal-contenido > :last-child { margin-bottom: 0; }
 .modal-footer {
   padding: 16px 28px;
   border-top: 1px solid var(--gray-4);

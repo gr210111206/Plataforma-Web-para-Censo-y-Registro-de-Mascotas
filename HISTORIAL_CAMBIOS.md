@@ -2,6 +2,22 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22d] — 2 pendientes menores de las re-pruebas: viñetas en artículos y el texto del aviso de error
+
+### 🤔 Contexto
+El usuario confirmó la falla 17 corregida en producción (ya no quedan fallas pendientes de "Configuración del sitio", salvo la decisión de Municipio) y señaló dos detalles menores que venían arrastrándose de reportes anteriores.
+
+### 🔍 Causas y 🔧 Cambios
+- **Listas sin viñetas dentro de un artículo (cosmético).** El reset global de `css/styles.css` (`*{margin:0;padding:0}` y `ul{list-style:none}`) se aplica a TODO el sitio, incluyendo el contenido real de un artículo (que ahora sí se renderiza como HTML, desde la entrada `[2026-11-22c]`). Se agregó una regla acotada solo a `#articulo-modal-contenido` que le devuelve viñetas/numeración a `ul`/`ol` y separación entre párrafos y elementos de lista.
+- **El aviso de error seguía diciendo "Se guardó localmente..." aunque ya no siempre es cierto** (desde la corrección de la falla 12, `saveAppearance()` deshace el cambio si el servidor lo rechaza, pero las demás pestañas sí lo dejan guardado localmente). En vez de mantener una afirmación que depende de cada pestaña, `pushConfigToServer()` (`web/js/admin/admin-config-site.js`) ahora solo afirma lo que siempre es cierto: que no se guardó en el servidor, y por qué.
+
+### 🔎 Verificado
+- `node --check` sin errores en `admin-config-site.js`.
+- Cambio de CSS acotado por selector (`#articulo-modal-contenido ul/ol/li/p`), no toca ninguna otra lista del sitio (menús, FAQ, etc., que siguen sin viñetas a propósito).
+
+### 📂 Archivos modificados
+- `web/css/styles.css`, `web/js/admin/admin-config-site.js`
+
 ## 📅 [2026-11-22c] — Tercera re-prueba: "Leer más" de un artículo mostraba el HTML en vez de renderizarlo
 
 ### 🤔 Contexto

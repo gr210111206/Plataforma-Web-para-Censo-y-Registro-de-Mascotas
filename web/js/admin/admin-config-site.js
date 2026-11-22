@@ -25,7 +25,12 @@ async function pushConfigToServer(key, value) {
     await apiSaveSiteConfig(key, value);
     return true;
   } catch (err) {
-    showToast(`Se guardó localmente, pero no se pudo sincronizar con el servidor: ${err.message}`, 'error');
+    // No decir "se guardó localmente": para Apariencia ya no es cierto
+    // (saveAppearance() deshace el cambio si el servidor lo rechaza —
+    // ver Falla 12) y para el resto de las claves depende de cada
+    // función "Guardar". El motivo real (del servidor o de la red) es
+    // lo único que se puede afirmar siempre.
+    showToast(`No se guardó en el servidor: ${err.message}`, 'error');
     return false;
   }
 }
