@@ -2,6 +2,39 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22] — Re-prueba de "Configuración del sitio": 3 fallas nuevas + el mismo patrón de XSS encontrado en Avisos/Eventos/Artículos/FAQ
+
+### 🤔 Contexto
+Ya desplegado el commit `7c0507a` (entrada `[2026-11-21b]`), el usuario volvió a probar las 10 pestañas en producción con la cuenta superadmin, confirmó las 10 fallas anteriores como corregidas y entregó un reporte nuevo (`Reporte_fallas_Configuracion_del_sitio_2026-11-22.txt`) con 3 fallas adicionales. Al corregir la Falla 12 (que toca `pushConfigToServer`, usado por todas las pestañas) se revisó ese mismo archivo de punta a punta y se encontró que el patrón de XSS ya corregido en Apariencia (fallas 5/6 de la entrada anterior) seguía sin corregir en otros cuatro lugares que SÍ llegan al portal público: Avisos/campañas, Eventos, Artículos y FAQ, además del logo del propio panel admin y su vista previa del pie de página. Nada de esto estaba en el reporte del usuario; se corrigió por ser exactamente la misma falla de seguridad, ya confirmada como real en esta misma pestaña. Nada se ha desplegado todavía.
+
+### 🔍 Causas y 🔧 Cambios
+
+**11. SEO — la "URL canónica" de fábrica apuntaba a otro dominio.** `web/admin.html` traía `https://elgrullo.gob.mx/padron` como valor por defecto del campo; al corregirse la falla 4 (ahora el SEO sí se aplica), esto le decía a Google que la página "oficial" era otro dominio. Se cambió el valor de fábrica a `https://mascota-elgrullo.com/`.
+
+**12. Se avisaba "guardado con éxito" antes de saber si el servidor lo aceptaba.** `pushConfigToServer()` (`admin-config-site.js`) no devolvía nada, así que cada pestaña mostraba su aviso de éxito justo después de llamarla, sin esperar la respuesta real del servidor — si éste rechazaba el valor (ej. una URL sin `https://`), el admin se quedaba viendo en su propio navegador (vía `localStorage`) algo distinto a lo que veían los visitantes reales, con dos avisos contradictorios en pantalla. Cambios:
+  - `pushConfigToServer()` ahora devuelve `true`/`false` según el resultado real.
+  - Las funciones "Guardar" de Apariencia, SEO, Municipio, Reglamento, Tema, Contactos (pie de página) y Contenidos de Portada ahora son `async`, esperan ese resultado y solo muestran "guardado con éxito" (o actualizan el punto de estado/la insignia) si el servidor de verdad lo aceptó.
+  - Apariencia además deshace el cambio en `localStorage` si el servidor lo rechaza (es la única clave con validación real en el servidor hoy, `validarAparienciaConfig()`), para no dejar al admin viendo un ícono que el portal público nunca mostró.
+  - De paso, los "Restablecer" de Municipio, Contactos y Contenidos de Portada no avisaban al servidor del restablecimiento (mismo hueco que ya se había corregido en Apariencia/SEO/Tema); ahora los tres también sincronizan.
+
+**13. El logo del panel admin (sidebar) seguía usando `innerHTML`, y no volvía al de fábrica al Restablecer.** La corrección de la falla 5/6 se había aplicado en `index.html`, `login.html` y la vista previa del panel, pero no en `applyAdminOwnAppearance()` (`admin-config-site.js`), que seguía armando `<img src="${valor}">` a mano. Además, si no había valor guardado, la función simplemente no hacía nada, así que tras "Restablecer" el logo personalizado se quedaba ahí hasta recargar. Reescrita para usar `textContent` (emoji) o un `<img>` creado por DOM con la misma lista blanca de URLs (`esIconoUrlSegura`), y para volver siempre al logo de fábrica (`Imagenes/Logo blanco.png`) cuando no hay valor o el valor ya no es válido.
+
+**Hallazgo adicional — el mismo XSS de Apariencia seguía abierto en Avisos, Eventos, Artículos, FAQ y el pie de página público.** `renderCampaigns()`, `renderEvents()`, `renderArticles()` y `renderFAQ()` (`web/index.html`) pintaban título/descripción/lugar/hora/pregunta/respuesta y la imagen de aviso/artículo directo en un `innerHTML`; lo mismo hacía `applyFooterConfig()` con la descripción y los datos de Contacto (dirección/teléfono/correos) del pie de página. Cualquier cuenta admin (no solo el superadmin) puede escribir estos campos, y se muestran a TODOS los visitantes reales. Cambios:
+  - Se agregó `escapeHtml()` en `index.html` (misma idea que `sanitizeHeroTitleHtml()`, que ahora lo reutiliza) y se aplicó a todo el texto de admin interpolado en esas 4 funciones, más la descripción del pie de página.
+  - La imagen de aviso/artículo y el color de fondo del aviso ahora también pasan por la lista blanca `esIconoUrlSegura()` / `escapeHtml()` antes de meterse en el `style="..."`.
+  - Los datos de Contacto del pie de página (dirección/teléfono/correos) se reescribieron para crearse por DOM (`document.createElement('a')` + `.href =` + nodos de texto) en vez de un `innerHTML` armado a mano.
+  - **Panel admin:** `previewFooter()` (`admin-config-footer.js`) tenía el mismo problema pero de cara a OTROS ADMINS: esta vista previa se repinta con la configuración sincronizada del servidor (`padron_site_config`), así que un valor malicioso guardado por un admin se ejecutaría en la sesión de cualquier otro admin (incluido el superadmin) que abriera esa pestaña. Se reescribió para pintar la plantilla fija (íconos SVG, que sí son constantes del código) con `innerHTML` y rellenar el texto del admin aparte, por `textContent`.
+  - No se tocaron las tablas internas del panel (Roles, Cuentas, Mascotas, Bitácora, lista de Artículos, etc.) — comparten el mismo riesgo en teoría, pero es una revisión más grande y separada de este reporte; se recomienda pedirla aparte como una revisión de seguridad dedicada.
+
+### 🔎 Verificado
+- `node --check` sin errores en los 6 `.js` tocados y en los `<script>` inline de `index.html` (2 bloques, ambos OK).
+- El mismo chequeo sobre `admin.html` reporta un "bloque 2" con error de sintaxis — se confirmó que es un falso positivo del script de verificación (una comilla dentro de un string de un `<script>` anterior corta mal el bloque) y que existe igual en la versión ya publicada en `HEAD`, es decir, no lo causó este cambio.
+- No se pudo volver a probar con sesión real contra la BD local (mismo problema preexistente de credenciales que en la entrada anterior). Recomendado: repetir manualmente los pasos del reporte después de desplegar, incluyendo ahora Avisos/Eventos/Artículos/FAQ con un valor que tenga comillas o `<`/`>`.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/admin.html`
+- `web/js/admin/admin-config-site.js`, `web/js/admin/admin-config-apariencia.js`, `web/js/admin/admin-config-contenido.js`, `web/js/admin/admin-config-core.js`, `web/js/admin/admin-config-footer.js`, `web/js/admin/admin-config-portada.js`
+
 ## 📅 [2026-11-21b] — 10 fallas de "Configuración del sitio" (panel admin), reportadas en pruebas manuales en producción
 
 ### 🤔 Contexto

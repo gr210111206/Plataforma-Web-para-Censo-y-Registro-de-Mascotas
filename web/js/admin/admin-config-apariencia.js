@@ -310,7 +310,7 @@ function handleIconDrop(event, id) {
 }
 
 // ── Save all to localStorage ──────────────────────
-function saveAppearance() {
+async function saveAppearance() {
   if (Object.keys(appearanceState).length === 0) {
     showToast('No hay cambios que guardar', 'error');
     return;
@@ -328,20 +328,33 @@ function saveAppearance() {
     return;
   }
 
+  const previo = localStorage.getItem('padron_appearance_config');
   try {
     localStorage.setItem('padron_appearance_config', JSON.stringify(appearanceState));
-    pushConfigToServer('padron_appearance_config', appearanceState);
-    if (incompletos.length) {
-      const nombres = incompletos.map(([id]) => ICON_ELEMENTS.find(e => e.id === id)?.label || id).join(', ');
-      showToast(`Guardado, pero "${nombres}" no tenía nada seleccionado y se omitió`, 'error');
-    } else {
-      showToast('Apariencia e íconos guardados y publicados con éxito', 'success');
-    }
-    if (typeof applyAppearanceConfig === 'function') applyAppearanceConfig();
-    if (typeof applyAdminOwnAppearance === 'function') applyAdminOwnAppearance();
-  } catch(err) {
+  } catch (err) {
     showToast('Error de almacenamiento: El archivo es demasiado grande', 'error');
+    return;
   }
+
+  // No mostrar "éxito" sin antes saber si el servidor lo aceptó: si lo
+  // rechaza (ej. una URL inválida), el admin se quedaba viendo un ícono
+  // distinto al que veían los visitantes reales. pushConfigToServer ya
+  // avisa del error, así que aquí solo deshacemos el cambio local.
+  const guardadoEnServidor = await pushConfigToServer('padron_appearance_config', appearanceState);
+  if (!guardadoEnServidor) {
+    if (previo) localStorage.setItem('padron_appearance_config', previo);
+    else localStorage.removeItem('padron_appearance_config');
+    return;
+  }
+
+  if (incompletos.length) {
+    const nombres = incompletos.map(([id]) => ICON_ELEMENTS.find(e => e.id === id)?.label || id).join(', ');
+    showToast(`Guardado, pero "${nombres}" no tenía nada seleccionado y se omitió`, 'error');
+  } else {
+    showToast('Apariencia e íconos guardados y publicados con éxito', 'success');
+  }
+  if (typeof applyAppearanceConfig === 'function') applyAppearanceConfig();
+  if (typeof applyAdminOwnAppearance === 'function') applyAdminOwnAppearance();
 }
 
 // ── Reset all to defaults ─────────────────────────

@@ -45,10 +45,11 @@ function getSiteContentValues() {
   };
 }
 
-function saveSiteContentConfig() {
+async function saveSiteContentConfig() {
   const content = getSiteContentValues();
   localStorage.setItem('padron_site_content', JSON.stringify(content));
-  pushConfigToServer('padron_site_content', content);
+  const guardadoEnServidor = await pushConfigToServer('padron_site_content', content);
+  if (!guardadoEnServidor) return;
   showToast('Contenidos de la portada guardados y publicados con éxito', 'success');
 }
 
@@ -67,6 +68,7 @@ function loadSiteContentConfig() {
 async function resetSiteContentConfig() {
   if (!(await confirmarAccion('¿Restablecer todos los contenidos de la Portada a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar, y la página se va a recargar.'))) return;
   localStorage.removeItem('padron_site_content');
+  await pushConfigToServer('padron_site_content', {});
   showToast('Contenidos de portada restablecidos a valores por defecto', 'info');
   setTimeout(() => location.reload(), 800);
 }

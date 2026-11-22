@@ -16,7 +16,7 @@ function switchConfig(tab, navItem) {
 /* ══════════════════════════════════════════════════ */
 /*  MUNICIPIO                                         */
 /* ══════════════════════════════════════════════════ */
-function saveMunicipio() {
+async function saveMunicipio() {
   const data = {
     nombre:     document.getElementById('mun-nombre').value.trim(),
     municipio:  document.getElementById('mun-municipio').value.trim(),
@@ -29,7 +29,8 @@ function saveMunicipio() {
     escudo_url: document.getElementById('escudo-url').value.trim(),
   };
   localStorage.setItem('padron_municipio_config', JSON.stringify(data));
-  pushConfigToServer('padron_municipio_config', data);
+  const guardadoEnServidor = await pushConfigToServer('padron_municipio_config', data);
+  if (!guardadoEnServidor) return;
   // Update nav badge
   document.querySelector('#cnav-municipio .config-nav-badge')?.remove();
   const badge = document.createElement('div');
@@ -41,13 +42,14 @@ function saveMunicipio() {
 async function resetMunicipio() {
   if (!(await confirmarAccion('¿Restablecer los datos del municipio a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   localStorage.removeItem('padron_municipio_config');
+  await pushConfigToServer('padron_municipio_config', {});
   showToast('Datos del municipio restablecidos', 'info');
 }
 
 /* ══════════════════════════════════════════════════ */
 /*  REGLAMENTO — persistido en el servidor            */
 /* ══════════════════════════════════════════════════ */
-function saveReglamento() {
+async function saveReglamento() {
   const data = {
     titulo:    document.getElementById('reg-titulo').value.trim(),
     contenido: document.getElementById('reg-contenido').value.trim(),
@@ -57,7 +59,8 @@ function saveReglamento() {
     return;
   }
   localStorage.setItem('padron_reglamento', JSON.stringify(data));
-  pushConfigToServer('padron_reglamento', data);
+  const guardadoEnServidor = await pushConfigToServer('padron_reglamento', data);
+  if (!guardadoEnServidor) return;
   const stEl = document.getElementById('statusReglamento');
   if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Reglamento guardado';
   showToast('Reglamento actualizado y publicado en el portal', 'success');
@@ -150,7 +153,7 @@ function renderThemePreview() {
     </div>`;
 }
 
-function saveTema() {
+async function saveTema() {
   const data = {
     color:      _currentColor,
     font:       _currentFont,
@@ -160,8 +163,9 @@ function saveTema() {
     showFolio:  document.getElementById('toggle-folio').checked,
   };
   localStorage.setItem('padron_tema_config', JSON.stringify(data));
-  pushConfigToServer('padron_tema_config', data);
   aplicarTemaVisual(); // aplica el color/bordes de inmediato, también aquí en el propio admin
+  const guardadoEnServidor = await pushConfigToServer('padron_tema_config', data);
+  if (!guardadoEnServidor) return; // no era cierto que ya se aplicó "en todo el sitio"
   // Mark status bar
   const stEl = document.getElementById('statusTema');
   if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> Tema guardado';
@@ -176,7 +180,7 @@ function saveTema() {
 async function resetTema() {
   if (!(await confirmarAccion('¿Restablecer el tema visual (color y fuente) al predeterminado? Este cambio se aplica de inmediato en todo el sitio público, sin necesidad de guardar.', { danger: true, textoAceptar: 'Restablecer' }))) return;
   localStorage.removeItem('padron_tema_config');
-  pushConfigToServer('padron_tema_config', {});
+  await pushConfigToServer('padron_tema_config', {});
   _currentColor = '#F27A00';
   _currentFont  = 'Inter';
   document.documentElement.style.removeProperty('--orange');

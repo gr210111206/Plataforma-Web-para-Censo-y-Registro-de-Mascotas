@@ -23,8 +23,10 @@ const SERVER_CONFIG_KEYS = [
 async function pushConfigToServer(key, value) {
   try {
     await apiSaveSiteConfig(key, value);
+    return true;
   } catch (err) {
     showToast(`Se guardó localmente, pero no se pudo sincronizar con el servidor: ${err.message}`, 'error');
+    return false;
   }
 }
 
@@ -55,15 +57,25 @@ async function primeConfigFromServer() {
 // Aplica el logo del panel admin a su PROPIO sidebar (a diferencia de los
 // demás elementos de ICON_ELEMENTS, este no vive en el portal público).
 function applyAdminOwnAppearance() {
+  const el = document.getElementById('admin-sidebar-logo');
+  if (!el) return;
+
+  let val = null;
   try {
     const raw = localStorage.getItem('padron_appearance_config');
-    if (!raw) return;
-    const cfg = JSON.parse(raw);
-    const val = cfg['admin-sidebar-logo'];
-    const el  = document.getElementById('admin-sidebar-logo');
-    if (!val || !val.value || !el) return;
-    el.innerHTML = val.type === 'emoji'
-      ? val.value
-      : `<img src="${val.value}" alt="Logo" style="width:100%;height:100%;object-fit:contain;" />`;
+    if (raw) val = JSON.parse(raw)['admin-sidebar-logo'];
   } catch (e) { /* ignore */ }
+
+  el.textContent = '';
+  if (val && val.type === 'emoji' && val.value) {
+    el.textContent = val.value;
+    return;
+  }
+  // Sin valor guardado (o Restablecer), o un valor que ya no pasa la
+  // validación: vuelve al logo de fábrica en vez de dejar el ícono
+  // personalizado anterior hasta que alguien recargue la página.
+  const url = (val && val.value && esIconoUrlSegura(val.value)) ? val.value : 'Imagenes/Logo blanco.png';
+  const img = crearImgVistaPrevia(url);
+  img.alt = 'Logo';
+  el.appendChild(img);
 }

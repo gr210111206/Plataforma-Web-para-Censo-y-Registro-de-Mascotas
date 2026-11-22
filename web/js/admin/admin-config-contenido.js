@@ -72,7 +72,7 @@ function previewOgImgUrl() {
   if (big && url) big.innerHTML = `<img src="${url}" alt="Vista previa de la imagen para redes sociales" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML='URL inválida'" />`;
 }
 
-function saveSEO() {
+async function saveSEO() {
   const data = {
     title:     document.getElementById('seo-title').value,
     desc:      document.getElementById('seo-desc').value,
@@ -83,7 +83,10 @@ function saveSEO() {
     indexed:   document.getElementById('seo-index').checked,
   };
   localStorage.setItem('padron_seo_config', JSON.stringify(data));
-  pushConfigToServer('padron_seo_config', data); // si no, el <title>/<meta> del portal público nunca cambiaban (ver HISTORIAL_CAMBIOS.md)
+  // No mostrar "guardado" sin saber si el servidor lo aceptó (ver Falla 12,
+  // Reporte_fallas_Configuracion_del_sitio_2026-11-22.txt).
+  const guardadoEnServidor = await pushConfigToServer('padron_seo_config', data); // si no, el <title>/<meta> del portal público nunca cambiaban (ver HISTORIAL_CAMBIOS.md)
+  if (!guardadoEnServidor) return;
   const stEl = document.getElementById('statusSEO');
   if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> SEO guardado';
   document.querySelector('#cnav-seo .config-nav-badge')?.remove();
@@ -117,7 +120,7 @@ function loadSEO() {
 async function resetSEO() {
   if (!(await confirmarAccion('¿Restablecer la configuración SEO a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   localStorage.removeItem('padron_seo_config');
-  pushConfigToServer('padron_seo_config', {});
+  await pushConfigToServer('padron_seo_config', {});
   showToast('Configuración SEO restablecida', 'info');
 }
 
