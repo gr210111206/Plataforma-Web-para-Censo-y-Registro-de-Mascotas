@@ -459,22 +459,28 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 // HISTORIAL_CAMBIOS.md, 2026-09-08).
 function renderCampaigns(campaigns) {
   const container = document.getElementById('campaignsContainer');
+  // titulo/descripcion/icono/banner_color ya vienen escapados del servidor
+  // (clean() = htmlspecialchars en web/api/contenido.php) — escaparlos otra
+  // vez aquí los mostraba como "&quot;" en vez de la comilla real (ver
+  // Falla 15, Reporte_fallas_Configuracion_del_sitio_2026-11-22b.txt).
+  // "imagen" NO pasa por clean() del lado servidor, así que sigue
+  // escapándose aquí.
   container.innerHTML = campaigns.map(c => {
     const imagenSegura = c.imagen && esIconoUrlSegura(c.imagen) ? c.imagen : '';
     const bg = imagenSegura
       ? `background-image:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)), url('${escapeHtml(imagenSegura)}'); background-size:cover; background-position:center;`
-      : `background:${escapeHtml(c.banner_color || '#F27A00')};`;
+      : `background:${c.banner_color || '#F27A00'};`;
     return `
     <div class="campaign-card">
       <div class="campaign-banner" style="${bg}">
-        ${imagenSegura ? '' : `<div class="campaign-icon">${escapeHtml(c.icono)}</div>`}
+        ${imagenSegura ? '' : `<div class="campaign-icon">${c.icono}</div>`}
         <div class="campaign-banner-text">
           <div class="campaign-banner-tag">Campaña activa</div>
-          <div class="campaign-banner-title">${escapeHtml(c.titulo)}</div>
+          <div class="campaign-banner-title">${c.titulo}</div>
         </div>
       </div>
       <div class="campaign-body">
-        <p class="campaign-desc">${escapeHtml(c.descripcion)}</p>
+        <p class="campaign-desc">${c.descripcion}</p>
         <div class="campaign-footer">
           <span class="campaign-date"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></svg> ${c.fecha_inicio ? formatDate(c.fecha_inicio) + (c.fecha_fin ? ` — ${formatDate(c.fecha_fin)}` : '') : ''}</span>
         </div>
@@ -507,6 +513,16 @@ function renderEvents(events) {
 
 /* ── Render Articles ── */
 let ARTICULOS_DATA = [];
+// titulo ya viene escapado del servidor (clean(), igual que en
+// renderCampaigns) — no se vuelve a escapar aquí. "contenido" es HTML de
+// verdad (sanitizeArticleHtml en el servidor, para el editor con
+// negritas/imágenes), así que para el extracto se saca solo el texto
+// plano en vez de cortar el HTML a la mitad (ver Falla 16).
+function extraerTextoPlano(html, maxLen) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = String(html ?? '');
+  return (tmp.textContent || '').trim().slice(0, maxLen);
+}
 function renderArticles(articles) {
   ARTICULOS_DATA = articles;
   const container = document.getElementById('articlesContainer');
@@ -514,10 +530,10 @@ function renderArticles(articles) {
     const imagenSegura = a.imagen && esIconoUrlSegura(a.imagen) ? a.imagen : '';
     return `
     <div class="article-card">
-      ${imagenSegura ? `<img src="${escapeHtml(imagenSegura)}" alt="${escapeHtml(a.titulo)}" class="article-image" />` : ''}
+      ${imagenSegura ? `<img src="${escapeHtml(imagenSegura)}" alt="${a.titulo}" class="article-image" />` : ''}
       <div class="article-card-body">
-        <div class="article-title">${escapeHtml(a.titulo)}</div>
-        <div class="article-excerpt">${escapeHtml(a.contenido.substring(0, 100))}...</div>
+        <div class="article-title">${a.titulo}</div>
+        <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 100))}...</div>
         <a href="#" class="article-link" onclick="event.preventDefault(); verArticulo(${i});">Leer más <span>→</span></a>
       </div>
     </div>
@@ -531,7 +547,9 @@ function renderArticles(articles) {
 function verArticulo(i) {
   const a = ARTICULOS_DATA[i];
   if (!a) return;
-  document.getElementById('articulo-modal-titulo').textContent = a.titulo;
+  // a.titulo ya viene escapado del servidor (clean()) — .textContent no
+  // decodifica entidades, así que sin esto se veía literalmente "&quot;".
+  document.getElementById('articulo-modal-titulo').textContent = unescapeHtmlEntities(a.titulo);
   document.getElementById('articulo-modal-contenido').textContent = a.contenido;
   const img = document.getElementById('articulo-modal-imagen');
   if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
@@ -924,17 +942,8 @@ async function initMap() {
 // <span class="highlight">...</span> — así el admin puede resaltar una
 // palabra del título (hero_title es el único campo que lo necesita) sin
 // poder meter ningún otro tag/atributo (ej. onerror=, <script>, etc.).
-// Texto de admin que se arma como HTML a mano (template strings +
-// innerHTML): sin esto, un título/descripción/pregunta con comillas o
-// "<" se metía tal cual en el HTML del portal público (ver Falla 11/12/13,
-// Reporte_fallas_Configuracion_del_sitio_2026-11-22.txt, que encontró el
-// mismo patrón fuera de Apariencia, en Avisos/Eventos/Artículos/FAQ).
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
+// escapeHtml()/unescapeHtmlEntities() viven en js/api-client.js (se
+// comparten con admin.html — ver Falla 14, Reporte..._2026-11-22b.txt).
 function sanitizeHeroTitleHtml(str) {
   return escapeHtml(str)
     .replace(/&lt;span class=&quot;highlight&quot;&gt;/g, '<span class="highlight">')

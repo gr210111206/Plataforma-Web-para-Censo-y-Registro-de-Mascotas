@@ -253,14 +253,16 @@ function renderEventos() {
         <div style="font-size:1.3rem; font-weight:800; color:var(--orange-dark); font-family:'Outfit',sans-serif;">${e.fecha ? new Date(e.fecha+'T12:00:00').getDate() : '—'}</div>
       </div>
       <div style="flex:1;">
-        <div style="font-weight:700; font-size:.88rem;">${e.titulo}</div>
-        <div style="font-size:.75rem; color:var(--gray-2); display:flex; align-items:center; gap:4px; flex-wrap:wrap;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg> ${e.lugar || '—'} · <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> ${e.hora || '—'}</div>
+        <div style="font-weight:700; font-size:.88rem;">${escapeHtml(e.titulo)}</div>
+        <div style="font-size:.75rem; color:var(--gray-2); display:flex; align-items:center; gap:4px; flex-wrap:wrap;"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg> ${escapeHtml(e.lugar) || '—'} · <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg> ${escapeHtml(e.hora) || '—'}</div>
       </div>
       <button class="btn btn-danger btn-sm" onclick="deleteEvento(${i})" style="padding:4px 8px;" aria-label="Eliminar evento">${ICON_TRASH}</button>
     </div>`).join('');
 }
 async function deleteEvento(i) {
   const e = eventosData[i];
+  // confirmarAccion() pinta el mensaje con textContent (admin-core.js), no
+  // con innerHTML — ya es seguro tal cual, sin necesidad de escapeHtml().
   if (!(await confirmarAccion(`¿Eliminar el evento "${e ? e.titulo : ''}"? Esta acción no se puede deshacer.`, { danger: true, textoAceptar: 'Eliminar' }))) return;
   eventosData.splice(i, 1);
   renderEventos();
@@ -287,8 +289,8 @@ function renderFaqTable() {
   const tbody = document.getElementById('faqTableBody');
   tbody.innerHTML = faqData.map((f, i) => `
     <tr>
-      <td style="max-width:160px;">${f.pregunta}</td>
-      <td style="max-width:200px; color:var(--gray-1);">${f.respuesta.substring(0, 60)}...</td>
+      <td style="max-width:160px;">${escapeHtml(f.pregunta)}</td>
+      <td style="max-width:200px; color:var(--gray-1);">${escapeHtml(f.respuesta.substring(0, 60))}...</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm" onclick="editFaq(${i})" style="padding:4px 8px;" title="Editar" aria-label="Editar pregunta frecuente">${ICON_PENCIL}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFaq(${i})" style="padding:4px 8px;" title="Eliminar" aria-label="Eliminar pregunta frecuente">${ICON_TRASH}</button>

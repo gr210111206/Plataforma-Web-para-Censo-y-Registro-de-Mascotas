@@ -531,3 +531,29 @@ async function apiSaveSiteConfig(key, value) {
   });
 }
 
+/* ══════════════════════════════════════════════
+   ESCAPE DE TEXTO DE ADMIN EN innerHTML
+   Compartido entre index.html y admin.html: texto que viene de un admin
+   (título de evento, pregunta de FAQ, etc.) y se arma a mano en un
+   template de innerHTML — sin esto, una comilla o un "<" rompía el
+   HTML y ejecutaba código en cualquier visitante del portal o en la
+   sesión de OTRO admin que abriera esa misma lista (ver
+   HISTORIAL_CAMBIOS.md, 2026-11-21b y 2026-11-22/b).
+   ══════════════════════════════════════════════ */
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Para texto que el SERVIDOR ya guardó escapado (clean()/htmlspecialchars
+// en contenido.php, ej. título de campaña/artículo) y que se necesita
+// mostrar como texto plano real (ej. con .textContent, que no decodifica
+// entidades por su cuenta) — sin esto se veía literalmente "&quot;" en
+// vez de la comilla (ver Falla 15, Reporte..._2026-11-22b.txt).
+function unescapeHtmlEntities(str) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = String(str ?? '');
+  return txt.value;
+}
+

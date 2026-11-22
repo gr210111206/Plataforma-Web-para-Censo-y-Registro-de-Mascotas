@@ -2,6 +2,31 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22b] — Segunda re-prueba: XSS dentro del propio panel admin (Eventos/FAQ) + doble escape en Avisos/Artículos
+
+### 🤔 Contexto
+Con el commit `2c8490b` ya desplegado, el usuario volvió a probar las 10 pestañas en producción, esta vez escribiendo a propósito texto con HTML y comillas en cada campo, y revisando tanto el portal público como el propio panel admin. Confirmó las fallas 11/12/13 y lo extra de la vez anterior como corregidas, y entregó un reporte nuevo (`Reporte_fallas_Configuracion_del_sitio_2026-11-22b.txt`) con 3 fallas más.
+
+### 🔍 Causas y 🔧 Cambios
+
+**14. SEGURIDAD (alta) — las listas de Eventos y FAQ dentro del propio panel admin pintaban HTML real.** La corrección anterior solo cubrió el portal público (`index.html`); `renderEventos()` y `renderFaqTable()` (`web/js/admin/admin-config-contenido.js`) seguían metiendo `e.titulo`/`e.lugar`/`e.hora` y `f.pregunta`/`f.respuesta` directo en un `innerHTML` — como Eventos/FAQ se sincronizan entre admins vía servidor (`SERVER_CONFIG_KEYS`), un `<img src=x onerror="...">` guardado por un admin se ejecutaría en la sesión de CUALQUIER otro admin (incluido el superadmin) que abriera esa pestaña. Cambios:
+  - Se movió `escapeHtml()` (antes solo en `index.html`) a `web/js/api-client.js`, que ya cargan tanto `index.html` como `admin.html` — una sola copia compartida en vez de reinventarla por página.
+  - Se aplicó en las 2 listas del panel.
+  - Se revisaron los `confirmarAccion(...)` de "¿Eliminar el evento/pregunta...?" (líneas que señalaba el reporte): no hacía falta tocarlos — `confirmarAccion()` (`admin-core.js`) ya pinta el mensaje con `.textContent`, que es seguro sin importar el contenido.
+  - La lista de Avisos del panel no se tocó: ya estaba bien (ver falla 15, es la misma razón: el servidor ya la escapa).
+
+**15. Avisos y Artículos: salían códigos como `&quot;`/`&amp;` en vez de la comilla real — doble escape.** `web/api/contenido.php` ya aplica `clean()` (`htmlspecialchars`) a título/descripción/ícono/color de campañas y a título/ícono de artículos al GUARDAR; la corrección de la entrada anterior además los volvía a escapar al MOSTRAR (`escapeHtml()` en `renderCampaigns()`/`renderArticles()`), de ahí el doble escape. Se quitó el `escapeHtml()` de esos campos (quedan en una sola capa: la del servidor); `imagen` en ambos casos NO pasa por `clean()`, así que ese sigue escapándose en el cliente. Eventos/FAQ no tienen este problema porque esos SÍ dependían solo de la capa del cliente (se guardan tal cual en `site_config`, sin `clean()` del lado servidor).
+
+**16. Artículos: el extracto de la portada mostraba las etiquetas del editor (`<p><b>...`).** `contenido` de un artículo es HTML de verdad, ya sanitizado con lista blanca en el servidor (`sanitizeArticleHtml()`, pensado para el editor con negritas/títulos/imágenes) — cortar ese HTML a los 100 caracteres y escaparlo mostraba las etiquetas como texto. Se agregó `extraerTextoPlano()` en `index.html`: vuelca el HTML en un `<div>` desconectado del documento y usa su `.textContent` para sacar solo el texto, que ahora sí se escapa (ya es texto plano, no hay doble escape). De paso se corrigió el mismo síntoma en el modal del artículo completo: el título (si trae comillas) se veía como `&quot;` porque `verArticulo()` lo ponía con `.textContent` sin decodificar las entidades que ya trae del servidor; se agregó `unescapeHtmlEntities()` (también en `api-client.js`) para decodificarlo primero. El contenido completo del modal se deja igual que antes (se sigue mostrando como texto, no como HTML enriquecido) — cambiar eso es una decisión de producto aparte, no una falla de este reporte.
+
+### 🔎 Verificado
+- `node --check` sin errores en `api-client.js` y `admin-config-contenido.js`; los 2 bloques `<script>` inline de `index.html` siguen OK.
+- No se pudo volver a probar con sesión real contra la BD local (mismo problema preexistente de credenciales). Recomendado: repetir los pasos del reporte después de desplegar, incluyendo abrir Eventos/FAQ en el panel con el texto de prueba.
+- Pendiente, confirmado por el reporte: una revisión de seguridad dedicada a las tablas internas del panel (Roles, Cuentas, Mascotas, Bitácora, lista de Artículos) que quedaron fuera de esta corrección.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/js/api-client.js`, `web/js/admin/admin-config-contenido.js`
+
 ## 📅 [2026-11-22] — Re-prueba de "Configuración del sitio": 3 fallas nuevas + el mismo patrón de XSS encontrado en Avisos/Eventos/Artículos/FAQ
 
 ### 🤔 Contexto
