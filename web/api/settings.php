@@ -43,6 +43,15 @@ if ($method === 'POST') {
         jsonError('Falta el valor de configuración.', 400);
     }
 
+    // Antes se guardaba cualquier valor sin validar — un <img src="…">
+    // malicioso mandado directo por la API (sin pasar por la UI) se le
+    // pintaba después a cualquier visitante del portal público. Mismo
+    // criterio que validarFotoBase64() para fotos (ver helpers.php).
+    if ($key === 'padron_appearance_config') {
+        $err = validarAparienciaConfig($value);
+        if ($err !== null) jsonError($err, 400);
+    }
+
     $json = json_encode($value, JSON_UNESCAPED_UNICODE);
     $db   = getDB();
     $stmt = $db->prepare('

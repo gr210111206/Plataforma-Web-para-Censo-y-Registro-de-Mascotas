@@ -449,6 +449,7 @@ Artículo 4. Los dueños de mascotas son responsables de los daños que éstas p
 
 
 <script src="js/api-client.js"></script>
+<script src="js/faq-default.js"></script>
 <script>
 /* ── Render Campaigns ── */
 // Si la campaña/aviso trae imagen se usa como fondo del banner; si no,
@@ -548,14 +549,8 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 /* ── Render FAQ: usa lo editado desde el admin si existe; si no, este
-   contenido institucional fijo sirve de respaldo. ── */
-const FAQS_DEFAULT = [
-  { pregunta: '¿Por qué debo registrar a mi mascota?', respuesta: 'El registro es gratuito y te permite obtener la ficha oficial de tu mascota, acceder a campañas de vacunación y esterilización, y contar con un respaldo digital oficial del Ayuntamiento.' },
-  { pregunta: '¿Qué documentos necesito para registrar a mi mascota?', respuesta: 'Solo necesitas tu correo electrónico, teléfono de contacto y datos básicos. No se requieren documentos físicos. Puedes subir una foto de tu mascota opcionalmente.' },
-  { pregunta: '¿El registro tiene algún costo?', respuesta: 'No. El registro en el padrón municipal de mascotas de El Grullo es completamente gratuito para todos los ciudadanos.' },
-  { pregunta: '¿Puedo registrar más de una mascota?', respuesta: 'Sí. Con una sola cuenta puedes registrar todos los perros y gatos que tengas. Cada mascota recibirá su propio folio M-GRU único.' },
-  { pregunta: '¿Qué es el estatus Alta y Baja?', respuesta: 'Alta significa que la mascota está activa en el padrón. Baja se aplica cuando la mascota ha fallecido o fue dada de baja del registro.' },
-];
+   contenido institucional fijo sirve de respaldo (FAQS_DEFAULT viene de
+   js/faq-default.js, compartido con el panel admin). ── */
 function renderFAQ() {
   let faqs = FAQS_DEFAULT;
   try {
@@ -747,6 +742,27 @@ function applyNavAuthState() {
   });
 }
 
+// Solo se acepta como URL de ícono: https://, data:image/(png|jpeg|webp|gif)
+// o una ruta propia del sitio ("Imagenes/..."). Y el <img> se construye por
+// DOM (nunca con el valor metido crudo en un template de innerHTML): así,
+// aunque el valor trajera comillas o HTML, no hay forma de "escaparse" del
+// atributo src (ver HISTORIAL_CAMBIOS.md, 2026-11-21 — XSS almacenado en
+// Apariencia e íconos).
+function esIconoUrlSegura(url) {
+  if (typeof url !== 'string' || !url) return false;
+  if (/^https:\/\//i.test(url)) return true;
+  if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)) return true;
+  if (/^Imagenes\//.test(url)) return true;
+  return false;
+}
+function crearImgIcono(url) {
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = 'icon';
+  img.style.cssText = 'max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;';
+  img.onerror = () => { img.replaceWith(document.createTextNode('✕')); };
+  return img;
+}
 function applyAppearanceConfig() {
   const raw = localStorage.getItem('padron_appearance_config');
   if (!raw) return;
@@ -758,9 +774,10 @@ function applyAppearanceConfig() {
       if (val.type === 'none') {
         el.style.display = 'none';
       } else if (val.type === 'emoji') {
-        el.innerHTML = val.value;
-      } else if (val.type === 'image' || val.type === 'gif') {
-        el.innerHTML = `<img src="${val.value}" alt="icon" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;" />`;
+        el.textContent = val.value;
+      } else if ((val.type === 'image' || val.type === 'gif') && esIconoUrlSegura(val.value)) {
+        el.innerHTML = '';
+        el.appendChild(crearImgIcono(val.value));
       }
     });
   } catch(e) { /* silently ignore */ }
@@ -870,6 +887,19 @@ async function initMap() {
   });
 }
 
+// Escapa cualquier HTML y luego "desescapa" solo la envoltura exacta
+// <span class="highlight">...</span> — así el admin puede resaltar una
+// palabra del título (hero_title es el único campo que lo necesita) sin
+// poder meter ningún otro tag/atributo (ej. onerror=, <script>, etc.).
+function sanitizeHeroTitleHtml(str) {
+  const esc = String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return esc
+    .replace(/&lt;span class=&quot;highlight&quot;&gt;/g, '<span class="highlight">')
+    .replace(/&lt;\/span&gt;/g, '</span>');
+}
+
 /* ── Contenidos de portada (hero, pasos, banner...) editados desde el admin ── */
 function applySiteContentConfig() {
   const raw = localStorage.getItem('padron_site_content');
@@ -880,7 +910,11 @@ function applySiteContentConfig() {
       if (val === undefined || val === null || val === '') return;
       const id = key.replace(/_/g, '-');
       const el = document.getElementById(id);
-      if (el) { el.textContent = val; return; }
+      if (el) {
+        if (key === 'hero_title') el.innerHTML = sanitizeHeroTitleHtml(val);
+        else el.textContent = val;
+        return;
+      }
 
       // Contadores del hero: stat_1_num → hero-stat-1-num (además set data-target)
       const statMatch = key.match(/^stat_(\d)_num$/);
@@ -943,11 +977,42 @@ async function applyRealStats() {
    un visitante que ya había entrado antes ve la portada completa de
    inmediato; (2) todo lo que sí necesita ir al servidor se pide en
    PARALELO (Promise.all), no en fila. */
+// Nota: Google y la mayoría de buscadores leen el HTML antes de ejecutar
+// JavaScript, así que este cambio solo alcanza a navegadores/crawlers que
+// sí ejecutan JS (ideal sería que PHP imprimiera el <title>/<meta>, pero
+// eso es un cambio de arquitectura mayor — ver HISTORIAL_CAMBIOS.md).
+function aplicarSeoConfig() {
+  const raw = localStorage.getItem('padron_seo_config');
+  if (!raw) return;
+  try {
+    const cfg = JSON.parse(raw);
+    if (cfg.title) document.title = cfg.title;
+    const setMeta = (name, content, attr = 'name') => {
+      if (!content) return;
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); }
+      el.setAttribute('content', content);
+    };
+    setMeta('description', cfg.desc);
+    setMeta('keywords', cfg.keywords);
+    setMeta('og:title', cfg.title, 'property');
+    setMeta('og:description', cfg.desc, 'property');
+    setMeta('og:image', cfg.og_img, 'property');
+    setMeta('robots', cfg.indexed === false ? 'noindex, nofollow' : 'index, follow');
+    if (cfg.canonical) {
+      let link = document.querySelector('link[rel="canonical"]');
+      if (!link) { link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link); }
+      link.href = cfg.canonical;
+    }
+  } catch (e) { /* ignore */ }
+}
+
 function aplicarConfigCacheada() {
   applySiteContentConfig();
   applyAppearanceConfig();
   applyFooterConfig();
   applyReglamento();
+  aplicarSeoConfig();
   renderFAQ();
   try {
     const eventosRaw = localStorage.getItem('padron_eventos');
@@ -975,7 +1040,7 @@ async function initIndex() {
   // 3) Con la config fresca del servidor ya en localStorage, se vuelve a
   // aplicar por si el admin cambió algo desde la última visita guardada.
   if (siteConfig) {
-    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_eventos'].forEach(key => {
+    ['padron_site_config', 'padron_appearance_config', 'padron_site_content', 'padron_reglamento', 'padron_faq', 'padron_eventos', 'padron_seo_config'].forEach(key => {
       if (siteConfig[key]) localStorage.setItem(key, JSON.stringify(siteConfig[key]));
     });
     aplicarConfigCacheada();

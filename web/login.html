@@ -722,15 +722,29 @@ async function applyAppearanceConfig() {
 
   const appearance = readCfg('padron_appearance_config');
   if (!appearance) return;
+  // Mismo criterio que index.html: solo https://, data:image/(…) o rutas
+  // propias "Imagenes/…", y el <img> se crea por DOM (nunca con el valor
+  // crudo dentro de un innerHTML) — ver HISTORIAL_CAMBIOS.md, 2026-11-21.
+  const esIconoUrlSegura = (url) => typeof url === 'string' && url && (
+    /^https:\/\//i.test(url) ||
+    /^data:image\/(png|jpeg|webp|gif);base64,/i.test(url) ||
+    /^Imagenes\//.test(url)
+  );
   Object.entries(appearance).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (!el || !val || !val.value) return;
     if (val.type === 'none') {
       el.style.display = 'none';
     } else if (val.type === 'emoji') {
-      el.innerHTML = val.value;
-    } else if (val.type === 'image' || val.type === 'gif') {
-      el.innerHTML = `<img src="${val.value}" alt="icon" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;" />`;
+      el.textContent = val.value;
+    } else if ((val.type === 'image' || val.type === 'gif') && esIconoUrlSegura(val.value)) {
+      el.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = val.value;
+      img.alt = 'icon';
+      img.style.cssText = 'max-width:100%; max-height:100%; object-fit:contain; border-radius:inherit; display:block; margin:auto;';
+      img.onerror = () => { img.replaceWith(document.createTextNode('✕')); };
+      el.appendChild(img);
     }
   });
 }

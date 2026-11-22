@@ -2253,19 +2253,29 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
       <!-- ─────────────────────────────────────── -->
       <div class="config-panel" id="cfg-municipio">
 
+        <div style="background:var(--orange-pale, #FFF3E0); border:1px solid var(--orange, #F27A00); border-radius:var(--radius); padding:12px 14px; margin-bottom:16px; font-size:.82rem; display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:1.1rem; line-height:1;">⚠️</span>
+          <div>
+            <strong>Estos datos todavía no se muestran en ninguna página pública.</strong>
+            Se guardan en el servidor, pero por ahora ningún archivo del portal (index.html, login.html, el acta en PDF) los lee todavía —
+            solo se usan dentro de este panel. Dile a quien dé mantenimiento al sitio en qué parte exacta quieres que aparezcan
+            (pie de página, encabezado, acta oficial, etc.) antes de confiarte en que ya están publicados.
+          </div>
+        </div>
+
         <div class="setting-section">
           <div class="setting-section-header">
             <div class="setting-section-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 9h4" /><path d="M12 7v5" /><path d="M14 22v-4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v4" /><path d="M18 22V5.618a1 1 0 0 0-.553-.894l-4.553-2.277a2 2 0 0 0-1.788 0L6.553 4.724A1 1 0 0 0 6 5.618V22" /><path d="m18 7 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.618a1 1 0 0 1 .553-.894L6 7" /></svg></div>
             <div>
               <div class="setting-section-title">Datos oficiales del municipio</div>
-              <div class="setting-section-desc">Información que aparece en el encabezado, pie de página y documentos oficiales</div>
+              <div class="setting-section-desc">Información institucional de referencia (ver el aviso de arriba sobre dónde se muestra hoy)</div>
             </div>
           </div>
           <div class="setting-rows">
             <div class="setting-row-full">
               <div class="setting-row-label" style="margin-bottom:8px;">Nombre del Ayuntamiento</div>
               <input type="text" class="form-control" id="mun-nombre" value="H. Ayuntamiento Constitucional de El Grullo" />
-              <div class="setting-row-hint" style="margin-top:4px;">Aparece en pies de página, actas y documentos oficiales</div>
+              <div class="setting-row-hint" style="margin-top:4px;">Pensado para pies de página, actas y documentos oficiales</div>
             </div>
             <div class="setting-row-full">
               <div class="form-row">
@@ -2299,7 +2309,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
             <div class="setting-section-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg></div>
             <div>
               <div class="setting-section-title">Responsables del padrón</div>
-              <div class="setting-section-desc">Aparecen en documentos y en la sección de contacto</div>
+              <div class="setting-section-desc">Pensado para documentos y la sección de contacto</div>
             </div>
           </div>
           <div class="setting-rows">
@@ -2809,6 +2819,7 @@ Dirección de Medio Ambiente e Informática Municipal.</textarea>
 
 <script src="js/api-client.js"></script>
 <script src="js/mis-sesiones.js"></script>
+<script src="js/faq-default.js"></script>
 <!-- jsPDF/QRCode con defer: solo los necesitan "Ver acta"/"QR" en
      Seguimiento, mucho después en el flujo — si tardan o fallan en
      cargar desde el CDN, ya no bloquean el resto del panel. -->

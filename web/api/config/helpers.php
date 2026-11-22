@@ -578,11 +578,12 @@ function sanitizeArticleHtml(?string $html): string {
    almacenado: un ciudadano podía atacar al administrador). Ahora todo lo
    que sigue al prefijo tiene que ser Base64 puro y, ya decodificado,
    tiene que ser de verdad una imagen del tipo que dice ser. */
-function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
+function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000, array $tiposPermitidos = ['jpeg', 'png', 'webp']): ?string {
     if ($foto === null || $foto === '') return null;
-    $errFormato = 'La imagen debe ser una foto en formato JPG, PNG o WEBP.';
+    $errFormato = 'La imagen debe ser una foto en formato ' . strtoupper(implode(', ', $tiposPermitidos)) . '.';
 
-    if (!preg_match('#^data:image/(jpeg|png|webp);base64,#', $foto, $m)) return $errFormato;
+    $patron = '#^data:image/(' . implode('|', $tiposPermitidos) . ');base64,#';
+    if (!preg_match($patron, $foto, $m)) return $errFormato;
     if (strlen($foto) > $maxBytes) return 'La imagen es demasiado grande.';
 
     // Solo caracteres Base64 (nada de comillas, "<", espacios ni saltos de
@@ -602,8 +603,69 @@ function validarFotoBase64(?string $foto, int $maxBytes = 3_000_000): ?string {
     $binario = base64_decode($b64, true);
     if ($binario === false) return $errFormato;
     $info  = @getimagesizefromstring($binario);
-    $tipos = ['jpeg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'webp' => IMAGETYPE_WEBP];
+    $tipos = ['jpeg' => IMAGETYPE_JPEG, 'png' => IMAGETYPE_PNG, 'webp' => IMAGETYPE_WEBP, 'gif' => IMAGETYPE_GIF];
     if ($info === false || $info[2] !== $tipos[$m[1]]) return $errFormato;
+
+    return null;
+}
+
+/* ── Validar "padron_appearance_config" (Apariencia e íconos) ──────────
+   Mismo problema que validarFotoBase64 de arriba (XSS almacenado), pero
+   acá settings.php guardaba lo que fuera sin validar NADA — un admin
+   (o cualquiera con su sesión robada) podía meter un <img src="…">
+   malicioso directo por la API, sin pasar por la UI, y ese valor se le
+   pintaba después a CUALQUIER visitante del portal público (index.html,
+   login.html) y a cualquier otro admin que abriera esta misma pestaña.
+   Devuelve null si es válida, o el mensaje de error. ── */
+function validarAparienciaConfig($value): ?string {
+    if (!is_array($value)) return 'Formato de apariencia inválido.';
+
+    $idsValidos = [
+        'nav-logo-icon', 'hero-mascot-icon', 'banner-icon',
+        'step-1-icon', 'step-2-icon', 'step-3-icon',
+        'footer-logo-icon', 'footer-brand-1', 'footer-brand-2',
+        'admin-sidebar-logo',
+    ];
+
+    foreach ($value as $id => $item) {
+        if (!in_array($id, $idsValidos, true)) return "Elemento de apariencia desconocido: $id";
+        if (!is_array($item) || !isset($item['type'])) return 'Formato de apariencia inválido.';
+
+        $tipo = $item['type'];
+        $val  = $item['value'] ?? '';
+
+        if ($tipo === 'none') continue; // no se renderiza como URL/HTML, no hay nada que validar
+
+        if ($tipo === 'emoji') {
+            if (!is_string($val) || $val === '' || mb_strlen($val) > 40) return 'El emoji es demasiado largo.';
+            if (strpbrk($val, '<>') !== false) return 'El emoji no puede contener "<" ni ">".';
+            continue;
+        }
+
+        if ($tipo === 'gif') {
+            if (!is_string($val) || $val === '' || strlen($val) > 2000
+                || strpbrk($val, "\"'<>") !== false
+                || !preg_match('#^https://#i', $val)
+                || filter_var($val, FILTER_VALIDATE_URL) === false) {
+                return 'La URL del ícono debe empezar con https:// y no contener comillas ni "<"/">"';
+            }
+            continue;
+        }
+
+        if ($tipo === 'image') {
+            if (!is_string($val) || $val === '') return 'Formato de imagen inválido.';
+            // Rutas propias del sitio (los logos oficiales preestablecidos)
+            if (preg_match('#^Imagenes/#', $val)) {
+                if (strpbrk($val, "\"'<>") !== false || str_contains($val, '..')) return 'Ruta de imagen inválida.';
+                continue;
+            }
+            $errFoto = validarFotoBase64($val, 2_000_000, ['jpeg', 'png', 'webp', 'gif']);
+            if ($errFoto !== null) return $errFoto;
+            continue;
+        }
+
+        return "Tipo de ícono inválido: $tipo";
+    }
 
     return null;
 }

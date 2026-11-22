@@ -2,6 +2,47 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-21b] — 10 fallas de "Configuración del sitio" (panel admin), reportadas en pruebas manuales en producción
+
+### 🤔 Contexto
+El usuario probó, en producción con la cuenta superadmin, cada pestaña de Configuración del sitio (un cambio por pestaña, guardar, revisar el portal público, restaurar) y entregó un reporte con 10 fallas (2 de seguridad). Detalle completo en `Reporte_fallas_Configuracion_del_sitio_2026-11-21.txt`. Esta entrada corrige las 10; nada se desplegó en producción todavía (falta cPanel → Git → Update from Remote → Deploy HEAD Commit).
+
+### 🔍 Causas y 🔧 Cambios
+
+**1. Portada — el título del hero mostraba las etiquetas HTML como texto.** `applySiteContentConfig()` (`web/index.html`) pintaba CUALQUIER campo con `el.textContent`, pero `hero_title` es el único que de verdad trae HTML (`...<span class="highlight">mascota</span>...`). Se agregó `sanitizeHeroTitleHtml()`: escapa todo el HTML y luego "desescapa" solo la envoltura exacta `<span class="highlight">...</span>` — así el admin puede seguir resaltando una palabra, pero no puede meter ningún otro tag o atributo.
+
+**2. FAQ — agregar una pregunta borraba las 5 de fábrica.** El portal (`index.html`) ya usaba `FAQS_DEFAULT` como respaldo si no había nada guardado, pero el panel arrancaba `faqData = []` sin esas 5. Se movió `FAQS_DEFAULT` a un archivo compartido nuevo (`web/js/faq-default.js`, cargado en `index.html` y `admin.html`) y `loadFaqFromServer()` ahora arranca con esas 5 (clonadas) cuando el servidor no tiene nada guardado (o guardó una lista vacía) — mismo criterio que ya usa el público, para que panel y portal siempre coincidan.
+
+**3. Municipio — se guarda pero no se muestra en ninguna página pública.** La pestaña prometía ("Aparece en pies de página, actas y documentos oficiales") algo que el código nunca hizo. Decidir dónde debe salir exactamente (pie de página, encabezado, acta en PDF) implica mostrar datos institucionales sensibles (nombre del Presidente Municipal, directores) en un sitio de gobierno real — se dejó esa decisión al usuario: se agregó un aviso visible arriba de la pestaña (`web/admin.html`) que dice la verdad ("todavía no se muestra en ninguna página pública... dile a quien dé mantenimiento en qué parte exacta quieres que aparezca") y se corrigieron los textos que afirmaban lo contrario. No se inventó ningún lugar público para estos datos.
+
+**4. SEO — no se guardaba en el servidor; el `<title>`/`<meta>` nunca cambiaban.** `saveSEO()` solo hacía `localStorage.setItem`; `padron_seo_config` no estaba en `SERVER_CONFIG_KEYS` (`web/js/admin/admin-config-site.js`, ahora sí) ni `index.html` los aplicaba. Se agregó `pushConfigToServer` a `saveSEO()`/`resetSEO()`, una función `loadSEO()` nueva (restaura el formulario al volver a la pestaña — antes tampoco existía) y `aplicarSeoConfig()` en `index.html` (pone `document.title`, `meta description/keywords/robots`, `og:title/description/image` y `link[rel=canonical]`). Ojo: Google y la mayoría de buscadores leen el HTML antes de ejecutar JavaScript, así que esto solo alcanza a navegadores/crawlers que sí corren JS — queda documentado en el código; que PHP imprima estas etiquetas sería un cambio de arquitectura mayor, fuera del alcance de esta corrección.
+
+**5 y 6. SEGURIDAD — XSS almacenado en Apariencia e íconos (GIF/URL y emoji).** `applyAppearanceConfig()` (`index.html`, `login.html`) y las vistas previas del propio panel (`admin-config-apariencia.js`) metían el valor crudo del admin dentro de un `innerHTML` (`<img src="${val}">` / `el.innerHTML = val`) — una URL con comillas (`x.png" onerror="...`) rompía el atributo y ejecutaba JavaScript en el navegador de cualquier visitante del portal, o de cualquier OTRO admin/superadmin que abriera esa misma pestaña. Cambios:
+  - Emoji: siempre `textContent`, nunca `innerHTML` (`index.html`, `login.html`, `admin-config-apariencia.js`).
+  - Imagen/GIF: el `<img>` se crea por DOM (`document.createElement('img')` + `img.src = valor`) en vez de interpolarlo en un string de HTML — así, aunque el valor traiga comillas, no hay forma de "escaparse" del atributo. Mismo criterio en las 3 vistas previas del panel (`updateIconPreviewUrl`, `selectPresetImage`, `handleIconFile`, `loadAppearance`) y en el aviso "Seleccionado: &lt;nombre&gt;" del drop-zone (antes también interpolado en `innerHTML`).
+  - Se agregó una lista blanca de URLs aceptadas (`https://`, `data:image/(png|jpeg|webp|gif);base64,...`, o rutas propias `Imagenes/...`) antes de pintar cualquier imagen, en el público y en el panel.
+  - **Servidor:** `web/api/settings.php` guardaba cualquier valor sin validar NADA. Se agregó `validarAparienciaConfig()` (`web/api/config/helpers.php`) — valida cada elemento contra la lista de ids reales, el tipo (`emoji`/`image`/`gif`/`none`) y, según el tipo, longitud/formato/protocolo; reutiliza `validarFotoBase64()` (ya existía para fotos de mascota/perfil/campañas/artículos) extendida con un 3er parámetro para aceptar también GIF. `settings.php` la llama solo para la clave `padron_appearance_config`.
+
+**7. Cambiar de pestaña (Emoji→Imagen, etc.) sin elegir nada dejaba un ícono roto.** `setIconSelType()` conservaba el `value` anterior aunque el usuario cambiara de tipo; si no se elegía nada en el tipo nuevo, ese valor viejo (ej. un emoji) se guardaba igual bajo el tipo nuevo (ej. `<img src="🧪">`). Ahora solo se conserva el `value` si el tipo no cambió de verdad (ej. `loadAppearance()` restaurando lo ya guardado); si cambió, empieza limpio y la validación existente de "tarjeta incompleta" en `saveAppearance()` lo detecta y lo omite.
+
+**8. El botón "Restablecer" de Apariencia no se publicaba.** `resetAppearance()` solo borraba `localStorage`; el servidor (y por lo tanto el portal público) seguía con lo personalizado. Ahora también hace `pushConfigToServer('padron_appearance_config', {})`.
+
+**9. Imágenes WEBP/GIF/SVG subidas perdían la transparencia (fondo negro) o la animación.** `handleIconFile()` convertía TODO lo que no fuera PNG a JPEG (sin canal alfa) vía canvas. Ahora: un GIF (animado o no) se guarda tal cual, sin pasarlo por canvas (que solo capturaría su primer cuadro); todo lo demás que no sea una foto JPG real se guarda como PNG (conserva transparencia) en vez de JPEG.
+
+**10. El logo del panel admin (sidebar) no cambiaba hasta recargar la página.** `saveAppearance()` llamaba a `applyAppearanceConfig()` (el portal público) pero nunca a `applyAdminOwnAppearance()` (el propio sidebar del panel). Se agregó esa llamada ahí y también en `resetAppearance()`.
+
+### 🔎 Verificado
+- `php -l` sin errores en `settings.php` y `helpers.php`; `node --check` sin errores en los 4 `.js` tocados y en los `<script>` inline de `index.html`/`login.html` (extraídos a un `.js` temporal para revisarlos).
+- `validarAparienciaConfig()` probado de forma aislada (sin tocar la BD) con 12 casos: emoji normal, emoji con `<i>` (debe rechazar), URL con comillas inyectadas tipo el ejemplo exacto del reporte (debe rechazar), URL `https://` válida (debe aceptar), URL `http://` sin "s" (debe rechazar), ruta preset válida, intento de path traversal (`Imagenes/../../../etc/passwd`, debe rechazar), id de elemento inventado (debe rechazar), tipo `none`, objeto vacío (el caso de "Restablecer"), imagen PNG en Base64 real y válida, e imagen Base64 con inyección tipo `"onerror="` — los 12 salieron como se esperaba.
+- Las páginas siguen cargando (200 OK) sirviéndolas con el Apache local de XAMPP sobre la junction `C:\xampp\htdocs\remac`, incluyendo el archivo nuevo `js/faq-default.js`.
+- **No verificado con el panel real logueado:** la BD local (`remac_db`) tiene credenciales desactualizadas en este equipo (error "Access denied" preexistente, no causado por este cambio — ver `reference_entorno_local_pruebas`), así que no se pudo ejercitar `POST /api/settings.php` de punta a punta contra una sesión real. Recomendado: que el usuario repita manualmente los 10 pasos de su propio reporte después de desplegar.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/login.html`, `web/admin.html`
+- `web/js/faq-default.js` (nuevo)
+- `web/js/admin/admin-config-apariencia.js`, `web/js/admin/admin-config-contenido.js`, `web/js/admin/admin-config-site.js`
+- `web/api/settings.php`, `web/api/config/helpers.php`
+
 ## 📅 [2026-11-21] — Contraseña de prueba del admin ya no queda expuesta en texto plano en `seed.sql`
 
 ### 🤔 Contexto

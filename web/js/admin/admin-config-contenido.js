@@ -83,6 +83,7 @@ function saveSEO() {
     indexed:   document.getElementById('seo-index').checked,
   };
   localStorage.setItem('padron_seo_config', JSON.stringify(data));
+  pushConfigToServer('padron_seo_config', data); // si no, el <title>/<meta> del portal público nunca cambiaban (ver HISTORIAL_CAMBIOS.md)
   const stEl = document.getElementById('statusSEO');
   if (stEl) stEl.innerHTML = '<div class="status-dot saved"></div> SEO guardado';
   document.querySelector('#cnav-seo .config-nav-badge')?.remove();
@@ -92,9 +93,31 @@ function saveSEO() {
   showToast('Configuración SEO guardada correctamente', 'success');
 }
 
+// Restaura los campos del formulario SEO con lo último guardado (si no,
+// el panel se veía siempre vacío al volver a entrar a esta pestaña).
+function loadSEO() {
+  const raw = localStorage.getItem('padron_seo_config');
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+    set('seo-title', data.title);
+    set('seo-desc', data.desc);
+    set('seo-keywords', data.keywords);
+    set('seo-og-img', data.og_img);
+    set('seo-ga', data.ga);
+    set('seo-canonical', data.canonical);
+    const idx = document.getElementById('seo-index');
+    if (idx) idx.checked = data.indexed !== false;
+    updateSeoPreview();
+    if (data.og_img) previewOgImgUrl();
+  } catch (e) { /* ignore */ }
+}
+
 async function resetSEO() {
   if (!(await confirmarAccion('¿Restablecer la configuración SEO a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   localStorage.removeItem('padron_seo_config');
+  pushConfigToServer('padron_seo_config', {});
   showToast('Configuración SEO restablecida', 'info');
 }
 
@@ -276,13 +299,17 @@ function persistFaq() {
   pushConfigToServer('padron_faq', faqData);
 }
 
+// Si el servidor no tiene nada guardado (o guardó una lista vacía), el
+// panel debe arrancar con las mismas 5 preguntas de fábrica que ya
+// muestra el portal público (FAQS_DEFAULT, de js/faq-default.js) — si
+// no, el panel se veía vacío mientras el público sí mostraba 5
+// preguntas, y agregar una nueva aquí borraba esas 5 del portal.
 function loadFaqFromServer() {
   const raw = localStorage.getItem('padron_faq');
-  if (!raw) return;
-  try {
-    const saved = JSON.parse(raw);
-    if (Array.isArray(saved)) { faqData = saved; renderFaqTable(); }
-  } catch (e) { /* ignore */ }
+  let saved = null;
+  try { saved = raw ? JSON.parse(raw) : null; } catch (e) { /* ignore */ }
+  faqData = (Array.isArray(saved) && saved.length) ? saved : FAQS_DEFAULT.map(f => ({ ...f }));
+  renderFaqTable();
 }
 
 function saveFaq() {

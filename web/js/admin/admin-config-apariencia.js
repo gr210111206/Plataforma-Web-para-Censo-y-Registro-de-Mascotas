@@ -27,6 +27,19 @@ const ICON_EMOJIS = [
 // In-memory state: { elementId: { type, value } }
 let appearanceState = {};
 
+// Mismo criterio que index.html/login.html: solo se acepta como URL de
+// ícono https://, data:image/(png|jpeg|webp|gif) o una ruta propia del
+// sitio ("Imagenes/…") — loadAppearance() puede estar pintando un valor
+// guardado por OTRO admin/superadmin, no solo lo que el usuario actual
+// acaba de escribir (ver HISTORIAL_CAMBIOS.md, 2026-11-21).
+function esIconoUrlSegura(url) {
+  if (typeof url !== 'string' || !url) return false;
+  if (/^https:\/\//i.test(url)) return true;
+  if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)) return true;
+  if (/^Imagenes\//.test(url)) return true;
+  return false;
+}
+
 // ── Build all icon-selector cards ────────────────
 function buildIconSelectors() {
   const grid = document.getElementById('iconSelGrid');
@@ -119,11 +132,14 @@ function setIconSelType(id, type) {
     const prev = document.getElementById(`prev-${id}`);
     if (prev) prev.innerHTML = ICON_EYE_OFF;
   } else {
-    // Si venía de "Ocultar", empieza limpio (no arrastrar value:'hidden'
-    // como si fuera un emoji/URL real).
+    // Si cambia de tipo de verdad (ej. tenía un emoji y se pasó a la
+    // pestaña "Imagen"), empieza limpio SIN arrastrar el value anterior —
+    // si no, "value" seguía sin estar vacío aunque no se hubiera elegido
+    // nada en el tipo nuevo, y se guardaba un ícono roto (ej. <img
+    // src="🧪">). Si el tipo no cambió (ej. loadAppearance() restaurando
+    // el mismo tipo ya guardado), se conserva el value tal cual.
     const was = appearanceState[id];
-    appearanceState[id] = (was && was.type === 'none') ? { type } : (was || {});
-    appearanceState[id].type = type;
+    appearanceState[id] = (was && was.type === type) ? was : { type };
   }
 }
 
@@ -135,7 +151,7 @@ function selectEmoji(id, emoji) {
     el.classList.toggle('selected', el.textContent === emoji);
   });
   appearanceState[id] = { type: 'emoji', value: emoji };
-  document.getElementById(`prev-${id}`).innerHTML = emoji;
+  document.getElementById(`prev-${id}`).textContent = emoji;
 }
 
 // ── Live preview from text input ──────────────────
@@ -143,7 +159,21 @@ function updateIconPreview(id) {
   const val = document.getElementById(`emoji-text-${id}`).value;
   if (!val) return;
   appearanceState[id] = { type: 'emoji', value: val };
-  document.getElementById(`prev-${id}`).innerHTML = val;
+  document.getElementById(`prev-${id}`).textContent = val;
+}
+
+// Crea el <img> de la vista previa por DOM (nunca con el valor crudo dentro
+// de un innerHTML) — aunque sea el propio admin quien lo escribe, ese mismo
+// valor lo vuelve a cargar loadAppearance() en la sesión de CUALQUIER otro
+// admin/superadmin que abra esta pestaña después (ver HISTORIAL_CAMBIOS.md,
+// 2026-11-21 — XSS almacenado en Apariencia e íconos).
+function crearImgVistaPrevia(url) {
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = 'Vista previa del ícono';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.onerror = () => { img.replaceWith(document.createTextNode('✕')); };
+  return img;
 }
 
 // ── Live preview from URL input ───────────────────
@@ -151,18 +181,35 @@ function updateIconPreviewUrl(id) {
   const url = document.getElementById(`gif-url-${id}`).value.trim();
   if (!url) return;
   appearanceState[id] = { type: 'gif', value: url };
-  document.getElementById(`prev-${id}`).innerHTML =
-    `<img src="${url}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='✕'"/>`;
+  const prev = document.getElementById(`prev-${id}`);
+  prev.innerHTML = '';
+  prev.appendChild(crearImgVistaPrevia(url));
+}
+
+// Pinta el aviso "Seleccionado: <nombre>" / "<nombre>" del drop-zone sin
+// meter el nombre (que en handleIconFile viene del archivo elegido por el
+// usuario) crudo dentro de un innerHTML.
+function pintarNombreDrop(dropEl, nombre, prefijo, nota) {
+  dropEl.innerHTML = '';
+  const fila = document.createElement('div');
+  fila.style.cssText = 'display:flex; align-items:center; gap:5px;';
+  fila.innerHTML = ICON_CHECK_CIRCLE; // ícono fijo, no viene del usuario
+  fila.append(document.createTextNode(' ' + prefijo + nombre));
+  const notaEl = document.createElement('div');
+  notaEl.style.cssText = 'font-size:.65rem;color:var(--gray-3);margin-top:3px;';
+  notaEl.textContent = nota;
+  dropEl.append(fila, notaEl);
 }
 
 // ── Select a preset official municipal logo ───────
 function selectPresetImage(id, url) {
   appearanceState[id] = { type: 'image', value: url };
-  document.getElementById(`prev-${id}`).innerHTML =
-    `<img src="${url}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
-  const name = url.split('/').pop();
-  document.getElementById(`drop-${id}`).innerHTML =
-    `<div style="display:flex; align-items:center; gap:5px;">${ICON_CHECK_CIRCLE} Seleccionado: ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar o subir otra</div>`;
+  const prev = document.getElementById(`prev-${id}`);
+  prev.innerHTML = '';
+  const img = crearImgVistaPrevia(url);
+  img.style.borderRadius = '8px';
+  prev.appendChild(img);
+  pintarNombreDrop(document.getElementById(`drop-${id}`), url.split('/').pop(), 'Seleccionado: ', 'Haz clic para cambiar o subir otra');
 }
 
 // ── Handle file upload (con optimización Canvas) ──
@@ -174,6 +221,25 @@ function handleIconFile(input, id) {
   const reader = new FileReader();
   reader.onload = e => {
     const rawSrc = e.target.result;
+
+    // Un GIF animado pasado por canvas solo captura su primer cuadro (se
+    // pierde la animación) — se guarda tal cual, sin redimensionar.
+    const esGifAnimado = file.type === 'image/gif' || /\.gif$/i.test(file.name);
+    if (esGifAnimado) {
+      appearanceState[id] = { type: 'image', value: rawSrc, name: file.name };
+      const prev = document.getElementById(`prev-${id}`);
+      if (prev) {
+        prev.innerHTML = '';
+        const imgGif = crearImgVistaPrevia(rawSrc);
+        imgGif.style.borderRadius = '8px';
+        prev.appendChild(imgGif);
+      }
+      const drop = document.getElementById(`drop-${id}`);
+      if (drop) pintarNombreDrop(drop, file.name, '', 'GIF guardado sin redimensionar, para conservar la animación');
+      if (input.value !== undefined) input.value = '';
+      return;
+    }
+
     const img = new Image();
     img.onload = () => {
       // Redimensionar canvas a máx 400px para almacenamiento inmediato en localStorage sin rebasar cuota
@@ -195,22 +261,36 @@ function handleIconFile(input, id) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
 
-      const mime = (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) ? 'image/png' : 'image/jpeg';
+      // Solo una foto JPG real se re-comprime como JPEG (sin transparencia
+      // que conservar); todo lo demás (PNG, WEBP, SVG) se guarda como PNG
+      // para no convertir su transparencia en fondo negro sólido.
+      const esFotoJpg = file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name);
+      const mime = esFotoJpg ? 'image/jpeg' : 'image/png';
       const optimizedSrc = canvas.toDataURL(mime, 0.85);
 
       appearanceState[id] = { type: 'image', value: optimizedSrc, name: file.name };
 
       const prev = document.getElementById(`prev-${id}`);
-      if (prev) prev.innerHTML = `<img src="${optimizedSrc}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+      if (prev) {
+        prev.innerHTML = '';
+        const img2 = crearImgVistaPrevia(optimizedSrc);
+        img2.style.borderRadius = '8px';
+        prev.appendChild(img2);
+      }
 
       const drop = document.getElementById(`drop-${id}`);
-      if (drop) drop.innerHTML = `<div style="display:flex; align-items:center; gap:5px;">${ICON_CHECK_CIRCLE} ${file.name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Imagen lista para guardar y publicar</div>`;
+      if (drop) pintarNombreDrop(drop, file.name, '', 'Imagen lista para guardar y publicar');
     };
 
     img.onerror = () => {
       appearanceState[id] = { type: 'image', value: rawSrc, name: file.name };
       const prev = document.getElementById(`prev-${id}`);
-      if (prev) prev.innerHTML = `<img src="${rawSrc}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"/>`;
+      if (prev) {
+        prev.innerHTML = '';
+        const img3 = crearImgVistaPrevia(rawSrc);
+        img3.style.borderRadius = '8px';
+        prev.appendChild(img3);
+      }
     };
 
     img.src = rawSrc;
@@ -258,6 +338,7 @@ function saveAppearance() {
       showToast('Apariencia e íconos guardados y publicados con éxito', 'success');
     }
     if (typeof applyAppearanceConfig === 'function') applyAppearanceConfig();
+    if (typeof applyAdminOwnAppearance === 'function') applyAdminOwnAppearance();
   } catch(err) {
     showToast('Error de almacenamiento: El archivo es demasiado grande', 'error');
   }
@@ -268,7 +349,9 @@ async function resetAppearance() {
   if (!(await confirmarAccion('¿Restablecer todos los íconos e imágenes a los valores por defecto? Se perderá lo que hayas editado aquí sin guardar.'))) return;
   appearanceState = {};
   localStorage.removeItem('padron_appearance_config');
+  await pushConfigToServer('padron_appearance_config', {}); // si no, el portal público seguía con lo personalizado hasta que alguien volviera a Guardar
   buildIconSelectors(); // re-render with defaults
+  if (typeof applyAdminOwnAppearance === 'function') applyAdminOwnAppearance();
   showToast('Apariencia restablecida a valores predeterminados', 'info');
 }
 
@@ -289,19 +372,20 @@ function loadAppearance() {
       if (val.type === 'emoji') {
         const input = document.getElementById(`emoji-text-${id}`);
         if (input) input.value = val.value;
-        prev.innerHTML = val.value;
+        prev.textContent = val.value;
         document.querySelectorAll(`#emoji-row-${id} .icon-sel-emoji-item`).forEach(el => {
           el.classList.toggle('selected', el.textContent === val.value);
         });
-      } else {
-        prev.innerHTML = `<img src="${val.value}" alt="Vista previa del ícono" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentNode.innerHTML='✕'"/>`;
+      } else if (esIconoUrlSegura(val.value)) {
+        prev.innerHTML = '';
+        prev.appendChild(crearImgVistaPrevia(val.value));
         if (val.type === 'gif') {
           const input = document.getElementById(`gif-url-${id}`);
           if (input) input.value = val.value;
         } else if (val.type === 'image') {
           const drop = document.getElementById(`drop-${id}`);
           const name = val.value.startsWith('data:') ? 'Imagen personal subida' : val.value.split('/').pop();
-          if (drop) drop.innerHTML = `<div style="display:flex; align-items:center; gap:5px;">${ICON_CHECK_CIRCLE} ${name}</div><div style="font-size:.65rem;color:var(--gray-3);margin-top:3px;">Haz clic para cambiar</div>`;
+          if (drop) pintarNombreDrop(drop, name, '', 'Haz clic para cambiar');
         }
       }
     });

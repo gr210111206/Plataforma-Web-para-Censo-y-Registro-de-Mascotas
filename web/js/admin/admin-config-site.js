@@ -14,6 +14,7 @@ const SERVER_CONFIG_KEYS = [
   'padron_faq',
   'padron_eventos',
   'padron_tema_config',
+  'padron_seo_config',
 ];
 
 // Envía una clave al servidor (además de guardarse en localStorage
@@ -44,6 +45,7 @@ async function primeConfigFromServer() {
   loadReglamento();
   loadFaqFromServer();
   loadEventosFromServer();
+  loadSEO();
   loadTemaFromServer();
   aplicarTemaVisual();
   previewFooter();
