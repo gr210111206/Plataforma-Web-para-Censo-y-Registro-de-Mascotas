@@ -2,6 +2,29 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22f] — "Tema visual": 2 opciones implementadas de verdad, 2 marcadas como "Próximamente"
+
+### 🤔 Contexto
+Al armar el nuevo manual de usuario (`Word/Manual_de_Usuario_REMAC_2026-11-22.docx`), se revisó qué hace cada opción de Configuración del sitio → Tema visual antes de describirla, y se encontró que de las 6 opciones solo 2 (Color, Bordes redondeados) cambiaban algo de verdad — las otras 4 se guardaban pero ninguna página las leía, y el aviso "Tema aplicado en todo el sitio" las daba por hechas igual. Detalle completo: `Word/Reporte_Tema_visual_opciones_sin_efecto_2026-11-22.txt`. No es una falla de seguridad.
+
+### 🔍 Causas y 🔧 Cambios
+Se eligió una solución mixta en vez de una sola de las dos que proponía el reporte (quitarlas todas, o programarlas todas):
+
+- **Animaciones y transiciones — implementada.** Era un cambio de una sola línea (agregar/quitar una clase). `tema.js` (`_aplicarVariables()`) ahora pone la clase `.sin-animaciones` en `<html>` cuando `cfg.anim === false`; `web/css/styles.css` la anula con `animation:none!important; transition:none!important`.
+- **Mostrar folio en tarjeta de mascota — implementada.** También era de una sola línea. `dashboard.html` (donde se listan "Mis mascotas") ahora lee `padron_tema_config.showFolio` y oculta el `<div class="pet-card-folio">` si está en `false` (antes ninguna página lo leía).
+- **Tipografía — marcada "Próximamente", no implementada.** No es un cambio de una línea: el sitio usa dos fuentes a propósito (Inter para texto, Outfit para títulos/números en TODAS partes) — "cambiar la tipografía" implica decidir si solo cambia el cuerpo de texto o también los títulos, y además el sitio solo carga Inter/Outfit (Roboto/Poppins/Nunito ni siquiera están disponibles). Es una decisión de diseño, no una corrección de bug, así que se dejó pendiente en vez de adivinar. En `web/admin.html` la sección ahora dice "Próximamente", con una nota honesta, y el selector de fuentes queda deshabilitado (ya no finge que hace algo).
+- **Modo oscuro disponible para usuarios — marcada "Próximamente", no implementada.** El propio texto de la opción prometía un interruptor en "Mi perfil" que nunca existió, y haría falta diseñar una paleta oscura completa — tampoco es un cambio chico. Mismo tratamiento: nota honesta en `admin.html`, casilla deshabilitada.
+- `web/js/tema.js`: actualizado el comentario de cabecera para explicar qué se aplica hoy y por qué lo que falta se dejó pendiente a propósito (no es un olvido).
+- `CLAUDE.md` (§3.A, "Superadmin"): corregido el párrafo que decía que revocar el rol admin "sigue siendo solo por base de datos directa" — ya existe el botón "Quitar administrador" (`usuarios.php?action=revocar-admin`), así que se actualizó para reflejarlo.
+
+### 🔎 Verificado
+- `node --check` sin errores en `tema.js`; los bloques `<script>` inline de `index.html` y `dashboard.html`: OK (el de `admin.html` sigue con el mismo falso positivo ya conocido del verificador, no relacionado con este cambio).
+- Páginas servidas (200 OK) con el Apache local de XAMPP.
+- No se pudo probar con sesión real logueada en este chat (mismo problema preexistente de credenciales locales). Recomendado: tras desplegar, en Configuración del sitio → Tema visual, apagar "Animaciones" y confirmar que el portal deja de animar, y apagar "Mostrar folio" y confirmar que desaparece del panel ciudadano.
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/dashboard.html`, `web/js/tema.js`, `web/css/styles.css`, `CLAUDE.md`
+
 ## 📅 [2026-11-22e] — Re-prueba general del sitio completo (82+12 casos): 5 fallas nuevas corregidas (18 a 22)
 
 ### 🤔 Contexto

@@ -881,6 +881,15 @@ function renderPets() {
 
   const CARD_COLORS   = ['#FFF3E6','#E8F5E9','#E3F2FD','#FFF8E1','#FCE4EC','#EDE7F6'];
 
+  // "Mostrar folio en tarjeta de mascota" (Tema visual, panel admin) — se
+  // guardaba pero ninguna página lo leía (ver Reporte_Tema_visual_
+  // opciones_sin_efecto_2026-11-22.txt).
+  let mostrarFolio = true;
+  try {
+    const temaCfg = JSON.parse(localStorage.getItem('padron_tema_config') || 'null');
+    if (temaCfg && temaCfg.showFolio === false) mostrarFolio = false;
+  } catch (e) { /* ignore */ }
+
   container.innerHTML = myPets.map((pet, i) => {
     const icon  = SPECIES_ICONS[pet.especie] || ICON_PAW;
     const color = CARD_COLORS[i % CARD_COLORS.length];
@@ -913,7 +922,7 @@ function renderPets() {
             ${pet.esterilizado ? '<span class="badge badge-blue">✂️ Esterilizado</span>' : ''}
             ${pet.color ? `<span class="badge" style="background:#F5F5F5;color:var(--gray-1);">&#127912; ${pet.color}</span>` : ''}
           </div>
-          <div class="pet-card-folio">${folio}</div>
+          ${mostrarFolio ? `<div class="pet-card-folio">${folio}</div>` : ''}
           <div class="pet-card-actions">
             <button class="btn btn-ghost btn-sm" onclick="verDetalle(${i})" style="flex:1;">${ICON_EYE} Ver</button>
             <button class="btn btn-ghost btn-sm" onclick="editarMascota(${i})" style="flex:1;">${ICON_PEN} Editar</button>

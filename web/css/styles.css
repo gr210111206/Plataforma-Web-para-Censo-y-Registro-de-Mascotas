@@ -64,6 +64,15 @@
 
 html { scroll-behavior: smooth; font-size: 16px; }
 
+/* "Animaciones y transiciones" (Tema visual, panel admin): se guardaba
+   pero ninguna página lo leía (ver Reporte_Tema_visual_opciones_sin_
+   efecto_2026-11-22.txt). tema.js agrega esta clase cuando el admin la
+   desactiva. */
+html.sin-animaciones, html.sin-animaciones * {
+  animation: none !important;
+  transition: none !important;
+}
+
 body {
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--dark);

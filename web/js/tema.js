@@ -6,13 +6,18 @@
  * previa dentro del propio panel admin y nunca tocaba el sitio real
  * — ni siquiera se guardaba en el servidor. Este archivo se incluye
  * en TODAS las páginas y aplica el color elegido sobrescribiendo las
- * variables CSS (--orange y derivadas) directamente en <html>.
+ * variables CSS (--orange y derivadas) directamente en <html>, además
+ * de las animaciones/transiciones (clase .sin-animaciones) y, aparte
+ * (en dashboard.html), si se muestra o no el folio en la tarjeta.
  *
- * La tipografía y el modo oscuro del selector de "Tema visual" NO se
- * aplican todavía: el sitio no carga ninguna fuente externa (Inter/
- * Outfit/Roboto/etc. son solo el nombre, sin @font-face real) y no
- * existe una hoja de estilos de modo oscuro. Aplicar el color ya es
- * la mejora visible que se pedía resolver primero.
+ * La tipografía y el modo oscuro del selector SIGUEN sin aplicarse a
+ * propósito (quedan marcados "Próximamente" en el panel, ver
+ * admin.html): la tipografía implicaría decidir si también cambia a
+ * Outfit (la fuente de títulos/números en todo el sitio) o solo el
+ * cuerpo de texto, y el modo oscuro necesitaría una paleta oscura
+ * completa — ninguna de las dos es un cambio de una sola línea, así
+ * que se dejó pendiente en vez de adivinar (ver
+ * Reporte_Tema_visual_opciones_sin_efecto_2026-11-22.txt).
  */
 
 function _hexToHsl(hex) {
@@ -97,6 +102,11 @@ function _aplicarVariables(cfg) {
     root.setProperty('--radius-lg', '8px');
     root.setProperty('--radius-xl', '10px');
   }
+  // "Animaciones y transiciones": se guardaba pero nada lo leía (ver
+  // Reporte_Tema_visual_opciones_sin_efecto_2026-11-22.txt). La clase
+  // .sin-animaciones (css/styles.css) anula animation/transition en
+  // todo el sitio.
+  document.documentElement.classList.toggle('sin-animaciones', cfg.anim === false);
 }
 
 /**
