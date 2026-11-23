@@ -518,45 +518,9 @@ function renderEvents(events) {
 /* ── Render Articles ── */
 let ARTICULOS_DATA = [];
 // titulo ya viene escapado del servidor (clean(), igual que en
-// renderCampaigns) — no se vuelve a escapar aquí. "contenido" es HTML de
-// verdad (sanitizeArticleHtml en el servidor, para el editor con
-// negritas/imágenes), así que para el extracto se saca solo el texto
-// plano en vez de cortar el HTML a la mitad (ver Falla 16).
-function extraerTextoPlano(html, maxLen) {
-  // <template> es inerte (su .content no es parte del documento activo):
-  // a diferencia de un <div> normal, parsear aquí un <img src=x> no
-  // dispara su carga/onerror — igual que limpiarHtmlArticuloCliente(),
-  // más abajo.
-  const tpl = document.createElement('template');
-  // Espacio entre bloques para que el extracto no pegue los textos de
-  // párrafos/líneas distintas (ej. "cada año.Rabia").
-  const conEspacios = String(html ?? '')
-    .replace(/<\/(p|li|div|h[1-3]|blockquote)>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, ' ');
-  tpl.innerHTML = conEspacios;
-  const texto = (tpl.content.textContent || '').replace(/\s+/g, ' ').trim();
-  return texto.slice(0, maxLen);
-}
-// Segunda capa de protección, en el navegador, para el HTML que ya llegó
-// sanitizado del servidor (sanitizeArticleHtml() en
-// web/api/config/helpers.php: lista blanca de etiquetas/atributos, sin
-// on*=, sin javascript:) — por si un bug ahí algún día dejara pasar algo.
-// Igual que arriba, se inspecciona dentro de un <template> inerte para no
-// disparar nada mientras se limpia.
-function limpiarHtmlArticuloCliente(html) {
-  const tpl = document.createElement('template');
-  tpl.innerHTML = String(html ?? '');
-  tpl.content.querySelectorAll('*').forEach(el => {
-    [...el.attributes].forEach(attr => {
-      const nombre = attr.name.toLowerCase();
-      if (nombre.startsWith('on')) { el.removeAttribute(attr.name); return; }
-      if ((nombre === 'href' || nombre === 'src') && /^\s*javascript:/i.test(attr.value)) {
-        el.removeAttribute(attr.name);
-      }
-    });
-  });
-  return tpl.innerHTML;
-}
+// renderCampaigns) — no se vuelve a escapar aquí. extraerTextoPlano() y
+// limpiarHtmlArticuloCliente() viven en js/api-client.js (compartidas
+// con admin.html — ver Falla 18, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
 function renderArticles(articles) {
   ARTICULOS_DATA = articles;
   const container = document.getElementById('articlesContainer');
@@ -584,11 +548,18 @@ function verArticulo(i) {
   // a.titulo ya viene escapado del servidor (clean()) — .textContent no
   // decodifica entidades, así que sin esto se veía literalmente "&quot;".
   document.getElementById('articulo-modal-titulo').textContent = unescapeHtmlEntities(a.titulo);
-  // a.contenido ya es HTML seguro (ver sanitizeArticleHtml() en el
-  // servidor) — se pinta con innerHTML para que se vean negritas/listas/
-  // imágenes de verdad, no las etiquetas como texto (Falla 17,
-  // Reporte_fallas_Configuracion_del_sitio_2026-11-22c.txt).
-  document.getElementById('articulo-modal-contenido').innerHTML = limpiarHtmlArticuloCliente(a.contenido);
+  // a.contenido normalmente ya es HTML seguro (sanitizeArticleHtml() en el
+  // servidor) y se pinta con innerHTML para que se vean negritas/listas/
+  // imágenes de verdad (Falla 17). PERO los artículos guardados antes de
+  // corregir la Falla 18 son texto plano con saltos de línea reales (sin
+  // ninguna etiqueta) — pintarlos con innerHTML los juntaba en un solo
+  // renglón (Falla 19, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt), así
+  // que ese caso se detecta (sin "<") y se escapa + "\n" → <br>.
+  const contenido = String(a.contenido ?? '');
+  const esHtmlReal = /<[a-z][\s\S]*>/i.test(contenido);
+  document.getElementById('articulo-modal-contenido').innerHTML = esHtmlReal
+    ? limpiarHtmlArticuloCliente(contenido)
+    : escapeHtml(contenido).replace(/\n/g, '<br>');
   const img = document.getElementById('articulo-modal-imagen');
   if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
   else { img.removeAttribute('src'); img.style.display = 'none'; }

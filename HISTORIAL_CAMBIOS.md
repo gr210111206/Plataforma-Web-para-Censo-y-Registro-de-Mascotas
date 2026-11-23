@@ -2,6 +2,40 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-22e] — Re-prueba general del sitio completo (82+12 casos): 5 fallas nuevas corregidas (18 a 22)
+
+### 🤔 Contexto
+Re-prueba completa de los 3 roles + portal público, en el entorno aislado con datos ficticios, usando un navegador de verdad con capturas reales (no solo scripts). Cubrió los 12 casos nuevos de "Configuración del sitio" (confirmados sin fallas) y volvió a correr la matriz de 82 casos del 2026-11-06. Detalle completo, pasos y evidencia: `Word/Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt` y `Word/Pruebas_y_Depuracion_2026-11-22.docx`. Ninguna de las 5 fallas encontradas es de seguridad (nada se ejecutó en ninguna prueba).
+
+### 🔍 Causas y 🔧 Cambios
+
+**18. Artículos — el editor del panel nunca guardaba el formato (negritas, listas, títulos).** `saveArticulo()` (`web/js/admin/admin-articulos.js`) mandaba `editor.innerText` (solo texto) en vez de `editor.innerHTML`; el servidor ya sabe limpiar HTML real (`sanitizeArticleHtml()`), pero nunca le llegaba ninguno. Ahora manda `innerHTML`; la validación de "contenido vacío" sigue usando `innerText` (más `<img` como excepción, igual que ya hace el servidor, para no bloquear un artículo que solo trae una imagen). De paso, `renderAdminArtList()` (la lista del propio panel) ya no corta ese HTML a la mitad con `.substring()` — usa `extraerTextoPlano()` (ver abajo) igual que el portal.
+
+**19. "Leer más" de un artículo en texto plano juntaba todo en un renglón (regresión de `ec5e3b0`).** Ese commit quitó `white-space:pre-line` del contenedor para poder pintar HTML real (Falla 17), pero los artículos guardados ANTES de corregir la Falla 18 son texto plano con saltos de línea reales, sin ninguna etiqueta — pintarlos con `innerHTML` ya no respetaba esos `\n`. `verArticulo()` (`web/index.html`) ahora detecta si el contenido trae alguna etiqueta real: si no trae ninguna, se escapa y sus `\n` se cambian por `<br>`; si sí trae HTML (artículos nuevos, ya con la Falla 18 corregida), se sigue pintando como antes.
+
+**20. Al EDITAR un aviso, artículo o mascota con comillas/"&"/"<", el texto se corrompía y empeoraba con cada guardado.** El servidor guarda estos campos ya escapados (`clean()` = `htmlspecialchars`, en `contenido.php` y `mascotas.php`); los formularios de edición metían ese valor escapado tal cual en el campo, y al volver a guardar se escapaba una segunda vez. Se corrigió con `unescapeHtmlEntities()` (ya existía en `api-client.js`, agregada el 2026-11-22c) en los 4 lugares que lo hacían mal: `editAviso()` (`admin-config-contenido.js`, título y descripción), `editarArticulo()` (`admin-articulos.js`, título), `editarMascota()` (`dashboard.html`, nombre/raza/color) y `editarMascotaAdmin()` (`admin-mascotas.js`, nombre/raza/color). En los dos últimos también se corrigieron de paso el título del modal y el `alt` de la foto (mismo problema, no reportado explícitamente pero es la misma causa exacta), escapando otra vez el nombre ya desescapado antes de meterlo en el `innerHTML` de la vista previa de la foto (para no reabrir el mismo hueco que ya se cerró en fallas anteriores).
+  - **Pendiente del usuario, no corregido aquí (requiere revisar datos reales):** si ya editaste en producción algún aviso o artículo que tuviera comillas o "&" antes de este commit, es posible que haya quedado guardado con el texto corrompido. Para revisarlo (phpMyAdmin): `SELECT id, titulo FROM campanas WHERE titulo LIKE '%&amp;%' OR descripcion LIKE '%&amp;%'; SELECT id, titulo FROM articulos WHERE titulo LIKE '%&amp;%';` — si aparece algo, hay que volver a escribir ese texto a mano (ya con este fix, editarlo y guardarlo de nuevo lo arregla solo).
+
+**21. El acta PDF mostraba `&quot;`/`&amp;`/`&lt;`, nunca traía código QR, y un nombre largo se encimaba con la foto.** `downloadActa()` (`web/dashboard.html`) y `downloadActaAdmin()` (`web/js/admin/admin-mascotas.js`) escriben con `doc.text()` el mismo texto ya escapado del servidor — ahora pasa por `unescapeHtmlEntities()` antes (nombre, raza, color, propietario, dirección, colonia). Se agregó el código QR de verdad (nueva función compartida `generarQrDataUrlParaActa()` en `api-client.js`: dibuja el QR con la misma librería `QRCode` que ya usa la ventana "Ver QR", en un contenedor fuera de pantalla, y lo entrega como imagen para `doc.addImage()`). El texto de cada renglón ahora se envuelve con `doc.splitTextToSize()`, con menos ancho disponible mientras la foto ocupa la esquina, para que un valor largo ya no se meta debajo de ella. De paso, `mascota.html` (línea 385, `document.title`) también mostraba `&lt;...&gt;` en la pestaña del navegador por la misma causa — mismo arreglo con `unescapeHtmlEntities()`.
+
+**22. Una palabra muy larga sin espacios rompía el diseño (sobre todo Seguimiento del admin en celular).** `.seguimiento-layout` (`web/admin.html`) usaba columnas `1fr 1fr` sin `minmax(0, …)`, así que una palabra sin espacios en el nombre de una mascota ensanchaba toda la cuadrícula más allá de la pantalla. Se cambió a `minmax(0, 1fr) minmax(0, 1fr)` y se agregó `overflow-wrap: anywhere` a `.pet-detail-card` (cascada a sus hijos), `.pet-card-name` (tarjeta del panel ciudadano, `web/css/styles.css`), `.hero-title` (título de la portada) y las celdas de la tabla de FAQ del panel (`admin-config-contenido.js`).
+
+### 🔎 De paso (observaciones menores del mismo reporte, no eran "fallas" con prioridad)
+- La vista previa de Google/redes dentro de SEO seguía diciendo "elgrullo.gob.mx" como texto fijo aunque la URL canónica real ya es `mascota-elgrullo.com` — corregido (`web/admin.html`).
+- El servidor nunca fijaba una zona horaria (dependía de la configuración del hosting; en el entorno de pruebas, con PHP en `Europe/Berlin`, una mascota registrada el día 22 quedaba fechada el 23). Se agregó `date_default_timezone_set('America/Mexico_City')` en `web/api/config/helpers.php` (afecta a toda la API).
+- No se tocó el detalle del nombre del CSV de exportación (usa la fecha UTC) ni el resto de observaciones del reporte (bitácora de baja, CLAUDE.md desactualizado, avisos sin opción de ocultar en el panel, CSP en modo Report-Only, código muerto de `initMap()`) — quedan documentadas en el reporte, no son urgentes.
+
+### 🔎 Verificado
+- `php -l` sin errores en `helpers.php`; `node --check` sin errores en los 4 `.js` tocados.
+- Los bloques `<script>` inline de `index.html`, `dashboard.html` y `mascota.html` (2, 2 y 1 respectivamente): OK. El de `admin.html` sigue dando el mismo falso positivo ya conocido (existe igual en `HEAD`, no lo causó este cambio).
+- Páginas servidas (200 OK) con el Apache local de XAMPP.
+- No se pudo probar con sesión real logueada en este chat (mismo problema preexistente de credenciales locales) ni generar un PDF real para revisar visualmente el QR/el ajuste de texto — recomendado que el usuario lo pruebe después de desplegar: descargar un acta con un nombre largo y revisar que el QR escanee al link público.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`, `web/admin.html`, `web/mascota.html`, `web/index.html`
+- `web/js/api-client.js`, `web/js/admin/admin-articulos.js`, `web/js/admin/admin-mascotas.js`, `web/js/admin/admin-config-contenido.js`
+- `web/css/styles.css`, `web/api/config/helpers.php`
+
 ## 📅 [2026-11-22d] — 2 pendientes menores de las re-pruebas: viñetas en artículos y el texto del aviso de error
 
 ### 🤔 Contexto

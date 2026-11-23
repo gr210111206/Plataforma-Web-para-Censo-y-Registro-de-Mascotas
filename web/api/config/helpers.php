@@ -5,6 +5,14 @@
 
 require_once __DIR__ . '/database.php';
 
+// Sin esto, date()/time() usan la zona horaria que traiga configurada el
+// servidor (UTC por defecto en PHP si php.ini no dice otra cosa) — en el
+// entorno de pruebas (Europe/Berlin) una mascota registrada el 22 salía
+// con fecha 23 (ver observación de Falla 21,
+// Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt). El Ayuntamiento está en
+// Jalisco, así que siempre debe ser esta zona sin importar el hosting.
+date_default_timezone_set('America/Mexico_City');
+
 /* ── Manejo global de errores: SIEMPRE responder JSON, nunca HTML ──
    Sin esto, cualquier error o advertencia de PHP (ej. un dato que no
    cabe en una columna de la BD) se imprime como HTML antes del JSON y

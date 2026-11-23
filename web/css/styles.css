@@ -439,6 +439,7 @@ input, select, textarea { font-family: inherit; }
   color: var(--white);
   line-height: 1.1;
   margin-bottom: 20px;
+  overflow-wrap: anywhere; /* una palabra sin espacios no debe desbordar en celular (Falla 22) */
 }
 .hero-title .highlight {
   background: linear-gradient(135deg, var(--orange-light), var(--orange));
@@ -1307,7 +1308,7 @@ input, select, textarea { font-family: inherit; }
   position: relative;
 }
 .pet-card-body { padding: 20px; }
-.pet-card-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+.pet-card-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
 .pet-card-info { font-size: .82rem; color: var(--gray-2); margin-bottom: 12px; }
 .pet-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .pet-card-folio {

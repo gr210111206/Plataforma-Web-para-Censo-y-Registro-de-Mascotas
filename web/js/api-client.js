@@ -557,3 +557,81 @@ function unescapeHtmlEntities(str) {
   return txt.value;
 }
 
+/* ══════════════════════════════════════════════
+   TEXTO PLANO Y LIMPIEZA DE HTML DE ARTÍCULO
+   Compartidas entre index.html (portal) y admin.html (lista de
+   Artículos del panel): "contenido" de un artículo es HTML real,
+   sanitizado en el servidor (sanitizeArticleHtml(), ver helpers.php) —
+   cortar ese HTML a la mitad con .substring() para un extracto mostraba
+   las etiquetas como texto (Falla 16/18, ver HISTORIAL_CAMBIOS.md).
+   ══════════════════════════════════════════════ */
+function extraerTextoPlano(html, maxLen) {
+  // <template> es inerte (su .content no es parte del documento activo):
+  // a diferencia de un <div> normal, parsear aquí un <img src=x> no
+  // dispara su carga/onerror — igual que limpiarHtmlArticuloCliente().
+  const tpl = document.createElement('template');
+  // Espacio entre bloques para que el extracto no pegue los textos de
+  // párrafos/líneas distintas (ej. "cada año.Rabia").
+  const conEspacios = String(html ?? '')
+    .replace(/<\/(p|li|div|h[1-3]|blockquote)>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, ' ');
+  tpl.innerHTML = conEspacios;
+  const texto = (tpl.content.textContent || '').replace(/\s+/g, ' ').trim();
+  return texto.slice(0, maxLen);
+}
+
+// Segunda capa de protección, en el navegador, para el HTML que ya llegó
+// sanitizado del servidor — por si un bug ahí algún día dejara pasar algo.
+// Se inspecciona dentro de un <template> inerte para no disparar nada
+// (ej. la carga de una <img>) mientras se limpia.
+function limpiarHtmlArticuloCliente(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(html ?? '');
+  tpl.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      const nombre = attr.name.toLowerCase();
+      if (nombre.startsWith('on')) { el.removeAttribute(attr.name); return; }
+      if ((nombre === 'href' || nombre === 'src') && /^\s*javascript:/i.test(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+  return tpl.innerHTML;
+}
+
+/* ══════════════════════════════════════════════
+   QR PARA EL ACTA PDF
+   Compartida entre dashboard.html y admin-mascotas.js (downloadActa() /
+   downloadActaAdmin()): el acta nunca traía el código QR, solo el enlace
+   en texto (Falla 21, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
+   Usa la misma librería QRCode (qrcodejs) que ya carga el modal "Ver QR"
+   — se dibuja en un contenedor fuera de pantalla (nunca invisible con
+   display:none, porque la librería necesita medir el elemento) y se lee
+   como imagen para dárselo a jsPDF con doc.addImage().
+   ══════════════════════════════════════════════ */
+function generarQrDataUrlParaActa(texto, tamPx) {
+  if (typeof QRCode === 'undefined') return null;
+  const cont = document.createElement('div');
+  cont.style.cssText = 'position:fixed; left:-9999px; top:-9999px;';
+  document.body.appendChild(cont);
+  let dataUrl = null;
+  try {
+    new QRCode(cont, {
+      text: texto,
+      width: tamPx,
+      height: tamPx,
+      colorDark: '#1A1A1A',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+    const canvas = cont.querySelector('canvas');
+    if (canvas) dataUrl = canvas.toDataURL('image/png');
+    else {
+      const img = cont.querySelector('img');
+      if (img && img.src) dataUrl = img.src;
+    }
+  } catch (e) { /* el acta se genera igual, solo sin el QR */ }
+  document.body.removeChild(cont);
+  return dataUrl;
+}
+

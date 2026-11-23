@@ -126,21 +126,26 @@ function editarMascotaAdmin(id) {
   editingMascotaAdminId = id;
   pendingFotoEditarMascota = null;
 
-  document.getElementById('em-nombre').value = pet.nombre || '';
+  // nombre/raza/color ya vienen escapados del servidor (clean()) — sin
+  // unescapeHtmlEntities() se veía literalmente "&quot;" en vez de la
+  // comilla, y empeoraba con cada edición (Falla 20,
+  // Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
+  const nombre = unescapeHtmlEntities(pet.nombre || '');
+  document.getElementById('em-nombre').value = nombre;
   document.getElementById('em-especie').value = pet.especie || 'perro';
-  document.getElementById('em-raza').value = pet.raza || '';
+  document.getElementById('em-raza').value = unescapeHtmlEntities(pet.raza || '');
   document.getElementById('em-edad').value = pet.edad || '';
   document.getElementById('em-sexo').value = pet.sexo || 'macho';
-  document.getElementById('em-color').value = pet.color || '';
+  document.getElementById('em-color').value = unescapeHtmlEntities(pet.color || '');
   document.getElementById('em-vacunado').checked = !!pet.vacunado;
   document.getElementById('em-esterilizado').checked = !!pet.esterilizado;
 
   const preview = document.getElementById('em-foto-preview');
   preview.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
-    ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
+    ? `<img src="${pet.foto_url}" alt="Foto de ${escapeHtml(nombre)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`
     : `<svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1.6em;height:1.6em;"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" /></svg>`;
 
-  document.getElementById('editar-mascota-titulo').textContent = `Editar a ${pet.nombre}`;
+  document.getElementById('editar-mascota-titulo').textContent = `Editar a ${nombre}`;
   openModal('modal-editar-mascota');
 }
 
@@ -221,11 +226,15 @@ async function guardarEdicionMascota(e) {
    necesita conocer su ancho/alto reales) para no deformarla al encajarla
    en un cuadro de máximo 38×38mm. Si no hay foto o falla al cargar, el
    acta se genera igual, solo sin la imagen. */
+// Devuelve true si de verdad agregó la foto (para saber si hay que
+// envolver el texto de los primeros renglones y no encimarse con ella —
+// Falla 21, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
 function _agregarFotoActaPDF(doc, fotoUrl, pageW) {
   return new Promise((resolve) => {
-    if (!fotoUrl || fotoUrl.length < 10) { resolve(); return; }
+    if (!fotoUrl || fotoUrl.length < 10) { resolve(false); return; }
     const img = new Image();
     img.onload = () => {
+      let ok = false;
       try {
         const maxW = 38, maxH = 38;
         let w = img.naturalWidth || 1, h = img.naturalHeight || 1;
@@ -233,10 +242,11 @@ function _agregarFotoActaPDF(doc, fotoUrl, pageW) {
         w *= ratio; h *= ratio;
         const formato = fotoUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
         doc.addImage(fotoUrl, formato, pageW - 14 - w, 30, w, h);
+        ok = true;
       } catch (e) { /* imagen no compatible con jsPDF: el acta sigue sin ella */ }
-      resolve();
+      resolve(ok);
     };
-    img.onerror = () => resolve();
+    img.onerror = () => resolve(false);
     img.src = fotoUrl;
   });
 }
@@ -265,24 +275,29 @@ async function downloadActaAdmin(id) {
   doc.setFontSize(13);
   doc.text(`Folio: ${id}`, 14, 36);
 
-  await _agregarFotoActaPDF(doc, pet.foto_url, pageW);
+  const hayFoto = await _agregarFotoActaPDF(doc, pet.foto_url, pageW);
 
+  // nombre/raza/color/persona/dirección/colonia ya vienen escapados del
+  // servidor (clean()) — sin unescapeHtmlEntities() el acta mostraba
+  // literalmente "&quot;"/"&amp;"/"&lt;" en vez de los caracteres reales
+  // (Falla 21). jsPDF los escribe tal cual, no es HTML, así que nunca
+  // hace falta volver a escaparlos.
   const edad = pet.edad_label || (pet.edad ? `${pet.edad} años` : 'N/D');
   const rows = [
-    ['Nombre de la mascota', pet.nombre || ''],
+    ['Nombre de la mascota', unescapeHtmlEntities(pet.nombre || '')],
     ['Especie', capitalize(pet.especie || '')],
-    ['Raza', pet.raza || 'No especificada'],
+    ['Raza', unescapeHtmlEntities(pet.raza || 'No especificada')],
     ['Edad', edad],
     ['Sexo', capitalize(pet.sexo || '')],
-    ['Color', pet.color || '—'],
+    ['Color', unescapeHtmlEntities(pet.color || '—')],
     ['Vacunado', pet.vacunado ? 'Sí' : 'No'],
     ['Esterilizado', pet.esterilizado ? 'Sí' : 'No'],
     ['Estatus', pet.estatus || 'Alta'],
     ['Fecha de registro', pet.fecha_registro || pet.created_at || 'N/D'],
-    ['Propietario', pet.persona || '—'],
+    ['Propietario', unescapeHtmlEntities(pet.persona || '—')],
     ['Teléfono de contacto', pet.telefono || '—'],
-    ['Dirección', pet.direccion || '—'],
-    ['Colonia', pet.colonia || '—'],
+    ['Dirección', unescapeHtmlEntities(pet.direccion || '—')],
+    ['Colonia', unescapeHtmlEntities(pet.colonia || '—')],
   ];
 
   let y = 46;
@@ -292,14 +307,29 @@ async function downloadActaAdmin(id) {
     doc.setFont('helvetica', 'bold');
     doc.text(`${label}:`, 14, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(String(value), 80, y);
-    y += 8;
+    // Mientras la foto ocupa la esquina (y entre 30 y 68mm), el valor se
+    // envuelve en un ancho más angosto para no encimarse con ella — un
+    // nombre largo sin espacios ya lo hacía (Falla 21).
+    const anchoDisponible = (hayFoto && y < 70) ? pageW - 14 - 80 - 42 : pageW - 14 - 80;
+    const lineas = doc.splitTextToSize(String(value), Math.max(anchoDisponible, 30));
+    doc.text(lineas, 80, y);
+    y += 8 * lineas.length;
   });
+
+  const linkActa = `${window.location.origin}${window.location.pathname.replace('admin.html','')}${pet.link_publico}`;
 
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('admin.html','')}${pet.link_publico}`, 14, y + 6);
+  doc.text(`Verifica este registro en: ${linkActa}`, 14, y + 6);
   doc.text('Documento generado por el Padrón Municipal de Mascotas. Válido como comprobante de registro municipal.', 14, y + 12);
+
+  const qrDataUrl = generarQrDataUrlParaActa(linkActa, 160);
+  if (qrDataUrl) {
+    const qrY = y + 18;
+    doc.addImage(qrDataUrl, 'PNG', 14, qrY, 26, 26);
+    doc.setFontSize(8);
+    doc.text('Escanea para verificar', 44, qrY + 13);
+  }
 
   doc.save(`${id}.pdf`);
   showToast('Acta descargada correctamente', 'success');

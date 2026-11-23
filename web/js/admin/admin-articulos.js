@@ -134,10 +134,17 @@ let editingArticuloId = null;
 async function saveArticulo() {
   const titulo   = document.getElementById('art-titulo').value.trim();
   const editor   = document.getElementById('wysiwygEditor');
-  const contenido = editor.innerText.trim();
+  // El editor (negritas/listas/títulos con execCommand) guarda formato
+  // real en innerHTML — mandar solo innerText perdía todo ese formato
+  // (Falla 18, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt); el servidor
+  // ya lo limpia con sanitizeArticleHtml(). innerText se sigue usando
+  // nada más para saber si el editor está "vacío" (igual que el servidor,
+  // que también acepta un artículo que solo trae una imagen).
+  const contenido = editor.innerHTML.trim();
+  const soloTexto = editor.innerText.trim();
 
-  if (!titulo)    { showToast('El título es obligatorio', 'error'); return; }
-  if (!contenido) { showToast('El contenido no puede estar vacío', 'error'); return; }
+  if (!titulo) { showToast('El título es obligatorio', 'error'); return; }
+  if (!soloTexto && !contenido.includes('<img')) { showToast('El contenido no puede estar vacío', 'error'); return; }
 
   const payload = { titulo, contenido };
   const imgEl = document.querySelector('#art-banner-prev img');
@@ -176,7 +183,10 @@ function editarArticulo(id) {
   const a = adminArticulos.find(x => x.id === id);
   if (!a) return;
   editingArticuloId = id;
-  document.getElementById('art-titulo').value = a.titulo;
+  // a.titulo ya viene escapado del servidor (clean()) — sin
+  // unescapeHtmlEntities() el campo mostraba literalmente "&quot;" en vez
+  // de la comilla, y empeoraba con cada edición (Falla 20).
+  document.getElementById('art-titulo').value = unescapeHtmlEntities(a.titulo);
   document.getElementById('wysiwygEditor').innerHTML = a.contenido;
   document.getElementById('art-img').value = '';
   document.getElementById('art-banner-prev').innerHTML = a.imagen ? htmlVistaPreviaRecorte(a.imagen, 'Vista previa de la imagen de portada') : '';
@@ -205,7 +215,7 @@ function renderAdminArtList() {
       ${a.imagen ? `<img src="${a.imagen}" alt="" class="article-image" />` : ''}
       <div class="article-card-body">
         <div class="article-title">${a.titulo}</div>
-        <div class="article-excerpt">${a.contenido.substring(0, 80)}...</div>
+        <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 80))}...</div>
         <div style="display:flex; gap:6px; margin-top:10px;">
           <button class="btn btn-ghost btn-sm" onclick="editarArticulo(${a.id})" style="display:inline-flex; align-items:center; gap:5px;">${ICON_PENCIL} Editar</button>
           <button class="btn btn-danger btn-sm" onclick="eliminarArticulo(${a.id})" aria-label="Eliminar artículo">${ICON_TRASH}</button>

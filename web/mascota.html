@@ -382,7 +382,11 @@ async function findPet(token) {
   const pet = await findPet(publicToken);
   if (pet) {
     renderPet(pet);
-    document.title = `${pet.nombre} — Padrón de El Grullo`;
+    // pet.nombre ya viene escapado del servidor (clean()) — document.title
+    // no decodifica entidades (a diferencia de innerHTML en renderPet()),
+    // así que sin esto la pestaña mostraba literalmente "&lt;...&gt;"
+    // (Falla 21, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
+    document.title = `${unescapeHtmlEntities(pet.nombre)} — Padrón de El Grullo`;
   } else {
     renderNotFound();
   }

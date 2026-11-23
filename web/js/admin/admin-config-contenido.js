@@ -191,8 +191,11 @@ function editAviso(id) {
   const a = avisoData.find(x => x.id === id);
   if (!a) return;
   editingAvisoId = id;
-  document.getElementById('aviso-titulo').value = a.titulo;
-  document.getElementById('aviso-desc').value = a.descripcion || '';
+  // titulo/descripcion ya vienen escapados del servidor (clean()) — sin
+  // unescapeHtmlEntities() el campo mostraba literalmente "&quot;" en vez
+  // de la comilla, y empeoraba con cada edición (Falla 20).
+  document.getElementById('aviso-titulo').value = unescapeHtmlEntities(a.titulo);
+  document.getElementById('aviso-desc').value = unescapeHtmlEntities(a.descripcion || '');
   document.getElementById('aviso-inicio').value = a.fecha_inicio || '';
   document.getElementById('aviso-fin').value = a.fecha_fin || '';
   document.getElementById('aviso-prev').innerHTML = a.imagen ? htmlVistaPreviaRecorte(a.imagen, 'Vista previa del banner') : '';
@@ -289,8 +292,8 @@ function renderFaqTable() {
   const tbody = document.getElementById('faqTableBody');
   tbody.innerHTML = faqData.map((f, i) => `
     <tr>
-      <td style="max-width:160px;">${escapeHtml(f.pregunta)}</td>
-      <td style="max-width:200px; color:var(--gray-1);">${escapeHtml(f.respuesta.substring(0, 60))}...</td>
+      <td style="max-width:160px; overflow-wrap:anywhere;">${escapeHtml(f.pregunta)}</td>
+      <td style="max-width:200px; overflow-wrap:anywhere; color:var(--gray-1);">${escapeHtml(f.respuesta.substring(0, 60))}...</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm" onclick="editFaq(${i})" style="padding:4px 8px;" title="Editar" aria-label="Editar pregunta frecuente">${ICON_PENCIL}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFaq(${i})" style="padding:4px 8px;" title="Eliminar" aria-label="Eliminar pregunta frecuente">${ICON_TRASH}</button>

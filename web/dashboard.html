@@ -1195,21 +1195,26 @@ function editarMascota(i) {
   editingPetId = pet.id || pet.folio;
   editingPetOriginalFoto = pet.foto_url || null;
 
-  document.getElementById('pet-nombre').value = pet.nombre || '';
+  // nombre/raza/color ya vienen escapados del servidor (clean()) — sin
+  // unescapeHtmlEntities() se veía literalmente "&quot;" en vez de la
+  // comilla, y empeoraba con cada edición (Falla 20,
+  // Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
+  const nombre = unescapeHtmlEntities(pet.nombre || '');
+  document.getElementById('pet-nombre').value = nombre;
   document.getElementById('pet-especie').value = pet.especie || '';
-  document.getElementById('pet-raza').value = pet.raza || '';
+  document.getElementById('pet-raza').value = unescapeHtmlEntities(pet.raza || '');
   document.getElementById('pet-edad').value = pet.edad || '';
   document.getElementById('pet-sexo').value = pet.sexo || '';
-  document.getElementById('pet-color').value = pet.color || '';
+  document.getElementById('pet-color').value = unescapeHtmlEntities(pet.color || '');
   document.getElementById('pet-vacunado').checked = !!pet.vacunado;
   document.getElementById('pet-esterilizado').checked = !!pet.esterilizado;
 
   const photoEl = document.getElementById('photoPreviewIcon');
   photoEl.innerHTML = (pet.foto_url && pet.foto_url.length > 10)
-    ? `<img src="${pet.foto_url}" alt="Foto de ${pet.nombre}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
+    ? `<img src="${pet.foto_url}" alt="Foto de ${escapeHtml(nombre)}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--radius);" />`
     : ICON_CAMERA;
 
-  document.getElementById('modal-mascota-titulo').textContent = `Editar a ${pet.nombre}`;
+  document.getElementById('modal-mascota-titulo').textContent = `Editar a ${nombre}`;
   document.getElementById('modal-mascota-btn').textContent    = 'Guardar cambios';
   openModal('modal-nueva-mascota');
 }
@@ -1288,11 +1293,15 @@ function downloadActaRapida() {
    necesita conocer su ancho/alto reales) para no deformarla al encajarla
    en un cuadro de máximo 38×38mm. Si no hay foto o falla al cargar, el
    acta se genera igual, solo sin la imagen. */
+// Devuelve true si de verdad agregó la foto (para saber si hay que
+// envolver el texto de los primeros renglones y no encimarse con ella —
+// Falla 21, Reporte_fallas_PRUEBA_GENERAL_2026-11-22.txt).
 function _agregarFotoActaPDF(doc, fotoUrl, pageW) {
   return new Promise((resolve) => {
-    if (!fotoUrl || fotoUrl.length < 10) { resolve(); return; }
+    if (!fotoUrl || fotoUrl.length < 10) { resolve(false); return; }
     const img = new Image();
     img.onload = () => {
+      let ok = false;
       try {
         const maxW = 38, maxH = 38;
         let w = img.naturalWidth || 1, h = img.naturalHeight || 1;
@@ -1300,10 +1309,11 @@ function _agregarFotoActaPDF(doc, fotoUrl, pageW) {
         w *= ratio; h *= ratio;
         const formato = fotoUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
         doc.addImage(fotoUrl, formato, pageW - 14 - w, 30, w, h);
+        ok = true;
       } catch (e) { /* imagen no compatible con jsPDF: el acta sigue sin ella */ }
-      resolve();
+      resolve(ok);
     };
-    img.onerror = () => resolve();
+    img.onerror = () => resolve(false);
     img.src = fotoUrl;
   });
 }
@@ -1332,24 +1342,29 @@ async function downloadActa(folio) {
   doc.setFontSize(13);
   doc.text(`Folio: ${folio}`, 14, 36);
 
-  await _agregarFotoActaPDF(doc, pet.foto_url, pageW);
+  const hayFoto = await _agregarFotoActaPDF(doc, pet.foto_url, pageW);
 
+  // nombre/raza/color/persona/dirección/colonia ya vienen escapados del
+  // servidor (clean()) — sin unescapeHtmlEntities() el acta mostraba
+  // literalmente "&quot;"/"&amp;"/"&lt;" en vez de los caracteres reales
+  // (Falla 21). jsPDF los escribe tal cual, no es HTML, así que nunca
+  // hace falta volver a escaparlos.
   const edad = pet.edad_label || (pet.edad_anios ? `${pet.edad_anios} años` : 'N/D');
   const rows = [
-    ['Nombre de la mascota', pet.nombre || ''],
+    ['Nombre de la mascota', unescapeHtmlEntities(pet.nombre || '')],
     ['Especie', capitalize(pet.especie || '')],
-    ['Raza', pet.raza || 'No especificada'],
+    ['Raza', unescapeHtmlEntities(pet.raza || 'No especificada')],
     ['Edad', edad],
     ['Sexo', capitalize(pet.sexo || '')],
-    ['Color', pet.color || '—'],
+    ['Color', unescapeHtmlEntities(pet.color || '—')],
     ['Vacunado', pet.vacunado ? 'Sí' : 'No'],
     ['Esterilizado', pet.esterilizado ? 'Sí' : 'No'],
     ['Estatus', pet.estatus || 'Alta'],
     ['Fecha de registro', pet.fecha_registro || pet.created_at || 'N/D'],
-    ['Propietario', session.nombre || pet.persona || '—'],
+    ['Propietario', unescapeHtmlEntities(session.nombre || pet.persona || '—')],
     ['Teléfono de contacto', session.telefono || pet.telefono || '—'],
-    ['Dirección', session.direccion || pet.direccion || '—'],
-    ['Colonia', session.colonia || pet.colonia || '—'],
+    ['Dirección', unescapeHtmlEntities(session.direccion || pet.direccion || '—')],
+    ['Colonia', unescapeHtmlEntities(session.colonia || pet.colonia || '—')],
   ];
 
   let y = 46;
@@ -1359,14 +1374,29 @@ async function downloadActa(folio) {
     doc.setFont('helvetica', 'bold');
     doc.text(`${label}:`, 14, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(String(value), 80, y);
-    y += 8;
+    // Mientras la foto ocupa la esquina (y entre 30 y 68mm), el valor se
+    // envuelve en un ancho más angosto para no encimarse con ella — un
+    // nombre largo sin espacios ya lo hacía (Falla 21).
+    const anchoDisponible = (hayFoto && y < 70) ? pageW - 14 - 80 - 42 : pageW - 14 - 80;
+    const lineas = doc.splitTextToSize(String(value), Math.max(anchoDisponible, 30));
+    doc.text(lineas, 80, y);
+    y += 8 * lineas.length;
   });
+
+  const linkActa = `${window.location.origin}${window.location.pathname.replace('dashboard.html','')}${pet.link_publico}`;
 
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
-  doc.text(`Verifica este registro en: ${window.location.origin}${window.location.pathname.replace('dashboard.html','')}${pet.link_publico}`, 14, y + 6);
+  doc.text(`Verifica este registro en: ${linkActa}`, 14, y + 6);
   doc.text('Documento generado por el Padrón Municipal de Mascotas. Válido como comprobante de registro municipal.', 14, y + 12);
+
+  const qrDataUrl = generarQrDataUrlParaActa(linkActa, 160);
+  if (qrDataUrl) {
+    const qrY = y + 18;
+    doc.addImage(qrDataUrl, 'PNG', 14, qrY, 26, 26);
+    doc.setFontSize(8);
+    doc.text('Escanea para verificar', 44, qrY + 13);
+  }
 
   doc.save(`${folio}.pdf`);
   showToast('✅ Acta descargada correctamente', 'success');
