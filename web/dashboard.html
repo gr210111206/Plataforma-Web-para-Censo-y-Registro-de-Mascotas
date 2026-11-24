@@ -6,7 +6,7 @@
   <meta name="description" content="Mi portal ciudadano — Padrón Municipal de Mascotas, El Grullo, Jalisco." />
   <title>Mi Portal — Padrón de Mascotas · El Grullo</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <link rel="stylesheet" href="css/styles.css?v=20261124" />
   <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
        se vea un destello del color naranja original (ver tema.js). -->
   <script src="js/tema.js"></script>
@@ -963,16 +963,25 @@ function renderDashCampaigns(campanas) {
 // a.titulo/a.imagen_icono ya vienen escapados del servidor (clean()) — no
 // se vuelven a escapar aquí. a.contenido es HTML real (editor con
 // negritas/listas), así que el extracto se saca en texto plano en vez de
-// cortar el HTML a la mitad (mismo patrón que index.html, ver
-// HISTORIAL_CAMBIOS.md).
+// cortar el HTML a la mitad. Misma estructura que renderArticles() en
+// index.html (antes esta tarjeta no tenía el <div class="article-card-body">
+// que da el margen interno, ni la imagen de portada, ni "Leer más" — se
+// veía pegada a la orilla y sin la foto del artículo).
 function renderDashArticles(articulos) {
   dashArticulosData = articulos;
-  document.getElementById('dashArticlesContainer').innerHTML = articulos.map((a, i) => `
-    <div class="article-card" style="cursor:pointer;" onclick="verDashArticulo(${i})">
-      <span class="article-icon">${iconoArticuloHtml(a.imagen_icono)}</span>
-      <div class="article-title">${a.titulo}</div>
-      <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 110))}...</div>
-    </div>`).join('');
+  document.getElementById('dashArticlesContainer').innerHTML = articulos.map((a, i) => {
+    const imagenSegura = a.imagen && esIconoUrlSegura(a.imagen) ? a.imagen : '';
+    return `
+    <div class="article-card">
+      ${imagenSegura ? `<img src="${escapeHtml(imagenSegura)}" alt="${a.titulo}" class="article-image" />` : ''}
+      <div class="article-card-body">
+        ${imagenSegura ? '' : `<span class="article-icon">${iconoArticuloHtml(a.imagen_icono)}</span>`}
+        <div class="article-title">${a.titulo}</div>
+        <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 110))}...</div>
+        <a href="#" class="article-link" onclick="event.preventDefault(); verDashArticulo(${i});">Leer más <span>→</span></a>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // Antes esta tarjeta no tenía forma de leer el artículo completo, a

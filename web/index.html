@@ -6,7 +6,7 @@
   <meta name="description" content="Registra a tu mascota en el Padrón Municipal de El Grullo, Jalisco. Gratuito, rápido y oficial. H. Ayuntamiento 2024-2027." />
   <title>Padrón Municipal de Mascotas — El Grullo, Jalisco</title>
   <link rel="icon" type="image/png" href="Imagenes/favicon-escudo.png" />
-  <link rel="stylesheet" href="css/styles.css?v=20260922b" />
+  <link rel="stylesheet" href="css/styles.css?v=20261124" />
   <!-- Tema visual: se aplica aquí, antes de pintar el body, para que no
        se vea un destello del color naranja original (ver tema.js). -->
   <script src="js/tema.js"></script>
@@ -809,13 +809,8 @@ function applyNavAuthState() {
 // aunque el valor trajera comillas o HTML, no hay forma de "escaparse" del
 // atributo src (ver HISTORIAL_CAMBIOS.md, 2026-11-21 — XSS almacenado en
 // Apariencia e íconos).
-function esIconoUrlSegura(url) {
-  if (typeof url !== 'string' || !url) return false;
-  if (/^https:\/\//i.test(url)) return true;
-  if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)) return true;
-  if (/^Imagenes\//.test(url)) return true;
-  return false;
-}
+// esIconoUrlSegura() vive en js/api-client.js (compartida con
+// dashboard.html — ver HISTORIAL_CAMBIOS.md, 2026-11-24).
 function crearImgIcono(url) {
   const img = document.createElement('img');
   img.src = url;

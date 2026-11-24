@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-24c] — La tarjeta de artículo del panel ciudadano quedó incompleta (sin margen, sin imagen, sin "Leer más") + caché vieja del CSS
+
+### 🤔 Contexto
+El usuario (con ayuda de otra IA revisando las mismas capturas) encontró que, después del cambio de hace rato, las tarjetas de "Artículos/Tips" en el panel ciudadano seguían viéndose mal: el texto pegado a la orilla, sin la imagen de portada del artículo, y sin el enlace "Leer más" que sí tiene la portada pública. También notó que en producción las tarjetas se veían más anchas de lo que debían (~400px en vez del máximo de 320px que se acababa de agregar).
+
+### 🔍 Causas y 🔧 Cambios
+
+**`renderDashArticles()` (`web/dashboard.html`) armaba la tarjeta incompleta.** Le faltaban tres cosas que sí tiene `renderArticles()` en `index.html`: el `<div class="article-card-body">` (el que da el margen interno de 24px — sin él, todo quedaba pegado a la orilla), la imagen de portada del artículo (`a.imagen`, validada con `esIconoUrlSegura()` antes de mostrarla, igual que en la portada), y el enlace "Leer más →" que abre el modal (antes la tarjeta completa era clickeable sin ningún aviso visual de que lo era). Se reescribió para que arme exactamente la misma estructura que `index.html`.
+
+**`esIconoUrlSegura()` ahora es compartida.** Vivía duplicada dentro de `index.html` (y, aparte, como función local dentro de `login.html`); como `dashboard.html` también la necesitaba ahora, se movió la copia de `index.html` a `web/js/api-client.js` (ya compartido entre todas las páginas) en vez de duplicarla una vez más — así la próxima página que necesite validar una URL de imagen ya la tiene disponible.
+
+**Caché vieja del CSS en producción.** Las 5 páginas que cargan `css/styles.css` lo hacían con el mismo parámetro `?v=20260922b` desde septiembre, sin cambiarlo nunca — aunque el archivo se había editado muchas veces desde entonces (Tema visual, Falla 22, el centrado de hace rato), el navegador de quien ya lo tenía en caché seguía usando la versión vieja indefinidamente, porque la URL nunca cambiaba. Se subió a `?v=20261124` en `index.html`, `dashboard.html`, `admin.html`, `login.html` y `asistente.html`, para forzar a que todos vuelvan a descargarlo.
+
+### 🔎 Verificado
+- `node --check` sin errores en `api-client.js`; los bloques `<script>` inline de `index.html` y `dashboard.html`: OK.
+- Páginas servidas (200 OK) con el Apache local de XAMPP.
+- No se pudo probar con sesión real logueada en este chat (mismo problema preexistente de credenciales locales). Recomendado: tras desplegar, revisar con un artículo CON foto y uno SIN foto, en computadora y en celular, y hacer un refresco forzado (Ctrl+F5) la primera vez para no seguir viendo el CSS en caché.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/dashboard.html`, `web/admin.html`, `web/login.html`, `web/asistente.html`, `web/js/api-client.js`
+
 ## 📅 [2026-11-24b] — Ícono de artículo con íconos de línea reales (no emoji) + tarjetas de "Artículos/Tips" centradas
 
 ### 🤔 Contexto

@@ -622,6 +622,19 @@ function iconoArticuloHtml(valor) {
   return escapeHtml(valor || '📄');
 }
 
+// Lista blanca de URLs de imagen aceptadas al mostrar algo que vino del
+// admin (portada de artículo/aviso, apariencia, etc.): https://, Base64
+// de una imagen real, o una ruta propia Imagenes/... — compartida entre
+// index.html, dashboard.html y login.html (ver HISTORIAL_CAMBIOS.md,
+// 2026-11-21, Falla 5/6).
+function esIconoUrlSegura(url) {
+  if (typeof url !== 'string' || !url) return false;
+  if (/^https:\/\//i.test(url)) return true;
+  if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)) return true;
+  if (/^Imagenes\//.test(url)) return true;
+  return false;
+}
+
 /* ══════════════════════════════════════════════
    QR PARA EL ACTA PDF
    Compartida entre dashboard.html y admin-mascotas.js (downloadActa() /
