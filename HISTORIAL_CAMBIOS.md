@@ -2,6 +2,26 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-24] — Extracto de artículos en el panel ciudadano + íconos en los filtros de Seguimiento
+
+### 🤔 Contexto
+El usuario reportó, viendo la pantalla real en producción justo antes de su presentación, que la pestaña "Artículos / Tips" del panel ciudadano mostraba el resumen de un artículo cortado a la mitad de una palabra ("...La de..."), y que los filtros de "Seguimiento" (Especie/Estatus) no tenían ningún ícono, a diferencia de otras partes del sitio.
+
+### 🔍 Causas y 🔧 Cambios
+
+**Extracto de artículos del panel ciudadano.** `renderDashArticles()` (`web/dashboard.html`) todavía cortaba `a.contenido` con `.substring(0, 110)` — el mismo patrón de las fallas 16/18 ya corregidas en `index.html` y `admin-articulos.js`, pero que se había quedado sin tocar aquí. Como `contenido` ahora puede traer HTML real (negritas, listas) desde que se corrigió la falla 18, cortarlo a la mitad también podía partir una etiqueta. Se corrigió igual que en los otros dos lugares: `escapeHtml(extraerTextoPlano(a.contenido, 110))`. De paso, el modal "leer artículo completo" de esa misma pantalla (`verDashArticulo()`) tenía el mismo problema que ya se había corregido en el portal público (Falla 17: título sin desescapar, contenido mostrado como texto en vez de HTML real) — se aplicó el mismo arreglo (`unescapeHtmlEntities()` para el título; detectar si el contenido trae HTML real antes de decidir entre `innerHTML` limpio o texto escapado con saltos de línea) y se cambió su contenedor de `<p>` a `<div>` (un `<p>` no puede anidar los bloques que permite el editor).
+
+**Íconos en los filtros de Seguimiento.** Los `<select>` de "Especie..." y "Estatus..." (`web/admin.html`) no tenían ningún ícono en sus opciones. Se agregó un emoji a cada opción (🐕 Perro, 🐈 Gato, 🟢 Alta, ⚫ Baja) — es la forma segura de poner un ícono dentro de un `<select>` nativo, ya que ningún navegador permite imágenes o SVG dentro de un `<option>`. No se tocó el `value` de ninguna opción, así que el filtro sigue funcionando igual.
+
+**Pendiente, no corregido (decisión del usuario):** el selector de especie del formulario de registro de mascota (ciudadano, asistente y editar-mascota del admin) usa el mismo emoji 🐕/🐈 dentro de un `<select>` nativo; el usuario pidió reemplazarlo por imágenes reales de ícono, pero eso requiere construir un control propio (no es posible dentro de un `<select>` nativo) en 3 pantallas distintas — se dejó pendiente a propósito, por el riesgo de tocar un formulario que se iba a usar en vivo el mismo día de la presentación.
+
+### 🔎 Verificado
+- `node --check`/sintaxis de los bloques `<script>` inline de `dashboard.html`: OK.
+- Páginas servidas (200 OK) con el Apache local de XAMPP.
+
+### 📂 Archivos modificados
+- `web/dashboard.html`, `web/admin.html`
+
 ## 📅 [2026-11-22f] — "Tema visual": 2 opciones implementadas de verdad, 2 marcadas como "Próximamente"
 
 ### 🤔 Contexto

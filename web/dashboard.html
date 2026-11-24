@@ -587,7 +587,10 @@
     </div>
     <div class="modal-body">
       <img id="dash-articulo-modal-imagen" src="" alt="" style="display:none; width:100%; aspect-ratio:2.5/1; object-fit:cover; border-radius:var(--radius); margin-bottom:16px;" />
-      <p id="dash-articulo-modal-contenido" style="white-space:pre-line; line-height:1.8; color:var(--gray-1); margin-bottom:0;"></p>
+      <!-- div, no <p>: el contenido de un artículo puede traer sus propios
+           <p>/<ul>/<h1-3>/<blockquote> (ver sanitizeArticleHtml en el
+           servidor), y un <p> no puede anidar otro bloque. -->
+      <div id="dash-articulo-modal-contenido" style="line-height:1.8; color:var(--gray-1);"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="closeModal('modal-dash-articulo')">Cerrar</button>
@@ -957,13 +960,18 @@ function renderDashCampaigns(campanas) {
     </div>`).join('');
 }
 
+// a.titulo/a.imagen_icono ya vienen escapados del servidor (clean()) — no
+// se vuelven a escapar aquí. a.contenido es HTML real (editor con
+// negritas/listas), así que el extracto se saca en texto plano en vez de
+// cortar el HTML a la mitad (mismo patrón que index.html, ver
+// HISTORIAL_CAMBIOS.md).
 function renderDashArticles(articulos) {
   dashArticulosData = articulos;
   document.getElementById('dashArticlesContainer').innerHTML = articulos.map((a, i) => `
     <div class="article-card" style="cursor:pointer;" onclick="verDashArticulo(${i})">
       <span class="article-icon">${a.imagen_icono}</span>
       <div class="article-title">${a.titulo}</div>
-      <div class="article-excerpt">${a.contenido.substring(0, 110)}...</div>
+      <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 110))}...</div>
     </div>`).join('');
 }
 
@@ -974,8 +982,17 @@ function renderDashArticles(articulos) {
 function verDashArticulo(i) {
   const a = dashArticulosData[i];
   if (!a) return;
-  document.getElementById('dash-articulo-modal-titulo').textContent = a.titulo;
-  document.getElementById('dash-articulo-modal-contenido').textContent = a.contenido;
+  // a.titulo ya viene escapado del servidor (clean()) — .textContent no
+  // decodifica entidades, así que sin esto se vería literalmente "&quot;".
+  document.getElementById('dash-articulo-modal-titulo').textContent = unescapeHtmlEntities(a.titulo);
+  // a.contenido ya es HTML seguro (sanitizeArticleHtml en el servidor) —
+  // se pinta con innerHTML para que se vean negritas/listas de verdad,
+  // con una segunda limpieza en el navegador como defensa adicional.
+  const contenido = String(a.contenido ?? '');
+  const esHtmlReal = /<[a-z][\s\S]*>/i.test(contenido);
+  document.getElementById('dash-articulo-modal-contenido').innerHTML = esHtmlReal
+    ? limpiarHtmlArticuloCliente(contenido)
+    : escapeHtml(contenido).replace(/\n/g, '<br>');
   const img = document.getElementById('dash-articulo-modal-imagen');
   if (a.imagen) { img.src = a.imagen; img.alt = a.titulo; img.style.display = 'block'; }
   else { img.removeAttribute('src'); img.style.display = 'none'; }
