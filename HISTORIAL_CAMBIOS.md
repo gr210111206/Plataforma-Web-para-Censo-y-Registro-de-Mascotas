@@ -2,6 +2,27 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-24d] — Menú propio para los filtros de Seguimiento (Especie/Estatus), con íconos de línea y colores reales
+
+### 🤔 Contexto
+El usuario pidió que los filtros "Especie" y "Estatus" de Seguimiento usaran los mismos íconos de línea del selector de artículos (cara de perro/gato) en vez de emoji, y dijo que el círculo de color (🟢 Alta / ⚫ Baja) se veía "como de IA" / feo. Un `<select>` nativo de HTML no puede mostrar un ícono dibujado (SVG) ni un color real dentro de sus opciones, solo texto o emoji — para lograrlo hacía falta reemplazarlo por un menú propio.
+
+### 🔍 Causas y 🔧 Cambios
+
+**Los dos `<select>` de Seguimiento se reemplazaron por un menú propio** (`web/admin.html`): un botón con la pinta de un campo normal (mismo `.form-control` de siempre) que al hacer clic abre un panel con las opciones, y un `<input type="hidden">` oculto con el mismo `id` que ya usaba el `<select>` (`segFilterEspecie`/`segFilterEstatus`) — así `filterSeguimiento()` (`admin-mascotas.js`) sigue leyendo `.value` exactamente igual que antes, sin tocar esa función.
+- **Especie:** usa los mismos íconos de línea (Lucide) de perro/gato que ya se agregaron al selector de artículos (`ARTICLE_ICONS`, en `api-client.js`), no emoji.
+- **Estatus:** usa un punto de color real (`<span class="filtro-dot">`) con los mismos colores que ya usan las tarjetas de Seguimiento para "Alta" (verde) y "Baja" (gris) — en vez de un emoji de círculo de color, que no combinaba con el resto del diseño.
+- El panel y sus opciones se arman por JS (`buildFiltroDropdown()`, `web/js/admin/admin-mascotas.js`) a partir de una lista (`FILTROS_SEGUIMIENTO`), se cierran solos al elegir una opción o al hacer clic fuera, y el botón gira la flechita al abrirse (CSS, `web/css/styles.css`).
+- Pensado para celular desde el inicio: cada opción tiene suficiente alto para tocarla con el dedo (`padding: 12px`), y es un botón real, no un `div` con solo `onclick`.
+
+### 🔎 Verificado
+- `node --check` sin errores en `admin-mascotas.js` y `admin-bootstrap.js`; el bloque `<script>` inline de `admin.html` sigue con el mismo falso positivo ya conocido del verificador (existe igual en versiones anteriores, no lo causó este cambio).
+- Página servida (200 OK) con el Apache local de XAMPP.
+- No se pudo probar con sesión real logueada en este chat (mismo problema preexistente de credenciales locales) ni en un celular de verdad. Recomendado: tras desplegar, probar los dos filtros en computadora y en celular (abrir, elegir una opción, confirmar que sí filtra y que el menú se ve completo sin cortarse en pantallas angostas).
+
+### 📂 Archivos modificados
+- `web/admin.html`, `web/css/styles.css`, `web/js/admin/admin-mascotas.js`, `web/js/admin/admin-bootstrap.js`
+
 ## 📅 [2026-11-24c] — La tarjeta de artículo del panel ciudadano quedó incompleta (sin margen, sin imagen, sin "Leer más") + caché vieja del CSS
 
 ### 🤔 Contexto

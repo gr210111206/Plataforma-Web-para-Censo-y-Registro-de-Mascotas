@@ -1081,6 +1081,49 @@ input, select, textarea { font-family: inherit; }
   box-shadow: 0 0 0 3px rgba(var(--orange-rgb),.12);
 }
 .form-control::placeholder { color: var(--gray-3); }
+
+/* ── Menú propio para filtros con ícono (Especie/Estatus en Seguimiento) ──
+   Reemplaza un <select> nativo porque un <select> no puede mostrar un
+   ícono dibujado (SVG) dentro de sus opciones, solo texto o emoji. */
+.filtro-dropdown { position: relative; }
+.filtro-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+.filtro-dropdown-btn svg { flex-shrink: 0; color: var(--gray-2); transition: transform .15s; }
+.filtro-dropdown-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.filtro-dropdown-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--white);
+  border: 1.5px solid var(--gray-4);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.filtro-dropdown-panel.open { display: block; }
+.filtro-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: .88rem;
+}
+.filtro-dropdown-item:hover { background: var(--surface); }
+.filtro-dropdown-item svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--gray-1); }
+.filtro-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .input-group { position: relative; }
 .input-icon {
   position: absolute;

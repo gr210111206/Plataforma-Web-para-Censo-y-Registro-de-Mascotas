@@ -1,6 +1,59 @@
 /* ══════════════════════════════════════════════════ */
 /*  SEGUIMIENTO                                       */
 /* ══════════════════════════════════════════════════ */
+
+// Menú propio para los filtros de Especie/Estatus (ver admin.html): un
+// <select> nativo no puede mostrar un ícono dibujado, solo texto/emoji.
+// "Alta"/"Baja" reutilizan el mismo color que ya usan las tarjetas de
+// Seguimiento (statusColor, más abajo), en vez de un emoji de círculo.
+const FILTROS_SEGUIMIENTO = {
+  Especie: [
+    { value: '', label: 'Especie...' },
+    { value: 'perro', label: 'Perro', icono: ARTICLE_ICONS.perro },
+    { value: 'gato', label: 'Gato', icono: ARTICLE_ICONS.gato },
+  ],
+  Estatus: [
+    { value: '', label: 'Estatus...' },
+    { value: 'Alta', label: 'Alta', punto: 'var(--green)' },
+    { value: 'Baja', label: 'Baja', punto: 'var(--gray-2)' },
+  ],
+};
+
+function buildFiltroDropdown(nombre) {
+  const panel = document.getElementById(`filtro${nombre}Panel`);
+  if (!panel) return;
+  panel.innerHTML = FILTROS_SEGUIMIENTO[nombre].map((o, i) => `
+    <div class="filtro-dropdown-item" onclick="seleccionarFiltroSeguimiento('${nombre}', ${i})">
+      ${o.icono || (o.punto ? `<span class="filtro-dot" style="background:${o.punto};"></span>` : '')}
+      <span>${o.label}</span>
+    </div>`).join('');
+}
+
+function toggleFiltroDropdown(nombre) {
+  const panel = document.getElementById(`filtro${nombre}Panel`);
+  const btn   = panel.previousElementSibling;
+  const abrir = !panel.classList.contains('open');
+  document.querySelectorAll('.filtro-dropdown-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.filtro-dropdown-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  if (abrir) { panel.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+}
+
+function seleccionarFiltroSeguimiento(nombre, idx) {
+  const o = FILTROS_SEGUIMIENTO[nombre][idx];
+  document.getElementById(`segFilter${nombre}`).value = o.value;
+  document.getElementById(`filtro${nombre}Label`).innerHTML =
+    (o.icono || (o.punto ? `<span class="filtro-dot" style="background:${o.punto};"></span>` : '')) + `<span>${o.label}</span>`;
+  toggleFiltroDropdown(nombre); // lo cierra (ya estaba abierto para poder haber hecho clic en una opción)
+  filterSeguimiento();
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.filtro-dropdown')) {
+    document.querySelectorAll('.filtro-dropdown-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.filtro-dropdown-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  }
+});
+
 function renderSeguimiento(data, total) {
   const grid = document.getElementById('seguimientoGrid');
   if (data.length === 0) {

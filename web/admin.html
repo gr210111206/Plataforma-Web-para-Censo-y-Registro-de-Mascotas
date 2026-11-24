@@ -1211,16 +1211,28 @@
           <span class="search-icon"><svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></svg></span>
           <input class="form-control" id="segSearch" placeholder="Buscar por mascota, dueño, raza, color o colonia..." aria-label="Buscar por mascota, dueño, características o ubicación" oninput="debouncedFilterSeguimiento()" style="width:100%; padding-left:36px;" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
         </div>
-        <select class="form-control" id="segFilterEspecie" aria-label="Filtrar por especie" onchange="filterSeguimiento()" style="width:140px;">
-          <option value="">Especie...</option>
-          <option value="perro">🐕 Perro</option>
-          <option value="gato">🐈 Gato</option>
-        </select>
-        <select class="form-control" id="segFilterEstatus" aria-label="Filtrar por estatus" onchange="filterSeguimiento()" style="width:150px;">
-          <option value="">Estatus...</option>
-          <option value="Alta">🟢 Alta</option>
-          <option value="Baja">⚫ Baja</option>
-        </select>
+        <!-- Antes eran <select> nativos con emoji (🐕/🐈, 🟢/⚫) en las
+             opciones: un <select> no puede mostrar un ícono dibujado
+             (SVG), solo texto/emoji. Este menú propio sí, y reutiliza los
+             mismos íconos de línea del selector de artículos y los
+             mismos colores de "Alta/Baja" que ya se usan en las tarjetas
+             de Seguimiento (en vez de un emoji de círculo de color). -->
+        <div class="filtro-dropdown" style="width:150px;">
+          <button type="button" class="form-control filtro-dropdown-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por especie" onclick="toggleFiltroDropdown('Especie')">
+            <span id="filtroEspecieLabel">Especie...</span>
+            <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          <div class="filtro-dropdown-panel" id="filtroEspeciePanel" role="listbox"></div>
+          <input type="hidden" id="segFilterEspecie" value="" />
+        </div>
+        <div class="filtro-dropdown" style="width:150px;">
+          <button type="button" class="form-control filtro-dropdown-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por estatus" onclick="toggleFiltroDropdown('Estatus')">
+            <span id="filtroEstatusLabel">Estatus...</span>
+            <svg class="icon-line" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;"><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          <div class="filtro-dropdown-panel" id="filtroEstatusPanel" role="listbox"></div>
+          <input type="hidden" id="segFilterEstatus" value="" />
+        </div>
       </div>
 
       <div class="seguimiento-layout" id="seguimientoGrid">
