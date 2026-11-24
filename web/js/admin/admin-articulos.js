@@ -128,6 +128,33 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── Ícono del artículo (tarjeta sin imagen de portada) ────
+// Reemplaza al emoji libre de antes (podía no tener nada que ver con el
+// tema del artículo, y se veía distinto según el sistema operativo) por
+// los mismos íconos de línea (Lucide) que ya se usan para la especie de
+// una mascota — ver ARTICLE_ICONS en api-client.js.
+const ART_ICON_LABELS = { perro: 'Perro', gato: 'Gato', pata: 'Pata', vacuna: 'Vacuna' };
+let articuloIconoSeleccionado = 'perro';
+
+function buildArtIconGrid() {
+  const grid = document.getElementById('artIconGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.keys(ART_ICON_LABELS).map(key => `
+    <div class="art-icon-item" data-key="${key}" onclick="selectArtIcon('${key}')" title="${ART_ICON_LABELS[key]}"
+         style="width:48px; height:48px; border:1.5px solid var(--gray-4); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.3rem;">${ARTICLE_ICONS[key]}</div>
+  `).join('');
+  selectArtIcon(articuloIconoSeleccionado);
+}
+
+function selectArtIcon(key) {
+  articuloIconoSeleccionado = key;
+  document.querySelectorAll('#artIconGrid > div').forEach(el => {
+    const seleccionado = el.dataset.key === key;
+    el.style.borderColor = seleccionado ? 'var(--orange)' : 'var(--gray-4)';
+    el.style.background  = seleccionado ? 'var(--orange-pale)' : '';
+  });
+}
+
 // ── Save / Reset article ──────────────────────────
 let editingArticuloId = null;
 
@@ -146,7 +173,7 @@ async function saveArticulo() {
   if (!titulo) { showToast('El título es obligatorio', 'error'); return; }
   if (!soloTexto && !contenido.includes('<img')) { showToast('El contenido no puede estar vacío', 'error'); return; }
 
-  const payload = { titulo, contenido };
+  const payload = { titulo, contenido, imagen_icono: articuloIconoSeleccionado };
   const imgEl = document.querySelector('#art-banner-prev img');
   if (imgEl) payload.imagen = imgEl.src;
 
@@ -176,6 +203,7 @@ function resetArticulo() {
   document.getElementById('art-banner-prev').innerHTML = '';
   updateToolbarState();
   editingArticuloId = null;
+  selectArtIcon('perro');
   document.getElementById('art-save-btn').innerHTML = ICON_SAVE + ' Guardar artículo';
 }
 
@@ -190,6 +218,10 @@ function editarArticulo(id) {
   document.getElementById('wysiwygEditor').innerHTML = a.contenido;
   document.getElementById('art-img').value = '';
   document.getElementById('art-banner-prev').innerHTML = a.imagen ? htmlVistaPreviaRecorte(a.imagen, 'Vista previa de la imagen de portada') : '';
+  // Si el artículo ya tenía un emoji libre (de antes de este cambio, no
+  // una de las 4 llaves de ARTICLE_ICONS), se deja "perro" seleccionado
+  // en vez de intentar adivinar cuál de los 4 nuevos le queda mejor.
+  selectArtIcon(Object.prototype.hasOwnProperty.call(ARTICLE_ICONS, a.imagen_icono) ? a.imagen_icono : 'perro');
   updateWordCount();
   document.getElementById('art-save-btn').innerHTML = ICON_SAVE + ' Guardar cambios';
   showAdmin('articulo');
@@ -214,6 +246,7 @@ function renderAdminArtList() {
     <div class="article-card">
       ${a.imagen ? `<img src="${a.imagen}" alt="" class="article-image" />` : ''}
       <div class="article-card-body">
+        ${a.imagen ? '' : `<span class="article-icon">${iconoArticuloHtml(a.imagen_icono)}</span>`}
         <div class="article-title">${a.titulo}</div>
         <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 80))}...</div>
         <div style="display:flex; gap:6px; margin-top:10px;">

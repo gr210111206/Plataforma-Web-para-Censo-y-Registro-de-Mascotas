@@ -969,7 +969,7 @@ function renderDashArticles(articulos) {
   dashArticulosData = articulos;
   document.getElementById('dashArticlesContainer').innerHTML = articulos.map((a, i) => `
     <div class="article-card" style="cursor:pointer;" onclick="verDashArticulo(${i})">
-      <span class="article-icon">${a.imagen_icono}</span>
+      <span class="article-icon">${iconoArticuloHtml(a.imagen_icono)}</span>
       <div class="article-title">${a.titulo}</div>
       <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 110))}...</div>
     </div>`).join('');

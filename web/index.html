@@ -530,6 +530,7 @@ function renderArticles(articles) {
     <div class="article-card">
       ${imagenSegura ? `<img src="${escapeHtml(imagenSegura)}" alt="${a.titulo}" class="article-image" />` : ''}
       <div class="article-card-body">
+        ${imagenSegura ? '' : `<span class="article-icon">${iconoArticuloHtml(a.imagen_icono)}</span>`}
         <div class="article-title">${a.titulo}</div>
         <div class="article-excerpt">${escapeHtml(extraerTextoPlano(a.contenido, 100))}...</div>
         <a href="#" class="article-link" onclick="event.preventDefault(); verArticulo(${i});">Leer más <span>→</span></a>

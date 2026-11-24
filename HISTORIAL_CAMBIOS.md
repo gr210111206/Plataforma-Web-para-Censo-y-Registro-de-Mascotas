@@ -2,6 +2,28 @@
 
 Este documento registra cronológicamente todos los cambios, mejoras, correcciones y actualizaciones realizadas en la plataforma web y base de datos del proyecto. Nota: en entradas anteriores al 2026-09-10 el proyecto se refería a sí mismo internamente como "REMAC" — se dejó tal cual en el cuerpo de esas entradas por ser un registro histórico, aunque el nombre ya no se usa (ver entrada del 2026-09-10).
 
+## 📅 [2026-11-24b] — Ícono de artículo con íconos de línea reales (no emoji) + tarjetas de "Artículos/Tips" centradas
+
+### 🤔 Contexto
+El usuario revisó el sitio real como ciudadano y notó que el ícono de un artículo podía no tener nada que ver con el tema (ej. una carita feliz 😊 en el artículo de esterilización) y se veía distinto según el sistema operativo (recordó que ya antes se habían reemplazado íconos así, de perro/gato, para no depender del emoji del sistema). También notó que en el panel ciudadano, con pocos artículos publicados, las tarjetas quedaban pegadas a la izquierda en vez de centradas, y que el formulario "Nuevo artículo" del panel admin no tenía ninguna forma de elegir un ícono.
+
+### 🔍 Causas y 🔧 Cambios
+
+**No existía ningún selector de ícono al crear un artículo.** `saveArticulo()` (`web/js/admin/admin-articulos.js`) nunca mandaba `imagen_icono`; el servidor (`contenido.php`) le ponía por defecto 📄, y los artículos de ejemplo que ya tenía la base de datos traían emoji sueltos escritos a mano (de ahí el 😊). Se agregó un selector real en "Nuevo artículo" (`web/admin.html`, bloque `#artIconGrid`): 4 opciones (Perro, Gato, Pata, Vacuna), dibujadas con los mismos íconos de línea (Lucide) que ya se usan para la especie de una mascota — no con emoji — así se ven igual en cualquier sistema operativo. La selección se guarda como una palabra clave (`perro`/`gato`/`pata`/`vacuna`) en el mismo campo `imagen_icono` de siempre, y `editarArticulo()` la restaura al editar (un artículo viejo con un emoji suelto, que no es ninguna de las 4 llaves, se deja en "Perro" por defecto en vez de intentar adivinar).
+
+**Los 4 íconos se comparten donde se muestra un artículo.** Se agregó `ARTICLE_ICONS` (el mapa de las 4 llaves a su SVG) e `iconoArticuloHtml()` en `web/js/api-client.js` (compartido entre páginas): si el valor guardado es una de las 4 llaves, dibuja el ícono de línea; si es un emoji suelto de un artículo viejo, lo sigue mostrando tal cual, para no romper nada ya publicado. Se aplicó en las 3 pantallas que muestran la tarjeta de un artículo sin imagen de portada: `index.html` (portal público — antes ni mostraba ningún ícono), `dashboard.html` (panel ciudadano — antes mostraba el emoji suelto) y la lista "Artículos publicados" del panel admin (`admin-articulos.js` — antes tampoco mostraba ícono).
+
+**Tarjetas de "Artículos/Tips" no centradas en el panel ciudadano.** `#dashArticlesContainer` heredaba `.articles-grid` (`repeat(4, 1fr)`, pensado para el portal público con más artículos) — con solo 2 artículos publicados, las tarjetas se quedaban en las primeras 2 columnas de 4, pegadas a la izquierda. Se agregó una regla aparte, solo para este contenedor (`web/css/styles.css`), que las acomoda con flexbox centradas y con un ancho máximo por tarjeta, sin tocar `.articles-grid` en ningún otro lado (el portal público sigue igual).
+
+### 🔎 Verificado
+- `node --check` sin errores en `api-client.js`, `admin-articulos.js` y `admin-bootstrap.js`; los bloques `<script>` inline de `index.html` y `dashboard.html`: OK.
+- Páginas servidas (200 OK) con el Apache local de XAMPP.
+- No se pudo probar con sesión real logueada en este chat (mismo problema preexistente de credenciales locales). Recomendado: tras desplegar, crear un artículo nuevo y confirmar que el ícono elegido se ve igual en la portada, en el panel ciudadano y en la lista del panel admin.
+
+### 📂 Archivos modificados
+- `web/index.html`, `web/dashboard.html`, `web/admin.html`, `web/css/styles.css`
+- `web/js/api-client.js`, `web/js/admin/admin-articulos.js`, `web/js/admin/admin-bootstrap.js`
+
 ## 📅 [2026-11-24] — Extracto de artículos en el panel ciudadano + íconos en los filtros de Seguimiento
 
 ### 🤔 Contexto

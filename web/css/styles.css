@@ -733,6 +733,12 @@ input, select, textarea { font-family: inherit; }
 
 /* ── Articles ── */
 .articles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+/* "Artículos / Tips" del panel ciudadano: normalmente hay muy pocos
+   artículos publicados, así que una cuadrícula de 4 columnas fijas los
+   dejaba pegados a la izquierda en vez de centrados. Aquí se acomodan
+   con flexbox, centrados, con un ancho máximo por tarjeta. */
+#dashArticlesContainer { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+#dashArticlesContainer .article-card { flex: 1 1 260px; max-width: 320px; }
 .article-card {
   background: var(--white);
   border: 1px solid var(--gray-4);
